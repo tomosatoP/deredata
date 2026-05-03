@@ -1,0 +1,4 @@
+# データベースファイルを保持するフォルダ
+database_folder = "database/"
+# データベースの元テキストデータを保持するフォルダ
+textdata_folder = "textdata/"
