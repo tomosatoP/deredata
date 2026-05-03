@@ -1,0 +1,67 @@
+#:kivy 2.3.0
+#:include deredata/basewidget.kv
+#:include deredata/simulator.kv
+#:include deredata/unit.kv
+#:include deredata/buffskill.kv
+#:include deredata/episode.kv
+#:include deredata/idol.kv
+#:include deredata/music.kv
+
+
+<DatabaseSeries>:
+    unitview: unitview
+    buffskillview: buffskillview
+    musicview: musicview
+    episodeview: episodeview
+    idolview: idolview
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 5
+    tab_height: set_height * 2
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: musicview
+        text: "楽曲一覧"
+
+    TabbedPanelItem:
+        id: unitview
+        text: "ユニット一覧"
+
+    TabbedPanelItem:
+        id: buffskillview
+        text: "センター効果・特技"
+
+    TabbedPanelItem:
+        id: episodeview
+        text: "エピソード一覧"
+
+    TabbedPanelItem:
+        id: idolview
+        text: "アイドル一覧"
+
+<Deredata>:
+    upperregion: upperregion
+    commands: commands
+    lowerregion: lowerregion
+
+    orientation: "vertical"
+
+    Splitter:
+        strip_size: set_height
+        sizable_from: "bottom"
+        min_size: self.parent.height * 0.20
+        max_size: self.parent.height * 0.80
+
+        BoxLayout:
+            id: upperregion
+
+    BoxLayout:
+        id: commands
+        orientation: "horizontal"
+        size_hint_y: None
+        height: set_height * 2
+
+    BoxLayout:
+        id: lowerregion
+        

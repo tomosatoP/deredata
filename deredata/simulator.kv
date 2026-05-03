@@ -1,0 +1,107 @@
+#:kivy 2.3.0
+#:include deredata/basewidget.kv
+
+<SimulatorDataLabel@BoxLayout>:
+    orientation: "horizontal"
+
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        text: "楽曲"
+
+    StrFrameView:
+        text: "センター"
+
+    StrFrameView:
+        text: "左隣り"
+
+    StrFrameView:
+        text: "右隣り"
+
+    StrFrameView:
+        text: "左端"
+
+    StrFrameView:
+        text: "右端"
+
+    StrFrameView:
+        text: "ゲスト"
+
+    StrFrameView:
+        text: "進行度"
+
+    StrFrameView:
+        text: "スコア"
+
+<SimulatorDataView>:
+    musicname: musicname
+    centerepisode: centerepisode
+    leftepisode: leftepisode
+    rightepisode: rightepisode
+    leftendepisode: leftendepisode
+    rightendepisode: rightendepisode
+    guestepisode: guestepisode
+    progressview: progressview
+    scoreview: scoreview
+
+    orientation: "horizontal"
+
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: musicname
+        text: "楽曲"
+
+    StrFrameView:
+        id: centerepisode
+        text: "センター"
+
+    StrFrameView:
+        id: leftepisode
+        text: "左隣り"
+
+    StrFrameView:
+        id: rightepisode
+        text: "右隣り"
+
+    StrFrameView:
+        id: leftendepisode
+        text: "左端"
+
+    StrFrameView:
+        id: rightendepisode
+        text: "右端"
+
+    StrFrameView:
+        id: guestepisode
+        text: "ゲスト"
+
+    StrFrameView:
+        id: progressview
+        text: "進行度"
+
+    StrFrameView:
+        id: scoreview
+        text: "スコア"
+
+
+<SimulatorView>:
+    simulatordataviews: simulatordataviews
+
+    orientation: "vertical"
+
+    SimulatorDataLabel:
+        id: simulatordataviewlabel
+
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
+        bar_width: set_height * 2
+
+        BoxLayout:
+            id: simulatordataviews
+            orientation: "vertical"
+            size_hint_y: None
+            height: self.minimum_height

@@ -1,0 +1,130 @@
+#:kivy 2.3.0
+#:include deredata/basewidget.kv
+
+<MusicDataLabel@BoxLayout>:
+    songcategory: songcategory
+    songtype: songtype
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrSpinner:
+        id: songcategory
+
+    StrSpinner:
+        id: songtype
+
+    StrFrameView:
+        size_hint_x: 3
+        text: "タイトル"
+    
+    StrFrameView:
+        text: "レベル"
+
+    StrFrameView:
+        text: "時間"
+
+    StrFrameView:
+        text: "ノート数"
+
+    StrFrameView:
+        text: "フリックノート数"
+
+    StrFrameView:
+        text: "ロングノート数"
+
+    StrFrameView:
+        text: "スライドノート数"
+
+<MusicDataViewclass>:
+    songcategory: songcategory
+    songtype: songtype
+    songtitle: songtitle
+    songlevel: songlevel
+    songtime: songtime
+    notenumber: notenumber
+    flicknumber: flicknumber
+    longnumber: longnumber
+    slidenumber: slidenumber
+
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: songcategory
+
+    StrFrameView:
+        id: songtype
+
+    StrFrameView:
+        id: songtitle
+        size_hint_x: 3
+
+    StrFrameView:
+        id: songlevel
+
+    StrFrameView:
+        id: songtime
+
+    StrFrameView:
+        id: notenumber
+
+    StrFrameView:
+        id: flicknumber
+
+    StrFrameView:
+        id: longnumber
+
+    StrFrameView:
+        id: slidenumber
+
+<MusicView>:
+    timechart: timechart
+    musicdatalabel: musicdatalabel
+    musicdataviews: musicdataviews
+
+    orientation: "vertical"
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: set_height * 3
+
+        Label:
+            text: "譜面"
+
+        TimeChart:
+            id: timechart
+            size_hint_x: 12
+
+    MusicDataLabel:
+        id: musicdatalabel
+        size_hint_y: None
+        height: set_height
+
+    RecycleView:
+        id: musicdataviews
+        bar_width: set_height * 2
+        do_scroll_x: False
+        do_scroll_y: True
+
+        viewclass: "MusicDataViewclass"
+        SelectableRecycleBoxLayout:
+            default_size_hint: 1, None
+            default_size: None, set_height
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: "vertical"
+            multiselect: True
+            touch_multiselect: True
+            key_selection: "musicdata"
+    

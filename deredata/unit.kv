@@ -1,0 +1,93 @@
+#:kivy 2.3.0
+#:include deredata/basewidget.kv
+
+<UnitDataLabel@BoxLayout>:
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        text: "ユニット名"
+
+    StrFrameView:
+        text: "センター"
+
+    StrFrameView:
+        text: "左隣り"
+
+    StrFrameView:
+        text: "右隣り"
+
+    StrFrameView:
+        text: "左端"
+
+    StrFrameView:
+        text: "右端"
+
+    StrFrameView:
+        text: "ゲスト"
+
+<UnitDataViewclass>:
+    name: name
+    centerposition: centerposition
+    leftposition: leftposition
+    rightposition: rightposition
+    leftendposition: leftendposition
+    rightendposition: rightendposition
+    guestposition: guestposition
+
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: name
+
+    StrFrameView:
+        id: centerposition
+
+    StrFrameView:
+        id: leftposition
+
+    StrFrameView:
+        id: rightposition
+
+    StrFrameView:
+        id: leftendposition
+
+    StrFrameView:
+        id: rightendposition
+
+    StrFrameView:
+        id: guestposition
+
+<UnitView>:
+    unitdataviews: unitdataviews
+    
+    orientation: "vertical"
+
+    UnitDataLabel:
+
+    RecycleView:
+        id: unitdataviews
+        bar_width: set_height * 2
+        do_scroll_x: False
+        do_scroll_y: True
+
+        viewclass: "UnitDataViewclass"
+        SelectableRecycleBoxLayout:
+            default_size_hint: 1, None
+            default_size: None, set_height
+            size_hint_y: None
+            height: self.minimum_height
+            orientation: "vertical"
+            multiselect: True
+            touch_multiselect: True
+            key_selection: "unitdata"

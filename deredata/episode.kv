@@ -1,0 +1,264 @@
+#:kivy 2.3.0
+#:include deredata/basewidget.kv
+
+<EpisodeDataLabel@BoxLayout>
+    name: name
+    type: type
+    dominant: dominant
+    mystyle: mystyle
+    rare: rare
+    buff_class: buff_class
+    skill_class: skill_class
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrSpinner:
+        id: name
+        size_hint_x: 6
+
+    StrSpinner:
+        id: type
+
+    StrSpinner:
+        id: dominant
+
+    StrSpinner:
+        id: mystyle
+
+    StrSpinner:
+        id: rare
+    
+    StrSpinner:
+        id: buff_class
+        size_hint_x: 3
+    
+    StrSpinner:
+        id: skill_class
+        size_hint_x: 3
+
+    StrFrameView:
+        text: "スターランク"
+
+    StrFrameView:
+        text: "特技レベル"
+
+    StrFrameView:
+        text: "レベル"
+
+    StrFrameView:
+        text: "親愛度"
+
+    StrFrameView:
+        text: "ボーカル"
+
+    StrFrameView:
+        text: "ダンス"
+
+    StrFrameView:
+        text: "ビジュアル"
+
+    StrFrameView:
+        text: "ライフ"
+
+<EpisodeDataViewclass>
+    name: name
+    type: type
+    dominant: dominant
+    mystyle: mystyle
+    rare: rare
+    buff_class: buff_class
+    skill_class: skill_class
+    star_rank: star_rank
+    skill_level: skill_level
+    level: level
+    affection: affection
+    vocal: vocal
+    dance: dance
+    visual: visual
+    life: life
+    
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: name
+        size_hint_x: 6
+
+    StrFrameView:
+        id: type
+
+    StrFrameView:
+        id: dominant
+
+    StrFrameView:
+        id: mystyle
+
+    StrFrameView:
+        id: rare
+
+    StrFrameView:
+        id: buff_class
+        size_hint_x: 3
+
+    StrFrameView:
+        id: skill_class
+        size_hint_x: 3
+        
+    NumFrameInput:
+        id: star_rank
+        readonly: True
+        focus_next: self
+        on_focus: root.on_potential_changed(self) if not self.focus else None
+        on_text_validate: root.on_potential_changed(self) if not self.readonly else None
+
+    StrFrameView:
+        id: skill_level
+
+    StrFrameView:
+        id: level
+
+    StrFrameView:
+        id: affection
+
+    StrFrameView:
+        id: vocal
+
+    StrFrameView:
+        id: dance
+
+    StrFrameView:
+        id: visual
+    
+    StrFrameView:
+        id: life
+
+<EpisodeFlavorElementView>
+    title: title
+    value: value
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrView:
+        id: title
+
+    StrView:
+        id: value
+
+<EpisodeFlavorView>
+    ruby: ruby
+    voice: voice
+    solo: solo
+    gacha: gacha
+    registration_date: registration_date
+    buff: buff
+    skill: skill
+    altervocal: altervocal
+    alterdance: alterdance
+    altervisual: altervisual
+    alterlife: alterlife
+    alterskill: alterskill
+
+    EpisodeFlavorElementView:
+        id: ruby
+
+    EpisodeFlavorElementView:
+        id: voice
+
+    EpisodeFlavorElementView:
+        id: solo
+
+    EpisodeFlavorElementView:
+        id: gacha
+
+    EpisodeFlavorElementView:
+        id: registration_date
+
+    StrFrameView:
+        text: "エピソード"
+
+    EpisodeFlavorElementView:
+        id: buff
+
+    EpisodeFlavorElementView:
+        id: skill
+
+    StrFrameView:
+        text: "ポテンシャル＋ルーム効果＋楽曲タイプ一致効果"
+
+    EpisodeFlavorElementView:
+        id: altervocal
+
+    EpisodeFlavorElementView:
+        id: alterdance
+
+    EpisodeFlavorElementView:
+        id: altervisual
+
+    EpisodeFlavorElementView:
+        id: alterlife
+
+    EpisodeFlavorElementView:
+        id: alterskill
+
+<EpisodeView>
+    episodedatalabel: episodedatalabel
+    episodedataviews: episodedataviews
+    episodeflavorview: episodeflavorview
+
+    orientation: "horizontal"
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint_x: 90
+
+        EpisodeDataLabel
+            id: episodedatalabel
+
+        RecycleView:
+            id: episodedataviews
+            selected: False
+            bar_width: set_height * 2
+            do_scroll_x: False
+            do_scroll_y: True
+
+            viewclass: "EpisodeDataViewclass"
+            SelectableRecycleBoxLayout:
+                default_size_hint: 1, None
+                default_size: None, set_height
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: "vertical"
+                multiselect: False
+                touch_multiselect: False
+                key_selection: "episodedata"
+
+    Splitter:
+        size_hint_x: 15
+        strip_size: set_height
+        min_size: self.parent.width * 0.10
+        max_size: self.parent.width * 0.20
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: set_height * 2
+
+            EpisodeFlavorView:
+                id: episodeflavorview
+
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+
