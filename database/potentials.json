@@ -1,0 +1,1658 @@
+{
+    "アピール値": [
+        {
+            "rare": "ノーマル",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ノーマル",
+            "level": 1,
+            "potential": 80
+        },
+        {
+            "rare": "ノーマル",
+            "level": 2,
+            "potential": 160
+        },
+        {
+            "rare": "ノーマル",
+            "level": 3,
+            "potential": 250
+        },
+        {
+            "rare": "ノーマル",
+            "level": 4,
+            "potential": 340
+        },
+        {
+            "rare": "ノーマル",
+            "level": 5,
+            "potential": 440
+        },
+        {
+            "rare": "ノーマル",
+            "level": 6,
+            "potential": 540
+        },
+        {
+            "rare": "ノーマル",
+            "level": 7,
+            "potential": 650
+        },
+        {
+            "rare": "ノーマル",
+            "level": 8,
+            "potential": 760
+        },
+        {
+            "rare": "ノーマル",
+            "level": 9,
+            "potential": 880
+        },
+        {
+            "rare": "ノーマル",
+            "level": 10,
+            "potential": 1000
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 1,
+            "potential": 80
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 2,
+            "potential": 160
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 3,
+            "potential": 250
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 4,
+            "potential": 340
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 5,
+            "potential": 440
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 6,
+            "potential": 540
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 7,
+            "potential": 650
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 8,
+            "potential": 760
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 9,
+            "potential": 880
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 10,
+            "potential": 1000
+        },
+        {
+            "rare": "レア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "レア",
+            "level": 1,
+            "potential": 60
+        },
+        {
+            "rare": "レア",
+            "level": 2,
+            "potential": 120
+        },
+        {
+            "rare": "レア",
+            "level": 3,
+            "potential": 180
+        },
+        {
+            "rare": "レア",
+            "level": 4,
+            "potential": 255
+        },
+        {
+            "rare": "レア",
+            "level": 5,
+            "potential": 330
+        },
+        {
+            "rare": "レア",
+            "level": 6,
+            "potential": 405
+        },
+        {
+            "rare": "レア",
+            "level": 7,
+            "potential": 480
+        },
+        {
+            "rare": "レア",
+            "level": 8,
+            "potential": 570
+        },
+        {
+            "rare": "レア",
+            "level": 9,
+            "potential": 660
+        },
+        {
+            "rare": "レア",
+            "level": 10,
+            "potential": 750
+        },
+        {
+            "rare": "レア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "レア＋",
+            "level": 1,
+            "potential": 60
+        },
+        {
+            "rare": "レア＋",
+            "level": 2,
+            "potential": 120
+        },
+        {
+            "rare": "レア＋",
+            "level": 3,
+            "potential": 180
+        },
+        {
+            "rare": "レア＋",
+            "level": 4,
+            "potential": 255
+        },
+        {
+            "rare": "レア＋",
+            "level": 5,
+            "potential": 330
+        },
+        {
+            "rare": "レア＋",
+            "level": 6,
+            "potential": 405
+        },
+        {
+            "rare": "レア＋",
+            "level": 7,
+            "potential": 480
+        },
+        {
+            "rare": "レア＋",
+            "level": 8,
+            "potential": 570
+        },
+        {
+            "rare": "レア＋",
+            "level": 9,
+            "potential": 660
+        },
+        {
+            "rare": "レア＋",
+            "level": 10,
+            "potential": 750
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 1,
+            "potential": 60
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 2,
+            "potential": 120
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 3,
+            "potential": 180
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 4,
+            "potential": 250
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 5,
+            "potential": 320
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 6,
+            "potential": 390
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 7,
+            "potential": 460
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 8,
+            "potential": 540
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 9,
+            "potential": 620
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 10,
+            "potential": 700
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 1,
+            "potential": 60
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 2,
+            "potential": 120
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 3,
+            "potential": 180
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 4,
+            "potential": 250
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 5,
+            "potential": 320
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 6,
+            "potential": 390
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 7,
+            "potential": 460
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 8,
+            "potential": 540
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 9,
+            "potential": 620
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 10,
+            "potential": 700
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 1,
+            "potential": 40
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 2,
+            "potential": 80
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 3,
+            "potential": 120
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 4,
+            "potential": 170
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 5,
+            "potential": 220
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 6,
+            "potential": 270
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 7,
+            "potential": 320
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 8,
+            "potential": 380
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 9,
+            "potential": 440
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 10,
+            "potential": 500
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 1,
+            "potential": 40
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 2,
+            "potential": 80
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 3,
+            "potential": 120
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 4,
+            "potential": 170
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 5,
+            "potential": 220
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 6,
+            "potential": 270
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 7,
+            "potential": 320
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 8,
+            "potential": 380
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 9,
+            "potential": 440
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 10,
+            "potential": 500
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 1,
+            "potential": 30
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 2,
+            "potential": 60
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 3,
+            "potential": 100
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 4,
+            "potential": 140
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 5,
+            "potential": 180
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 6,
+            "potential": 220
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 7,
+            "potential": 260
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 8,
+            "potential": 300
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 9,
+            "potential": 350
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 10,
+            "potential": 400
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 1,
+            "potential": 30
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 2,
+            "potential": 60
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 3,
+            "potential": 100
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 4,
+            "potential": 140
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 5,
+            "potential": 180
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 6,
+            "potential": 220
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 7,
+            "potential": 260
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 8,
+            "potential": 300
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 9,
+            "potential": 350
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 10,
+            "potential": 400
+        }
+    ],
+    "特技発動率": [
+        {
+            "rare": "ノーマル",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ノーマル",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "ノーマル",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "ノーマル",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "ノーマル",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "ノーマル",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "ノーマル",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "ノーマル",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "ノーマル",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "ノーマル",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "ノーマル",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "レア",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "レア",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "レア",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "レア",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "レア",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "レア",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "レア",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "レア",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "レア",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "レア",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "レア",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "レア＋",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "レア＋",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "レア＋",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "レア＋",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "レア＋",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "レア＋",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "レア＋",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "レア＋",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "レア＋",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "レア＋",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "レア＋",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 1,
+            "potential": 0.01
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 2,
+            "potential": 0.02
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 3,
+            "potential": 0.03
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 4,
+            "potential": 0.04
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 5,
+            "potential": 0.06
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 6,
+            "potential": 0.08
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 7,
+            "potential": 0.1
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 8,
+            "potential": 0.13
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 9,
+            "potential": 0.16
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 10,
+            "potential": 0.2
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 1,
+            "potential": 0.02
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 2,
+            "potential": 0.04
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 3,
+            "potential": 0.08
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 4,
+            "potential": 0.13
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 5,
+            "potential": 0.2
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 6,
+            "potential": 0.21
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 7,
+            "potential": 0.22
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 8,
+            "potential": 0.23
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 9,
+            "potential": 0.24
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 10,
+            "potential": 0.25
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 0,
+            "potential": 0.0
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 1,
+            "potential": 0.02
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 2,
+            "potential": 0.04
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 3,
+            "potential": 0.08
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 4,
+            "potential": 0.13
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 5,
+            "potential": 0.2
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 6,
+            "potential": 0.21
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 7,
+            "potential": 0.22
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 8,
+            "potential": 0.23
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 9,
+            "potential": 0.24
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 10,
+            "potential": 0.25
+        }
+    ],
+    "ライフ": [
+        {
+            "rare": "ノーマル",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ノーマル",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ノーマル",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ノーマル",
+            "level": 3,
+            "potential": 3
+        },
+        {
+            "rare": "ノーマル",
+            "level": 4,
+            "potential": 4
+        },
+        {
+            "rare": "ノーマル",
+            "level": 5,
+            "potential": 5
+        },
+        {
+            "rare": "ノーマル",
+            "level": 6,
+            "potential": 6
+        },
+        {
+            "rare": "ノーマル",
+            "level": 7,
+            "potential": 7
+        },
+        {
+            "rare": "ノーマル",
+            "level": 8,
+            "potential": 9
+        },
+        {
+            "rare": "ノーマル",
+            "level": 9,
+            "potential": 11
+        },
+        {
+            "rare": "ノーマル",
+            "level": 10,
+            "potential": 13
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 3,
+            "potential": 3
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 4,
+            "potential": 4
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 5,
+            "potential": 5
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 6,
+            "potential": 6
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 7,
+            "potential": 7
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 8,
+            "potential": 9
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 9,
+            "potential": 11
+        },
+        {
+            "rare": "ノーマル＋",
+            "level": 10,
+            "potential": 13
+        },
+        {
+            "rare": "レア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "レア",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "レア",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "レア",
+            "level": 3,
+            "potential": 3
+        },
+        {
+            "rare": "レア",
+            "level": 4,
+            "potential": 4
+        },
+        {
+            "rare": "レア",
+            "level": 5,
+            "potential": 5
+        },
+        {
+            "rare": "レア",
+            "level": 6,
+            "potential": 6
+        },
+        {
+            "rare": "レア",
+            "level": 7,
+            "potential": 8
+        },
+        {
+            "rare": "レア",
+            "level": 8,
+            "potential": 10
+        },
+        {
+            "rare": "レア",
+            "level": 9,
+            "potential": 12
+        },
+        {
+            "rare": "レア",
+            "level": 10,
+            "potential": 14
+        },
+        {
+            "rare": "レア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "レア＋",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "レア＋",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "レア＋",
+            "level": 3,
+            "potential": 3
+        },
+        {
+            "rare": "レア＋",
+            "level": 4,
+            "potential": 4
+        },
+        {
+            "rare": "レア＋",
+            "level": 5,
+            "potential": 5
+        },
+        {
+            "rare": "レア＋",
+            "level": 6,
+            "potential": 6
+        },
+        {
+            "rare": "レア＋",
+            "level": 7,
+            "potential": 8
+        },
+        {
+            "rare": "レア＋",
+            "level": 8,
+            "potential": 10
+        },
+        {
+            "rare": "レア＋",
+            "level": 9,
+            "potential": 12
+        },
+        {
+            "rare": "レア＋",
+            "level": 10,
+            "potential": 14
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 4,
+            "potential": 6
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 5,
+            "potential": 8
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 6,
+            "potential": 10
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 7,
+            "potential": 12
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 8,
+            "potential": 14
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 9,
+            "potential": 17
+        },
+        {
+            "rare": "Ｓレア",
+            "level": 10,
+            "potential": 20
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 4,
+            "potential": 6
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 5,
+            "potential": 8
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 6,
+            "potential": 10
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 7,
+            "potential": 12
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 8,
+            "potential": 14
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 9,
+            "potential": 17
+        },
+        {
+            "rare": "Ｓレア＋",
+            "level": 10,
+            "potential": 20
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 4,
+            "potential": 6
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 5,
+            "potential": 8
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 6,
+            "potential": 10
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 7,
+            "potential": 13
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 8,
+            "potential": 16
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 9,
+            "potential": 19
+        },
+        {
+            "rare": "ＳＳレア",
+            "level": 10,
+            "potential": 22
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 4,
+            "potential": 6
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 5,
+            "potential": 8
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 6,
+            "potential": 10
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 7,
+            "potential": 13
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 8,
+            "potential": 16
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 9,
+            "potential": 19
+        },
+        {
+            "rare": "ＳＳレア＋",
+            "level": 10,
+            "potential": 22
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 4,
+            "potential": 7
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 5,
+            "potential": 9
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 6,
+            "potential": 11
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 7,
+            "potential": 14
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 8,
+            "potential": 17
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 9,
+            "potential": 20
+        },
+        {
+            "rare": "ＵＳレア",
+            "level": 10,
+            "potential": 24
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 0,
+            "potential": 0
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 1,
+            "potential": 1
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 2,
+            "potential": 2
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 3,
+            "potential": 4
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 4,
+            "potential": 7
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 5,
+            "potential": 9
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 6,
+            "potential": 11
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 7,
+            "potential": 14
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 8,
+            "potential": 17
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 9,
+            "potential": 20
+        },
+        {
+            "rare": "ＵＳレア＋",
+            "level": 10,
+            "potential": 24
+        }
+    ]
+}
