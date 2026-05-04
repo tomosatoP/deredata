@@ -97,28 +97,23 @@ class StageError(Exception):
         LibsStageLogger.error(f"StageError: {args}")
 
 
-class SkillCategories(IntEnum):
+class SkillValueIndices(IntEnum):
     """
-    特技系統の列挙クラス。
-
-    .. csv-table:: 特技系統のデータ配列位置
-      :header-rows: 1
-
-      "項目", "系統", "ボーナス", "ブースト"
-      "SCORE", "スコア", "0", "1"
-      "ALTERNATE", "オルタネイト", "2（スコアボーナスのコピー）", "3（極大アップ）"
-      "ALTERNATE1", "オルタネイト", "4（コンボボーナスダウン）", "5"
-      "COMBO", "COMBO", "6", "7"
-      "MUTUAL", "ミューチャル", "8（COMBOボーナスのコピー）", "9（極大アップ）"
-      "MUTUAL1", "ミューチャル", "10（スコアボーナスダウン）", "11"
+    特技系統の列挙クラス。特技効果量配列の添え字に相当する。
     """
 
-    SCORE = 0  # スコアボーナス、スコアブースト
-    ALTERNATE = 2  # オルタネイト（スコアボーナスのコピー、極大アップ）
-    ALTERNATE1 = 4  # オルタネイト（コンボボーナスダウン、ブースト無し）
-    COMBO = 6  # COMBOボーナス、COMBOブースト
-    MUTUAL = 8  # ミューチャル（COMBOボーナスのコピー、極大アップ）
-    MUTUAL1 = 10  # ミューチャル（スコアボーナスダウン、ブースト無し）
+    BONUS_SCORE = 0  # スコアボーナス
+    BOOST_SCORE = 1  # スコアブースト
+    BONUS_ALTERNATE = 2  # オルタネイト（スコアボーナスのコピー）
+    BOOST_ALTERNATE = 3  # オルタネイト（極大アップ）
+    BONUS_ALTERNATE1 = 4  # オルタネイト（コンボボーナスダウン）
+    BOOST_ALTERNATE1 = 5  # オルタネイト（ブースト無し）
+    BONUS_COMBO = 6  # COMBOボーナス
+    BOOST_COMBO = 7  # COMBOブースト
+    BONUS_MUTUAL = 8  # ミューチャル（COMBOボーナスのコピー）
+    BOOST_MUTUAL = 9  # ミューチャル（極大アップ）
+    BONUS_MUTUAL1 = 10  # ミューチャル（スコアボーナスダウン）
+    BOOST_MUTUAL1 = 11  # ミューチャル（ブースト無し）
 
 
 @dataclass
@@ -228,6 +223,22 @@ def skillwrap(func: Callable) -> Callable:
     """
     特技の効果量配列を返すラッパー関数。
 
+    他の特技に影響する特技は、重複を考慮する。
+
+        - トリコロール・シンフォニーの他特技ブースト。
+            - ライフ回復、ダメージガード
+        - アンコール
+        - シンデレラマジック
+
+    スコア計算に影響しないので、重複を考慮しない。
+
+        - PERFECTサポート、COMBOサポート、集中。
+
+    特技のノートへの適用でライフ消費は無い（スコア計算に影響しない）ので、重複を考慮しない。
+
+        - ダメージガード発動中は、ライフ消費無し（ただし、ブーストのライフ回復は考慮する）
+        - クリスタル・ヒールは、ライフ消費50%OFF。
+
     :前処理: 特技パーツ分の特技効果量配列を初期化する。
     :後処理: 特技効果量配列を最も効果の大きい要素にする。
 
@@ -244,7 +255,7 @@ def skillwrap(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(context: SkillContext) -> list[int]:
-        LibsStageLogger.debug(f"特技・{context.buff.buff}を処理。")
+        LibsStageLogger.debug(f"特技・{context.skill_list}を処理。")
 
         return list()
 
@@ -448,7 +459,7 @@ class Simulator:
             """
             特技系統の特技倍率の計算。
 
-            :特技系統: スコアアップ、オルタネイト、COMBOボーナス、ミューチャル
+            :特技系統: スコアアップ、オルタネイト（ブースト、ダウン）、COMBOボーナス、ミューチャル（ブースト、ダウン）の4系統
               :math:`1.0+ボーナス効果量\times(1.0+ブースト効果量)`
 
             :param list[float] values: 特技系統の効果量（ボーナス、ブースト）
@@ -465,8 +476,9 @@ class Simulator:
             * self._perfection_rate("PERFECT")  # 判定倍率
             * Simulator._comborates.rate(combo / self._music.note_number)  # コンボ倍率
             * reduce(
-                mul, [series(skill_rates[x : x + 2]) for x in [a.value for a in list(SkillCategories)]]
-            )  # 特技倍率
+                mul,
+                [series(skill_rates[x : x + 2]) for x in [a.value for a in list(SkillValueIndices) if not a.value % 2]],
+            )  # 特技倍率（特技効果量データ配列を連続2要素ずつの配列に分けて個々の特技倍率を求め、掛け合わせる）
         )
 
     def _base(self, appeals: int) -> float:
@@ -643,7 +655,7 @@ class Simulator:
         #     SUPPORT_PERFECT
         #     ブースト対象外: CONCENTRATION（PERFECT判定される時間が短くなる）
         #     ブースト対象外: SUPPORT_COMBO（PERFECT判定のみCOMBO継続）
-        skill_values: list[list[float]] = [[0.0 for _ in range(len(SkillCategories) * 2)]]
+        skill_values: list[list[float]] = [[0.0 for _ in range(len(SkillValueIndices))]]
 
         # 保留する回復ライフ値。
         life: list[int] = list()
@@ -669,7 +681,7 @@ class Simulator:
                 for iskillpart, skillpart in enumerate(skill.skillparts):
                     # 特技パーツごと（順不同）
 
-                    skillpart_values.append([0.0 for _ in range(len(SkillCategories) * 2)])
+                    skillpart_values.append([0.0 for _ in range(len(SkillValueIndices))])
                     match skillpart.effect:
                         # 特技パーツ効果で検索
 
@@ -694,12 +706,12 @@ class Simulator:
                                     # トリコロール・シナジー／効果量ブースト
                                     # トリコロール・スパイク（ライフを**消費して）／効果量ブースト
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = value
 
                                 case [IconType.NA, float(value)] if value < 0.0:
                                     # ミューチャル（20%ダウン）／ブースト無し
 
-                                    skillpart_values[iskillpart][SkillCategories.MUTUAL1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_MUTUAL1] = value
 
                                 case [IconType.NA, str(MOTIF)]:
                                     # ボーカルモチーフ、ダンスモチーフ、ビジュアルモチーフ／効果量ブースト
@@ -708,17 +720,17 @@ class Simulator:
                                         # 効果量を示す文字列
 
                                         case "ユニットボーカルアピール値が多いほど":
-                                            skillpart_values[iskillpart][SkillCategories.SCORE] = (
+                                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = (
                                                 Simulator._motives.value(context.appeal_list[0])
                                             )
 
                                         case "ユニットダンスアピール値が多いほど":
-                                            skillpart_values[iskillpart][SkillCategories.SCORE] = (
+                                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = (
                                                 Simulator._motives.value(context.appeal_list[1])
                                             )
 
                                         case "ユニットビジュアルアピール値が多いほど":
-                                            skillpart_values[iskillpart][SkillCategories.SCORE] = (
+                                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = (
                                                 Simulator._motives.value(context.appeal_list[2])
                                             )
 
@@ -734,7 +746,7 @@ class Simulator:
                                 }:
                                     # スライドアクト（スライドノート）／効果量ブースト
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = value
 
                                 case [IconType.FLICK, float(value)] if note.type in {
                                     NoteType.FLICK_LEFT,
@@ -746,7 +758,7 @@ class Simulator:
                                 }:
                                     # フリックアクト（フリックノート）／効果量ブースト
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = value
 
                                 case [IconType.LONG, float(value)] if note.type in {
                                     NoteType.LONG_ON,
@@ -756,7 +768,7 @@ class Simulator:
                                 }:
                                     # ロングアクト（ロングノート）／効果量ブースト
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = value
 
                                 case _:
                                     LibsStageLogger.error("スコアボーナスのどれにも一致しませんでした。")
@@ -777,12 +789,12 @@ class Simulator:
                                     # トリコロール・シナジー／効果量ブースト
                                     # トリコロール・スパイク（ライフを25消費して）／効果量ブースト
 
-                                    skillpart_values[iskillpart][SkillCategories.COMBO] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_COMBO] = value
 
                                 case float(value) if value < 0.0:
                                     # オルタネイト（20%ダウン）／ブースト無し
 
-                                    skillpart_values[iskillpart][SkillCategories.ALTERNATE1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_ALTERNATE1] = value
 
                                 case str(LIFE):
                                     # ライフスパークル／効果量ブースト
@@ -791,7 +803,7 @@ class Simulator:
                                         # 効果量を示す文字列
 
                                         case "ライフ値が多いほど":
-                                            skillpart_values[iskillpart][SkillCategories.COMBO] = (
+                                            skillpart_values[iskillpart][SkillValueIndices.BONUS_COMBO] = (
                                                 Simulator._lifesparkles.value(self._life.value)
                                             )
                                             LibsStageLogger.error("ライフスパークルのレア度をSSRとした（仮）。")
@@ -815,7 +827,7 @@ class Simulator:
                                     # トリコロール・シンフォニー（自分以外のアイドルのスコアボーナス）
                                     # スターライトアンサンブル（自分以外のアイドルのスコアボーナス）
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE + 1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_SCORE] = value
 
                                 case str(DOMINANT):
                                     # ドミナント・ハーモニー（キュートアイドルのスコアボーナス）
@@ -837,7 +849,7 @@ class Simulator:
                                         case _:
                                             LibsStageLogger.error(f"ドミナント・ハーモニーの不一致: {DOMINANT}")
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE + 1] = (
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_SCORE] = (
                                         Simulator._dominants.value(number, 0)
                                     )
                                     LibsStageLogger.error(
@@ -860,7 +872,7 @@ class Simulator:
                                     # トリコロール・シンフォニー（自分以外のアイドルのCOMBOボーナス）
                                     # スターライトアンサンブル（自分以外のアイドルのCOMBOボーナス）
 
-                                    skillpart_values[iskillpart][SkillCategories.COMBO + 1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_COMBO] = value
 
                                 case str(DOMINANT):
                                     # ドミナント・ハーモニー（キュートアイドルのCOMBOボーナス）
@@ -882,7 +894,7 @@ class Simulator:
                                         case _:
                                             LibsStageLogger.error(f"ドミナント・ハーモニーの不一致: {DOMINANT}")
 
-                                    skillpart_values[iskillpart][SkillCategories.COMBO + 1] = (
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_COMBO] = (
                                         Simulator._dominants.value(number, 1)
                                     )
                                     LibsStageLogger.error(
@@ -901,8 +913,10 @@ class Simulator:
                                 case float(value):
                                     # スキルブースト（自分以外のアイドルの特技ボーナス）
 
-                                    skillpart_values[iskillpart][SkillCategories.SCORE + 1] = value  # スコアブースト
-                                    skillpart_values[iskillpart][SkillCategories.COMBO + 1] = value  # COMBOブースト
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_SCORE] = (
+                                        value  # スコアブースト
+                                    )
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_COMBO] = value  # COMBOブースト
                                     life_boost.append(value)
                                     LibsStageLogger.error("スキルブースト（ライフ回復量ブースト）は、未処理（仮）。")
 
@@ -934,14 +948,14 @@ class Simulator:
                             # スコアボーナスコピー
                             # リフレイン（LIVE中に発動した最も高いスコアアップ効果を適用）
 
-                            skillpart_values[iskillpart][SkillCategories.SCORE] = 0.18
+                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = 0.18
                             LibsStageLogger.error("リフレイン・スコアボーナス（仮）")
 
                         case EffectType.COPY_BONUS_COMBO:
                             # COMBOボーナスコピー
                             # リフレイン（LIVE中に発動した最も高いCOMBOボーナス効果を適用）
 
-                            skillpart_values[iskillpart][SkillCategories.COMBO] = 0.18
+                            skillpart_values[iskillpart][SkillValueIndices.BONUS_COMBO] = 0.18
                             LibsStageLogger.error("リフレイン・COMBOボーナス（仮）")
 
                         case EffectType.COPY_BOOST_SCORE:
@@ -951,9 +965,9 @@ class Simulator:
                                 # 効果量
 
                                 case float(value):
-                                    skillpart_values[iskillpart][SkillCategories.ALTERNATE] = 0.18
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_ALTERNATE] = 0.18
                                     LibsStageLogger.error("オルタネイト・コピースコアボーナス（仮）")
-                                    skillpart_values[iskillpart][SkillCategories.ALTERNATE + 1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_ALTERNATE] = value
 
                                 case _:
                                     LibsStageLogger.error("オルタネイトのどれにも一致しませんでした。")
@@ -965,9 +979,9 @@ class Simulator:
                                 # 効果量
 
                                 case float(value):
-                                    skillpart_values[iskillpart][SkillCategories.MUTUAL] = 0.18
+                                    skillpart_values[iskillpart][SkillValueIndices.BONUS_MUTUAL] = 0.18
                                     LibsStageLogger.error("ミューチャル・コピーCOMBOアボーナス（仮）")
-                                    skillpart_values[iskillpart][SkillCategories.MUTUAL + 1] = value
+                                    skillpart_values[iskillpart][SkillValueIndices.BOOST_MUTUAL] = value
 
                                 case _:
                                     LibsStageLogger.error("ミューチャルのどれにも一致しませんでした。")
@@ -975,10 +989,10 @@ class Simulator:
                         case EffectType.MAGIC:
                             # シンデレラマジック（ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用）
 
-                            skillpart_values[iskillpart][SkillCategories.SCORE] = 0.18
-                            skillpart_values[iskillpart][SkillCategories.SCORE + 1] = 0.7
-                            skillpart_values[iskillpart][SkillCategories.COMBO] = 0.17
-                            skillpart_values[iskillpart][SkillCategories.COMBO + 1] = 0.7
+                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE] = 0.18
+                            skillpart_values[iskillpart][SkillValueIndices.BONUS_SCORE + 1] = 0.7
+                            skillpart_values[iskillpart][SkillValueIndices.BONUS_COMBO] = 0.17
+                            skillpart_values[iskillpart][SkillValueIndices.BOOST_COMBO] = 0.7
                             LibsStageLogger.error("シンデレラマジック・特技効果（仮）")
                             LibsStageLogger.error("シンデレラマジック・他特技効果（仮）")
 
