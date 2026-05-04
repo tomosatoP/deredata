@@ -43,7 +43,12 @@ dev = [
 init = "deredata.init:main"
 
 [tool.setuptools.packages.find]
-include = ["deredata*"]
+include = ["deredata", "database", "textdata", "config"]
+
+[tool.setuptools.package-data]
+database = ["json"]
+textdata = ["txt"]
+config = ["toml"]
 
 [tool.mypy]
 # https://mypy.readthedocs.io/en/stable/config_file.html
