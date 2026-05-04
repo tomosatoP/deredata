@@ -1,34 +1,50 @@
 """
 インストール後のフォルダ作成などを行うモジュール。
+
+以下のファイル群をコピー（venv/lib/python#.##/site-packages/ -> インストールフォルダ）する。
+
+:設定ファイル: config/config.toml
+:テキストデータ: textdata/*.txt
+:データベースファイル: database/*.json
+:デレステ譜面データファイル: database/music/*.json
 """
 
 from pathlib import Path
 
-# 設定ファイル
-CONFIG_FILENAME: str = "config/config.toml"
-# デレステ譜面データファイル置き場
-MUSIC_FOLDER: str = "databese/music"
+# Python3.14からはpathlibにcopyが実装されるので、不要
+from shutil import copy
 
-CONFIG_CONTENT: str = '''# データベースファイルを保持するフォルダ
-database_folder = "database/"
-# データベースの元テキストデータを保持するフォルダ
-textdata_folder = "textdata/"'''
+# 設定ファイルのフォルダ
+CONFIG_FOLDERNAME: str = "config"
+# テキストデータのフォルダ
+TEXTDATA_FOLDERNAME: str = "textdata"
+# データベースファイルのフォルダ
+DATABASE_FOLDERNAME: str = "database"
+# デレステ譜面データファイルのフォルダ
+MUSIC_FOLDERNAME: str = "databese/music"
 
 
 def setup_folders() -> None:
     """
-    フォルダとファイルを作成する。
+    フォルダを作成する。
     """
 
-    Path(CONFIG_FILENAME).mkdir(exist_ok=True)
-    Path(MUSIC_FOLDER).mkdir(exist_ok=True)
+    Path("./" + CONFIG_FOLDERNAME).mkdir(exist_ok=True)
+    Path("./" + TEXTDATA_FOLDERNAME).mkdir(exist_ok=True)
+    Path("./" + DATABASE_FOLDERNAME).mkdir(exist_ok=True)
+    Path("./" + MUSIC_FOLDERNAME).mkdir(exist_ok=True)
 
 
 def setup_files() -> None:
     """
-    ファイルに中身を書き出す。
+    ファイルをコピーする。
     """
-    Path(CONFIG_FILENAME).write_text(CONFIG_CONTENT)
+
+    site_packages_folder = Path(__file__).parents[1]
+    install_folder = Path(".")
+
+    for foldername in ["config", "textdata", "database", "database/music"]:
+        copy(site_packages_folder / foldername, install_folder / foldername)
 
 
 def main() -> None:
