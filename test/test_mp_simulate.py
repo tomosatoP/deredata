@@ -17,10 +17,10 @@ musics: Musics = Musics()
 musics.load()
 Calculator.load()
 Simulator.load()
-musicfilename: str = "database/music/M@GIC☆_ALL_MASTER_L28.json"
+musicfilename: str = "database/music/sample_DEBUT_ALL_L5.json"
 
 if __name__ == "__main__":
-    unit: Unit | GrandliveUnit = units.get("全タイプ楽曲ユニット")
+    unit: Unit | GrandliveUnit = units.get("sample")
 
     test_appeals = Calculator(musics.get(musicfilename))
     test_appeals.run(unit if isinstance(unit, Unit) else Unit())
