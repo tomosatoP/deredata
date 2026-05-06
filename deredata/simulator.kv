@@ -34,7 +34,7 @@
     StrFrameView:
         text: "スコア"
 
-<SimulatorDataView>:
+<SimulatorDataViewclass>:
     musicname: musicname
     centerepisode: centerepisode
     leftepisode: leftepisode
@@ -45,8 +45,14 @@
     progressview: progressview
     scoreview: scoreview
 
-    orientation: "horizontal"
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
+    orientation: "horizontal"
     size_hint_y: None
     height: set_height
 
@@ -86,7 +92,6 @@
         id: scoreview
         text: "スコア"
 
-
 <SimulatorView>:
     simulatordataviews: simulatordataviews
 
@@ -95,13 +100,19 @@
     SimulatorDataLabel:
         id: simulatordataviewlabel
 
-    ScrollView:
+    RecycleView:
+        id: simulatordataviews
+        bar_width: set_height * 2
         do_scroll_x: False
         do_scroll_y: True
-        bar_width: set_height * 2
 
-        BoxLayout:
-            id: simulatordataviews
-            orientation: "vertical"
+        viewclass: "SimulatorDataViewclass"
+        SelectableRecycleBoxLayout:
+            default_size_hint: 1, None
+            default_size: None, set_height
             size_hint_y: None
             height: self.minimum_height
+            orientation: "vertical"
+            multiselect: True
+            touch_multiselect: True
+            key_selection: "simulatordata"

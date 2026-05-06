@@ -5,6 +5,8 @@
 from typing import Any
 from itertools import product
 
+from deredata.libs.database.units import Unit, Positions6
+
 from deredata.unit import UnitView
 from deredata.buffskill import BuffSkillView
 from deredata.music import MusicView
@@ -94,6 +96,10 @@ class Deredata(Factory.BoxLayout):
         self.databaseseries.update()
 
     def command(self, widget: Widget) -> None:
+        """
+        シミュレーターのコマンド（ボタン）を。
+        """
+
         getattr(self, COMMANDS.get(widget.text, "na"))()
 
     def add_unit(self) -> None:
@@ -111,7 +117,32 @@ class Deredata(Factory.BoxLayout):
                 self.simulator.unit_live(music=music, unit=unit)
 
     def set_simulator_from_music_and_buffskill(self) -> None:
-        pass
+        if self.databaseseries.musicview.content.selected() and self.databaseseries.buffskillview.content.selected():
+            # :todo: ゲストを除きユニット内でエピソードの重複は不可
+            # :todo: 組合せが多いと、kivyサイクルをブロック
+            for music, center, left, right, leftend, rightend, guest in product(
+                self.databaseseries.musicview.content.selected(),
+                self.databaseseries.buffskillview.content.selected()[0],
+                self.databaseseries.buffskillview.content.selected()[1],
+                self.databaseseries.buffskillview.content.selected()[2],
+                self.databaseseries.buffskillview.content.selected()[3],
+                self.databaseseries.buffskillview.content.selected()[4],
+                self.databaseseries.buffskillview.content.selected()[5],
+            ):
+                self.simulator.unit_live(
+                    music=music,
+                    unit=Unit(
+                        name="A",
+                        positions=Positions6(
+                            centerposition=center.episode,
+                            leftposition=left.episode,
+                            rightposition=right.episode,
+                            leftendposition=leftend.episode,
+                            rightendposition=rightend.episode,
+                            guestposition=guest.episode,
+                        ),
+                    ),
+                )
 
     def delete_set(self) -> None:
         pass
