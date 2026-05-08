@@ -19,16 +19,10 @@ from kivy.logger import Logger as BuffSkillLogger
 class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     """
     各種の絞り込みの結果得られたエピソードのエピソード情報を表示するウィジット。
-
-    :エピソード情報:
-      エピソード名、センター効果名、特技名、
-      ボーカルポテンシャル、ビジュアルポテンシャル、ダンスポテンシャル、ライフポテンシャル、特技ポテンシャル
-
-    :param Episode episode: 表示するエピソード。
     """
 
     index = None
-    selected = Factory.BooleanProperty(False)
+    selected = Factory.BooleanProperty(None)
     selectable = Factory.BooleanProperty(True)
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
