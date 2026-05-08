@@ -2,6 +2,7 @@
 デレステの ``アピール値計算`` を扱うモジュール。
 
 ライブのスコア計算前に、アピール値（ボーカル・ダンス・ビジュアル・ライフ・特技発動率・継続期間）を確定する。
+
 まずは、通常のゲストメンバー有りの ``WIDEライブ`` のみ対応する。
 ``GrandLive`` や ``LiveCarnival（Booth効果）`` にも対応したい。
 
@@ -30,17 +31,18 @@
       "特技指定", "対象の特技を持つアイドルのみアピール値アップ。"
 
 :入力:
-    | ユニットメンバーのエピソード名リスト
-    | ゲストメンバーのエピソード名
-    | デレステ譜面データのファイル名
+    | デレステ譜面データ
+    | ユニット
 
 :出力:
     | レゾナンスの適否
+
     | ゲストを含むユニットメンバーのエピソード名リスト
     | ゲストを含むユニットメンバーのアピール値（ボーカル・ダンス・ビジュアル）
     | ゲストを含むユニットメンバーのライフ
     | ユニットメンバーの特技発動確率
     | ユニットメンバーの特技継続期間
+
     | サポートメンバーのエピソード名リスト
     | サポートメンバーのアピール値（ボーカル・ダンス・ビジュアル）
 
@@ -74,9 +76,9 @@ class AppealError(Exception):
         LibsAppealLogger.error(f"AppealError: {args}")
 
 
-class AppealRow(IntEnum):
+class AppealID(IntEnum):
     """
-    アピール値データ（エピソード名を除く）順序の列挙クラス。
+    アピール値（エピソード名を除く）タイプの列挙クラス。
 
     :VOCAL: 0: ボーカル
     :DANCE: 1: ダンス
@@ -106,25 +108,32 @@ class BoothEffect:
 @dataclass
 class BuffPartContext:
     """
-    センター効果パーツによるアピール値計算のコンテキストのデータクラス。
+    センター効果パーツのコンテキストのデータクラス。
 
-    :対象のアピール系統: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
+    アピールのボーナス配列を取得する際、必要となるセンター効果パーツに関わる各種条件を格納する。
+
+    :アピール: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
 
     :param BuffPart buffpart: センター効果パーツ。
     :param SongType livesong_type: ライブの楽曲タイプ。
-    :param list[IdolType]|list[DominantType] idol_typelist:
-      ユニットのアイドルタイプもしくはドミナントアイドルタイプのリスト。
+    :param list[IdolType] idol_typelist: ゲストを含むユニットメンバーのアイドルタイプリスト
+    :param list[DominantType] dominant_typelist: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
     """
 
     buffpart: BuffPart = BuffPart()
     livesong_type: SongType = SongType.ALL
-    idol_typelist: list[IdolType] | list[DominantType] = field(default_factory=list)
+    idol_typelist: list[IdolType] = field(default_factory=list)
+    dominant_typelist: list[DominantType] = field(default_factory=list)
 
 
 @dataclass
 class BuffContext:
     """
-    センター効果によるアピール値計算のコンテキストのデータクラス。
+    センター効果のコンテキストのデータクラス。
+
+    アピールのボーナス配列を取得する際、必要となるセンター効果に関わるの各種条件を格納する。
+
+    :アピール: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
 
     :param bool on_resonance: レゾナンス（全ての特技効果が重複時に加算）
     :param int position: 立ち位置（センター、左隣、右隣、左端、右端、ゲスト）
@@ -177,7 +186,7 @@ def appeal_formula(factors: list[np.ndarray]) -> np.ndarray:
 
       :math:`(基礎値\\times(1.0+\\dfrac{特技LV-1}{18})+ポテンシャル補正)\\times(1.0+楽曲タイプ一致効果+センター効果+ゲストのセンター効果)`
 
-    :効果時間:
+    :特技継続時間:
 
       :math:`基礎値\\times(1.0+\\dfrac{特技LV-1}{18})`
 
@@ -269,17 +278,20 @@ abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
 def buffpartwrap(func: Callable) -> Callable:
     """
-    センター効果パーツのアピールデータ配列を返すラッパー関数。
+    センター効果パーツのアピールのボーナス配列を返すラッパー関数。
 
-    :前処理: アピールデータ配列を初期化する。
-    :後処理: 無し。
+    :ボーナス配列: アピールのボーナスを要素とする二次元NUMPY配列（アピールタイプ, ユニットメンバー配置）。
+
+    :前処理: アピールのボーナス配列を初期化する。
+    :後処理: AppealIDリストに含まれるアピールタイプで、ボーナス配列を書き換える。
 
     :param Callable func:
-      アピール値の関数。
-        :param BuffPartContext context: コンテキスト。
-        :param np.ndarray datas: 初期化済みのアピールデータ配列。
-        :return: アピールデータ配列。
-        :rtype: np.ndarray
+        センター効果パーツ__のAppealIDリストを返す。
+
+        :param BuffPartContext context: センター効果パーツ__のコンテキスト。
+
+        :return: AppealIDリスト。
+        :rtype: list[AppealID]
 
     :return: ラッパー関数
     :rtype: Callable
@@ -290,191 +302,204 @@ def buffpartwrap(func: Callable) -> Callable:
 
         LibsAppealLogger.debug(f"センター効果パーツ・{context.buffpart.name}を処理。")
 
-        appeal_data = np.zeros((len(AppealRow), len(context.idol_typelist)))
+        array_bonus: np.ndarray = np.zeros((len(AppealID), len(context.idol_typelist)))
 
-        return partial(func, context, appeal_data)()
+        appealids: list[AppealID] = partial(func, context)()
+
+        bonus: float = context.buffpart.value
+        member: IdolType = context.buffpart.member
+        idoltypes: list[IdolType] = context.idol_typelist
+        dominanttypes: list[DominantType] = context.dominant_typelist
+
+        for appealid in appealids:
+            if not dominanttypes:
+                array_bonus[appealid] = np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes])
+            else:
+                array_bonus[appealid] = np.maximum(
+                    np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes]),
+                    np.array([bonus if ismatch(member, type) else 0.0 for type in dominanttypes]),
+                )
+
+        return array_bonus
 
     return wrapper
 
 
 @buffpartwrap
-def buffpart_all(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
+def buffpart_all(context: BuffPartContext) -> list[AppealID]:
     """
-    全アピール（ボーカル、ダンス、ビジュアル）値。
+    センター効果パーツ・全アピール（ボーカル、ダンス、ビジュアル）のAppealIDリストを返す。
 
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
+    :param BuffPartContext context: センター効果パーツ・全アピールのコンテキスト。
 
-    :return: アピールデータ配列。
-    :rtype: np.ndarray
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
     """
-
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    def value_by_membermatch() -> None:
-        for row in [AppealRow.VOCAL, AppealRow.DANCE, AppealRow.VISUAL]:
-            data[row] = np.array([value if ismatch(member, type) else 0.0 for type in types])
 
     match context.buffpart.music:
         # 適用楽曲
 
         case MusicType.NA:
-            value_by_membermatch()
+            pass
 
         case MusicType.ALL if context.livesong_type == SongType.ALL:
-            value_by_membermatch()
+            pass
 
         case MusicType.CUTE if context.livesong_type == SongType.CUTE:
-            value_by_membermatch()
+            pass
 
         case MusicType.COOL if context.livesong_type == SongType.COOL:
-            value_by_membermatch()
+            pass
 
         case MusicType.PASSION if context.livesong_type == SongType.PASSION:
-            value_by_membermatch()
+            pass
 
-    return data
+        case _:
+            LibsAppealLogger.error(f"buffpart_all: {context.buffpart.name} 対象外の楽曲。")
+            return []
 
-
-@buffpartwrap
-def buffpart_vocal(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
-    """
-    ボーカルアピール値。
-
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
-
-    :return: アピールデータ配列。
-    :rtype: np.ndarray
-    """
-
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    data[AppealRow.VOCAL] = np.array([value if ismatch(member, type) else 0.0 for type in types])
-
-    return data
+    return [AppealID.VOCAL, AppealID.DANCE, AppealID.VISUAL]
 
 
 @buffpartwrap
-def buffpart_dance(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
+def buffpart_vocal(context: BuffPartContext) -> list[AppealID]:
     """
-    ダンスアピール値。
+    センター効果パーツ・ボーカルのAppealIDリストを返す。
 
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
+    :param BuffPartContext context: センター効果パーツ・ボーカルのコンテキスト。
 
-    :return: アピールデータ配列。
-    :rtype: np.ndarray
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
+    """
+
+    return [AppealID.VOCAL]
+
+
+@buffpartwrap
+def buffpart_dance(context: BuffPartContext) -> list[AppealID]:
+    """
+    センター効果パーツ・ダンスのAppealIDリストを返す。
+
+    :param BuffPartContext context: センター効果パーツ・ダンスのコンテキスト。
+
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
 
     :todo: ワールドオープン（ヘレン）
     """
 
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    data[AppealRow.DANCE] = np.array([value if ismatch(member, type) else 0.0 for type in types])
-
-    return data
+    return [AppealID.DANCE]
 
 
 @buffpartwrap
-def buffpart_visual(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
+def buffpart_visual(context: BuffPartContext) -> list[AppealID]:
     """
-    ビジュアルアピール値。
+    センター効果パーツ・ビジュアルのAppealIDリストを返す。
 
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
+    :param BuffPartContext context: センター効果パーツ・ビジュアルのコンテキスト。
 
-    :return: アピールデータ配列。
-    :rtype: np.ndarray
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
     """
 
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    data[AppealRow.VISUAL] = np.array([value if ismatch(member, type) else 0.0 for type in types])
-
-    return data
+    return [AppealID.VISUAL]
 
 
 @buffpartwrap
-def buffpart_life(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
+def buffpart_life(context: BuffPartContext) -> list[AppealID]:
     """
-    ライフ値。
+    センター効果パーツ・ライフのAppealIDリストを返す。
 
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
+    :param BuffPartContext context: センター効果パーツ・ライフのコンテキスト。
 
-    :return: アピールデータ配列。
-    :rtype: np.ndarray
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
     """
 
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    data[AppealRow.LIFE] = np.array([value if ismatch(member, type) else 0.0 for type in types])
-
-    return data
+    return [AppealID.LIFE]
 
 
 @buffpartwrap
-def buffpart_probability(context: BuffPartContext, data: np.ndarray) -> np.ndarray:
+def buffpart_probability(context: BuffPartContext) -> list[AppealID]:
     """
-    特技発動確率値。
+    センター効果パーツ・特技発動確率のAppealIDリストを返す。
 
-    :param BuffPartContext context: コンテキスト。
-    :param np.ndarray data: 初期化済みのアピールデータ配列。
+    :param BuffPartContext context: センター効果パーツ・特技発動確率のコンテキスト。
 
-    :return: アピールデータ配列。
+    :return: AppealIDリスト。
+    :rtype: list[AppealID]
+    """
+
+    return [AppealID.PROBABILITY]
+
+
+def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+    """
+    センター効果パーツに展開しておいてセンター効果で、``拡大ボーナス配列`` を適用する。
+
+    :todo: この関数は ``buffwrap`` に組み込む。
+
+    :param BuffContext context: センター効果コンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の ``拡大ボーナス配列`` 。
+
+    :return: センター効果の ``拡大ボーナス配列`` 。
     :rtype: np.ndarray
     """
 
-    value: float = context.buffpart.value
-    member: IdolType = context.buffpart.member
-    types: list[IdolType] | list[DominantType] = context.idol_typelist
-
-    data[AppealRow.PROBABILITY] = np.array([value if ismatch(member, type) else 0.0 for type in types])
-
-    return data
-
-
-def breakdown2buffparts(contexts: list[BuffPartContext], data: np.ndarray) -> np.ndarray:
-    """
-    センター効果をセンター効果パーツに展開して、センター効果データ配列を返す。
-
-    :param list[BuffPartContext] contexts: センター効果パーツコンテキストのリスト。
-    :param np.ndarray data: 初期化済みのセンター効果データ配列。
-
-    :return: センター効果データ配列
-    :rtype: np.ndarray
-    """
+    contexts: list[BuffPartContext] = list()
+    if buffcontext.buff.buff in [
+        "ドミナント・デュエット（ボイス＆ステップ）",
+        "ドミナント・デュエット（ステップ＆メイク）",
+        "ドミナント・デュエット（メイク＆ボイス）",
+    ]:
+        for buffpart in list(buffcontext.buff.buffparts):
+            if buffpart.appeal in appeal_funcname:
+                contexts.append(
+                    BuffPartContext(
+                        buffpart,
+                        buffcontext.livesong_type,
+                        buffcontext.idol_typelist,
+                        buffcontext.dominant_typelist,
+                    )
+                )
+    else:
+        for buffpart in list(buffcontext.buff.buffparts):
+            if buffpart.appeal in appeal_funcname:
+                contexts.append(
+                    BuffPartContext(
+                        buffpart,
+                        buffcontext.livesong_type,
+                        buffcontext.idol_typelist,
+                    )
+                )
 
     for i, context in enumerate(contexts):
         if context.buffpart.appeal in appeal_funcname:
-            data[i] = appeal_funcname[context.buffpart.appeal](context)
+            array_bonus_expanded[i] = appeal_funcname[context.buffpart.appeal](context)
+        else:
+            LibsAppealLogger.error(f"breakdown2buffparts: {context.buffpart.appeal}は、未実装")
 
-    return data
+    return array_bonus_expanded
 
 
 def buffwrap(func: Callable) -> Callable:
     """
-    センター効果のデータ配列を返すラッパー関数。
+    センター効果のアピールのボーナス配列を返すラッパー関数。
 
-    :前処理: センター効果パーツ分のセンター効果データ配列を初期化する。
-    :後処理: センター効果データ配列を最も効果の大きい要素にする。
+    :ボーナス配列: アピールのボーナスを要素とする二次元NUMPY配列（アピールタイプ, ユニットメンバー配置）。
+    :拡大ボーナス配列:
+        アピールのボーナスを要素とする三次元NUMPY配列（センター効果パーツ, アピールタイプ, ユニットメンバー配置）。
+
+    :前処理: アピールの拡大ボーナス配列を初期化する。
+    :後処理: 拡大ボーナス配列からボーナス配列に変換する。
 
     :param Callable func:
-      センター効果の関数。
+        センター効果__のボーナス配列を返す。
+
         :param BuffContext context: コンテキスト。
-        :param np.ndarray datas: 初期化済みのセンター効果データ配列。
-        :return: センター効果データ配列。
+        :param np.ndarray array_bonus_expanded: 初期化済みの拡大ボーナス配列。
+
+        :return: センター効果__のボーナス配列。
         :rtype: np.ndarray
 
     :return: ラッパー関数
@@ -486,8 +511,8 @@ def buffwrap(func: Callable) -> Callable:
 
         LibsAppealLogger.debug(f"センター効果・{context.buff.buff}を処理。")
 
-        buff_data = np.zeros((len(context.buff.buffparts), len(AppealRow), len(context.episode_list)))
-        result = partial(func, context, buff_data)
+        array_bonus_expanded = np.zeros((len(context.buff.buffparts), len(AppealID), len(context.episode_list)))
+        result = partial(func, context, array_bonus_expanded)
 
         return abs_max.reduce(result()[:])
 
@@ -495,17 +520,18 @@ def buffwrap(func: Callable) -> Callable:
 
 
 @buffwrap
-def buff_cinderella_bless(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    シンデレラブレス系センター効果。
+    シンデレラブレス系センター効果の拡大ボーナス配列を返す。
+        シンデレラブレス。
 
     :センター効果説明:
-      ゲストを含むユニット編成アイドル全員のセンター効果を発揮し、最も高い効果を適用
+        ゲストを含むユニット編成アイドル全員のセンター効果を発揮し、最も高い効果を適用。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列
     :rtype: np.ndarray
     """
 
@@ -515,7 +541,7 @@ def buff_cinderella_bless(context: BuffContext, data: np.ndarray) -> np.ndarray:
         case 0 | 5:
             # センターもしくはゲストのセンター効果：シンデレラブレス。
 
-            temp = np.zeros((len(context.episode_list), len(AppealRow), len(context.episode_list)))
+            temp = np.zeros((len(context.episode_list), len(AppealID), len(context.episode_list)))
 
             for member, episode in enumerate(context.episode_list):
                 if member != context.position or episode.buff_class != "シンデレラブレス":
@@ -541,21 +567,21 @@ def buff_cinderella_bless(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
                     else:
                         LibsAppealLogger.debug(f"{episode.buff_class}は、未実装です。")
-                        temp[member] = np.zeros((len(AppealRow), len(context.episode_list)))
+                        temp[member] = np.zeros((len(AppealID), len(context.episode_list)))
 
-            data[0] = temp.max(axis=0)
+            array_bonus_expanded[0] = temp.max(axis=0)
 
         case _:
             # 以外（効果がセンターもしくはゲストと重複するだけなので、何もしない）。
             LibsAppealLogger.debug("シンデレラブレス: センター、ゲスト以外")
 
-    return data
+    return array_bonus_expanded
 
 
 @buffwrap
-def buff_multi_appeal(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_multi_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    全アピール系センター効果。
+    全アピール系センター効果の拡大ボーナス配列を返す。
 
       | キュートブリリアンス、クールブリリアンス、パッションブリリアンス。
       | キュートプリンセス、クールプリンセス、パッションプリンセス。
@@ -563,14 +589,14 @@ def buff_multi_appeal(context: BuffContext, data: np.ndarray) -> np.ndarray:
       | トリコロール・ユニゾン。
 
     :センター効果説明:
-      | __アイドルの全アピール値__%アップ
-      | __アイドルの全アピール値__%アップ、__楽曲なら__%アップ
-      | 3タイプ全てのアイドル編成時、全員の全アピール値__%アップ、全タイプ楽曲なら__%アップ
+      | __アイドルの全アピール値__%アップ。
+      | __アイドルの全アピール値__%アップ、__楽曲なら__%アップ。
+      | 3タイプ全てのアイドル編成時、全員の全アピール値__%アップ、全タイプ楽曲なら__%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列
     :rtype: np.ndarray
     """
 
@@ -598,36 +624,31 @@ def buff_multi_appeal(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_multi_appeal: 対象外の編成")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_single_appeal(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_single_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    ボイス、ダンス、ビジュアル系センター効果。
+    ボイス、ダンス、ビジュアル系センター効果の拡大ボーナス配列を返す。
 
-      | キュートボイス、キュートステップ、キュートメイク
-      | クールボイス、クールステップ、クールメイク
-      | パッションボイス、パッションステップ、パッションメイク
-      | シャイニーボイス、シャイニー・ステップ
-      | トリコロール・ボイス、トリコロール・ステップ、トリコロール・メイク
+      | キュートボイス、キュートステップ、キュートメイク。
+      | クールボイス、クールステップ、クールメイク。
+      | パッションボイス、パッションステップ、パッションメイク。
+      | シャイニーボイス、シャイニー・ステップ。
+      | トリコロール・ボイス、トリコロール・ステップ、トリコロール・メイク。
 
     :センター効果説明:
-      | __アイドルの__アピール値__%アップ
-      | 全員の__アピール値__%アップ
-      | 3タイプ全てのアイドル編成時、全員の__アピール値__%アップ
+      | __アイドルの__アピール値__%アップ。
+      | 全員の__アピール値__%アップ。
+      | 3タイプ全てのアイドル編成時、全員の__アピール値__%アップ。
 
     :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -647,32 +668,27 @@ def buff_single_appeal(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_single_appeal: 対象外の編成")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_life(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_life(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    ライフ値系センター効果。
+    ライフ値系センター効果の拡大ボーナス配列を返す。
 
-      | キュートエナジー、クールエナジー、パッションエナジー
-      | キュートチアー、クールチアー、パッションチアー
+      | キュートエナジー、クールエナジー、パッションエナジー。
+      | キュートチアー、クールチアー、パッションチアー。
 
     :センター効果説明:
-      | __アイドルのライフ__%アップ
-      | __アイドルのみ編成時、全員のライフ__%アップ
+      | __アイドルのライフ__%アップ。
+      | __アイドルのみ編成時、全員のライフ__%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -698,32 +714,27 @@ def buff_life(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_life: 対象外の編成")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_probability(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_probability(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    特技発動確率系センター効果。
+    特技発動確率系センター効果の拡大ボーナス配列を返す。
 
-      | キュートアビリティ、クールアビリティ、パッションアビリティ
-      | トリコロール・アビリティ
+      | キュートアビリティ、クールアビリティ、パッションアビリティ。
+      | トリコロール・アビリティ。
 
     :センター効果説明:
-      | __アイドルの特技発動確率__%アップ
-      | 3タイプ全てのアイドル編成時、全員の特技発動確率__%アップ
+      | __アイドルの特技発動確率__%アップ。
+      | 3タイプ全てのアイドル編成時、全員の特技発動確率__%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -740,73 +751,61 @@ def buff_probability(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_probability: 対象外の編成")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_resonance(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_resonance(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    レゾナンス系センター効果。
+    レゾナンス系センター効果の拡大ボーナス配列を返す。
 
       | レゾナンス・ボイス。
       | レゾナンス・ステップ。
       | レゾナンス・メイク。
 
     :センター効果説明:
-      5種類の特技編成時、__以外のアピール値を100%ダウンし、全ての特技効果が重複時に加算
+      5種類の特技編成時、__以外のアピール値を100%ダウンし、全ての特技効果が重複時に加算。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
-    if len(context.skill_classset) >= 5:
-        # 5種類の特技編成時
+    if len(context.skill_classset) >= 5:  # 5種類の特技編成時
+        context.on_resonance = True  # 全ての特技効果が重複時に加算
 
-        context.on_resonance = True
-        # 全ての特技効果が重複時に加算
+    else:
+        LibsAppealLogger.error("buff_resonance: 対象外の編成")
+        return array_bonus_expanded
 
-        contexts: list[BuffPartContext] = list()
-        for buffpart in list(context.buff.buffparts):
-            if buffpart.appeal in appeal_funcname:
-                contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-        return breakdown2buffparts(contexts, data)
-
-    LibsAppealLogger.error("buff_resonance: 対象外の編成")
-    return data
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_cross(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_cross(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    クロス系センター効果。
+    クロス系センター効果の拡大ボーナス配列を返す。
 
-      | キュート・クロス・クール、キュート・クロス・パッション
-      | クール・クロス・キュート、クール・クロス・パッション
-      | パッション・クロス・キュート、パッション・クロス・クール
+      | キュート・クロス・クール、キュート・クロス・パッション。
+      | クール・クロス・キュート、クール・クロス・パッション。
+      | パッション・クロス・キュート、パッション・クロス・クール。
 
     :センター効果説明:
-      | キュートとクールのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ
-      | キュートとパッションのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ
-      | クールとキュートのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ
-      | クールとパッションのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ
-      | パッションとキュートのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ
-      | パッションとクールのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ
+      | キュートとクールのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
+      | キュートとパッションのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
+      | クールとキュートのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
+      | クールとパッションのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
+      | パッションとキュートのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
+      | パッションとクールのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -831,18 +830,13 @@ def buff_cross(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_cross: 対象外の編成")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_duet(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
     デュエット系センター効果。
 
@@ -854,14 +848,14 @@ def buff_duet(context: BuffContext, data: np.ndarray) -> np.ndarray:
           パッション・デュエット（メイク＆ボイス）。
 
     :センター効果説明:
-      | __アイドルのみ編成時、__楽曲で全員のダンス＆ビジュアルアピール値__%アップ
-      | __アイドルのみ編成時、__楽曲で全員のビジュアル＆ボーカルアピール値__%アップ
-      | __アイドルのみ編成時、__楽曲で全員のボーカル＆ダンスアピール値__%アップ
+      | __アイドルのみ編成時、__楽曲で全員のダンス＆ビジュアルアピール値__%アップ。
+      | __アイドルのみ編成時、__楽曲で全員のビジュアル＆ボーカルアピール値__%アップ。
+      | __アイドルのみ編成時、__楽曲で全員のボーカル＆ダンスアピール値__%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -883,32 +877,27 @@ def buff_duet(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_duet: 対象外の編成、楽曲")
-            return data
+            return array_bonus_expanded
 
-    contexts: list[BuffPartContext] = list()
-    for buffpart in list(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            contexts.append(BuffPartContext(buffpart, context.livesong_type, context.idol_typelist))
-
-    return breakdown2buffparts(contexts, data)
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 @buffwrap
-def buff_dominant_duet(context: BuffContext, data: np.ndarray) -> np.ndarray:
+def buff_dominant_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
-    ドミナント・デュエット系センター効果。
+    ドミナント・デュエット系センター効果の拡大ボーナス配列を返す。
 
       | ドミナント・デュエット（ボイス＆ステップ）。
       | ドミナント・デュエット（ステップ＆メイク）。
       | ドミナント・デュエット（メイク＆ボイス）。
 
     :センター効果説明:
-      __楽曲で__アイドルにタイプボーナスが発生し__アピール値150%アップ、__アイドルの__アピール値160%アップ
+      __楽曲で__アイドルにタイプボーナスが発生し__アピール値150%アップ、__アイドルの__アピール値160%アップ。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray data: センター効果データ配列。
+    :param BuffContext context: センター効果のコンテキスト。
+    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
 
-    :return: センター効果データ配列
+    :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
     """
 
@@ -924,22 +913,9 @@ def buff_dominant_duet(context: BuffContext, data: np.ndarray) -> np.ndarray:
 
         case _:
             LibsAppealLogger.error("buff_dominant_duet: 対象外の楽曲")
-            return data
+            return array_bonus_expanded
 
-    for i, buffpart in enumerate(context.buff.buffparts):
-        if buffpart.appeal in appeal_funcname:
-            # アイドルタイプ
-            idoldata = appeal_funcname[buffpart.appeal](
-                BuffPartContext(buffpart, context.livesong_type, context.idol_typelist)
-            )
-
-            # ドミナントアイドルタイプ
-            dominantdata = appeal_funcname[buffpart.appeal](
-                BuffPartContext(buffpart, context.livesong_type, context.dominant_typelist)
-            )
-
-            data[i] = np.maximum(idoldata, dominantdata)
-    return data
+    return breakdown2buffparts(context, array_bonus_expanded)
 
 
 appeal_funcname = {
@@ -1089,12 +1065,12 @@ class Calculator:
 
         return [
             [episode.episode for episode in self._unit_episodes if isinstance(episode, Episode)],
-            np.ceil(self._unit[AppealRow.VOCAL]).tolist(),
-            np.ceil(self._unit[AppealRow.DANCE]).tolist(),
-            np.ceil(self._unit[AppealRow.VISUAL]).tolist(),
-            np.ceil(self._unit[AppealRow.LIFE]).tolist(),
-            self._unit[AppealRow.PROBABILITY].tolist(),
-            self._unit[AppealRow.DURATION].tolist(),
+            np.ceil(self._unit[AppealID.VOCAL]).tolist(),
+            np.ceil(self._unit[AppealID.DANCE]).tolist(),
+            np.ceil(self._unit[AppealID.VISUAL]).tolist(),
+            np.ceil(self._unit[AppealID.LIFE]).tolist(),
+            self._unit[AppealID.PROBABILITY].tolist(),
+            self._unit[AppealID.DURATION].tolist(),
         ]
 
     @property
@@ -1115,16 +1091,16 @@ class Calculator:
 
         return [
             [episode.episode for episode in self._support_episodes if isinstance(episode, Episode)],
-            np.ceil(self._support[AppealRow.VOCAL]).tolist(),
-            np.ceil(self._support[AppealRow.DANCE]).tolist(),
-            np.ceil(self._support[AppealRow.VISUAL]).tolist(),
+            np.ceil(self._support[AppealID.VOCAL]).tolist(),
+            np.ceil(self._support[AppealID.DANCE]).tolist(),
+            np.ceil(self._support[AppealID.VISUAL]).tolist(),
         ]
 
     def run(self, unit: Unit) -> None:
         """
         アピール値計算を実行する。
 
-        :param list[str] UnitEpisodes: ゲストを含むユニットメンバーのエピソード名リスト。
+        :param Unit unit: ゲストを含むユニット。
         """
 
         # レゾナンスを適用するかどうかbool判定
@@ -1179,7 +1155,7 @@ class Calculator:
             self._potential(episode_all),  # ポテンシャル補正
             self._musicbuff(episode_all),  # 楽曲タイプ一致効果
         ]
-        appeal_all = np.sum(np.ceil(0.5 * appeal_formula(episode_all_factors))[: AppealRow.VISUAL + 1], axis=0).tolist()
+        appeal_all = np.sum(np.ceil(0.5 * appeal_formula(episode_all_factors))[: AppealID.VISUAL + 1], axis=0).tolist()
 
         # アピール値合計の高い順にエピソードをリスト化し、トップ10を選出。
         # スターランク分の重複を許容し、ユニットメンバーとの重複分は差し引く。
@@ -1231,7 +1207,7 @@ class Calculator:
         ポテンシャル補正。
 
         ポテンシャル補正対象は、ボーカル・ダンス・ビジュアル・ライフ・特技発動率。
-        特技継続期間は、補正無し。
+        特技継続期間は、非適用。
 
         :param list[Episode] episodes: エピソードリスト
         :return: ポテンシャル補正
@@ -1282,15 +1258,18 @@ class Calculator:
         """
 
         return np.array(
-            [[0.1 for _ in episodes] for _ in [AppealRow.VOCAL, AppealRow.DANCE, AppealRow.VISUAL]]
-            + [[0.0 for _ in episodes] for _ in [AppealRow.LIFE, AppealRow.PROBABILITY, AppealRow.DURATION]]
+            [[0.1 for _ in episodes] for _ in [AppealID.VOCAL, AppealID.DANCE, AppealID.VISUAL]]
+            + [[0.0 for _ in episodes] for _ in [AppealID.LIFE, AppealID.PROBABILITY, AppealID.DURATION]]
         )
 
     def _musicbuff(self, episodes: list[Episode]) -> np.ndarray:
         """
         楽曲タイプ一致効果（ボーカル・ダンス・ビジュアル・特技発動確率）。
 
+        :todo: とりあえず組み込んだドミナント・デュエットのドミナントアイドルの楽曲タイプ一致コードを見直す。
+
         :param list[Episode] episodes: エピソードリスト
+
         :return: 楽曲タイプ一致効果
         :rtype: np.ndarray
         """
@@ -1335,10 +1314,10 @@ class Calculator:
                         # :todo: ちゃんと実装しろ！
                         pass
 
-            return np.zeros((len(AppealRow), len(episodes)))
+            return np.zeros((len(AppealID), len(episodes)))
 
         lstype = self._music.song.type  # ライブの楽曲タイプ
-        np3d = np.zeros((3, len(AppealRow), len(episodes)))
+        np3d = np.zeros((3, len(AppealID), len(episodes)))
 
         # 通常の楽曲タイプ一致
         np3d[0] = basematch(lstype, episodes)
@@ -1384,7 +1363,7 @@ class Calculator:
             self._resonance = context.on_resonance
 
         else:
-            result = np.zeros((len(AppealRow), len(episodes)))
+            result = np.zeros((len(AppealID), len(episodes)))
             LibsAppealLogger.error(f"{episodes[position].buff_class}は、未実装です。")
 
         LibsAppealLogger.debug(f"{','.join(str(result).splitlines())}")
