@@ -56,7 +56,7 @@ from dataclasses import dataclass, field
 from functools import wraps, partial
 
 from deredata.libs.database.musics import SongType, Music
-from deredata.libs.database.enums import IdolType, DominantType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
 from deredata.libs.database.idols import Idol, Idols
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.units import Unit

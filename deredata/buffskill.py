@@ -1,5 +1,7 @@
 """
-モジュール。
+アイドルエピソードを絞り込み検索するモジュール。
+
+アイドルエピソードを、所有・非所有、アイドルタイプ、レア度、特技発動間隔、センター効果分類、特技分類で絞り込み検索する。
 """
 
 from typing import Any
@@ -21,7 +23,7 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     各種の絞り込みの結果得られたエピソードのエピソード情報を表示するウィジット。
     """
 
-    index = None
+    index: int | None = None
     selected = Factory.BooleanProperty(None)
     selectable = Factory.BooleanProperty(True)
 

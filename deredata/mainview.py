@@ -1,5 +1,5 @@
 """
-モジュール。
+メイン画面のモジュール。
 """
 
 from typing import Any
@@ -30,6 +30,10 @@ COMMANDS: dict = {
 
 
 class DatabaseSeries(Factory.TabbedPanel):
+    """
+    DatabaseSeries
+    """
+
     unitview = Factory.ObjectProperty(None)
     buffskillview = Factory.ObjectProperty(None)
     musicview = Factory.ObjectProperty(None)

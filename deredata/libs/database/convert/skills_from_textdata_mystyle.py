@@ -3,9 +3,9 @@
 """
 
 import csv
-import tomllib
 
-from deredata.libs.database.enums import IdolType, MusicType, UnitType
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
 from deredata.libs.database.skills import (
     Skill,
     SkillsMystyle,
@@ -24,6 +24,9 @@ load_skilldatas = SkillsMystyle()
 
 parts: set[SkillPart] = set()
 
+SKILLDATA: str = textdata_folder() + "mystyle_skills.txt"
+SKILLPARTDATA: str = textdata_folder() + "mystyle_skillparts.txt"
+
 
 def isfloat(data: str) -> bool:
     try:
@@ -35,12 +38,6 @@ def isfloat(data: str) -> bool:
 
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as ff:
-        config = tomllib.load(ff)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        SKILLDATA: str = TEXTDATAFOLDER + "mystyle_skills.txt"
-        SKILLPARTDATA: str = TEXTDATAFOLDER + "mystyle_skillparts.txt"
-
     with open(SKILLPARTDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 

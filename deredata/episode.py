@@ -7,7 +7,7 @@
 from typing import Any
 from math import ceil
 
-from deredata.libs.database.enums import GachaType
+from deredata.libs.database.enumerations import GachaType
 from deredata.libs.database.idols import Idol, Idols
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.flavors import Flavor, Flavors
@@ -133,9 +133,6 @@ class EpisodeFlavorView(Factory.BoxLayout):
 class EpisodeDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     """
     アイドルのエピソードの各種データを表示するウィジット。
-
-    :param Widget main: 親ウィジット。
-    :param Episode episode: 表示するエピソード
     """
 
     index = None

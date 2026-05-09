@@ -128,7 +128,8 @@ class SimulatorView(Factory.BoxLayout):
         :todo: 追加したら選択状態にしたい。
         """
 
-        self.simulatordataviews.data.append({"music": music, "unit": unit, "status": "追加", "median": 0, "max": 0})
+        # key_selection: "status"
+        self.simulatordataviews.data.append({"status": "追加", "music": music, "unit": unit, "median": 0, "max": 0})
 
     def buffskill_live(self) -> None:
         pass

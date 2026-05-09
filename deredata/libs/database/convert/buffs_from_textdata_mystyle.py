@@ -3,22 +3,19 @@
 """
 
 import csv
-import tomllib
 
-from deredata.libs.database.enums import IdolType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
+from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.buffs import BuffsMystyle, Buff, BuffTriggerType, BuffPart, AppealType, BuffPartTriggerType
 
 buffdatas = BuffsMystyle()
 load_buffdatas = BuffsMystyle()
 parts: set[BuffPart] = set()
 
-if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        BUFFDATA: str = TEXTDATAFOLDER + "mystyle_buffs.txt"
-        BUFFPARTDATA: str = TEXTDATAFOLDER + "mystyle_buffparts.txt"
+BUFFDATA: str = textdata_folder() + "mystyle_buffs.txt"
+BUFFPARTDATA: str = textdata_folder() + "mystyle_buffparts.txt"
 
+if __name__ == "__main__":
     with open(BUFFPARTDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 

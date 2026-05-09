@@ -19,8 +19,9 @@ Submodules
 
    deredata.libs.database.buffs
    deredata.libs.database.comborates
+   deredata.libs.database.configurations
    deredata.libs.database.dominant
-   deredata.libs.database.enums
+   deredata.libs.database.enumerations
    deredata.libs.database.episodes
    deredata.libs.database.flavors
    deredata.libs.database.idols

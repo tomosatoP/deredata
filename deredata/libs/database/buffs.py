@@ -18,12 +18,13 @@ from enum import StrEnum
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from deredata.libs.database.enums import IdolType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsBuffsLogger
 
-BUFFSDB = "database/buffs.json"
-BUFFSDB_MYSTYLE = "database/buffs_mystyle.json"
+BUFFSDB: str = database_folder() + "buffs.json"
+BUFFSDB_MYSTYLE: str = database_folder() + "buffs_mystyle.json"
 
 
 class BuffsError(Exception):

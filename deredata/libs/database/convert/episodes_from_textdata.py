@@ -3,35 +3,34 @@
 """
 
 import csv
-import tomllib
 from setuptools._distutils.util import strtobool
 
-from deredata.libs.database import enums
-from deredata.libs.database import episodes
-from deredata.libs.database import flavors
+from deredata.libs.database.enumerations import IdolType, DominantType, GachaType, RareClass
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.episodes import Episode, Episodes
+from deredata.libs.database.flavors import Flavor, Flavors
 
-episodedatas = episodes.Episodes()
-flavordatas = flavors.Flavors()
-load_episodedatas = episodes.Episodes()
-load_flavordatas = flavors.Flavors()
+episodedatas = Episodes()
+flavordatas = Flavors()
+
+load_episodedatas = Episodes()
+load_flavordatas = Flavors()
+
+EPISODEDATA: str = textdata_folder() + "episodes.txt"
+
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        EPISODEDATA: str = TEXTDATAFOLDER + "episodes.txt"
-
     with open(EPISODEDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
-            episode = episodes.Episode(
+            episode = Episode(
                 ruby=data["ふりがな"],
                 episode=data["エピソード"],
-                type=enums.IdolType(data["アイドルタイプ"]),
-                dominant=enums.DominantType(data["ドミナントアイドルタイプ"]),
+                type=IdolType(data["アイドルタイプ"]),
+                dominant=DominantType(data["ドミナントアイドルタイプ"]),
                 mystyle=strtobool(data["マイスタイル"]),
-                rare=enums.RareClass(data["レア度"]),
+                rare=RareClass(data["レア度"]),
                 star_rank=int(data["スターランク"]),
                 skill_level=int(data["特技レベル"]),
                 level=int(data["レベル"]),
@@ -45,11 +44,11 @@ if __name__ == "__main__":
                 skill_class=data["特技"],
                 skill=data["特技説明"],
             )
-            flavor = flavors.Flavor(
+            flavor = Flavor(
                 episode=data["エピソード"],
                 voice=strtobool(data["ボイス"]),
                 solo=strtobool(data["ソロ"]),
-                gacha=enums.GachaType(data["入手枠"]),
+                gacha=GachaType(data["入手枠"]),
                 registration_date=data["登録日"].strip("'"),
             )
 

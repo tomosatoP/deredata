@@ -17,9 +17,11 @@ from typing import Any
 from pathlib import Path
 from dataclasses import dataclass, field
 
+from deredata.libs.database.configurations import database_folder
+
 from kivy.logger import Logger as LibsUnitsLogger
 
-UNITSDB = "database/units.json"
+UNITSDB: str = database_folder() + "units.json"
 
 
 class UnitsError(Exception):

@@ -3,25 +3,22 @@
 """
 
 import csv
-import tomllib
 
-import deredata.libs.database.dominant as dm
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.dominant import Dominant, Dominants
 
-dominants: dm.Dominants = dm.Dominants()
-load_dominants: dm.Dominants = dm.Dominants()
+dominants: Dominants = Dominants()
+load_dominants: Dominants = Dominants()
+
+GUESTDATA: str = textdata_folder() + "appendix_dominant_guest.txt"
+NOGUESTDATA: str = textdata_folder() + "appendix_dominant_noguest.txt"
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        GUESTDATA: str = TEXTDATAFOLDER + "appendix_dominant_guest.txt"
-        NOGUESTDATA: str = TEXTDATAFOLDER + "appendix_dominant_noguest.txt"
-
     with open(GUESTDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
-            dominant = dm.Dominant(
+            dominant = Dominant(
                 number=int(data["編成人数"]),
                 score=float(data["スコアボーナス"]),
                 combo=float(data["COMBOボーナス"]),
@@ -32,7 +29,7 @@ if __name__ == "__main__":
         datas = csv.DictReader(f)
 
         for data in datas:
-            dominant = dm.Dominant(
+            dominant = Dominant(
                 number=int(data["編成人数"]),
                 score=float(data["スコアボーナス"]),
                 combo=float(data["COMBOボーナス"]),

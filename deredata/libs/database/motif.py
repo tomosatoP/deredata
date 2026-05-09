@@ -8,9 +8,11 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 
+from deredata.libs.database.configurations import database_folder
+
 from kivy.logger import Logger as LibsMotifLogger
 
-MOTIFDB = "database/motif.json"
+MOTIFDB: str = database_folder() + "motif.json"
 
 
 class MotifError(Exception):

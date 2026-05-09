@@ -10,18 +10,18 @@
     :math:`スコアアップ系列=スキルブースト系\\timesオルタネイト`
 
         スキルブースト系:
-            :math:`1.00+切り上げ\{スコアアップ効果量\\times(1.00+スコアアップ効果アップ効果量)\}`
+            :math:`1.00+切り上げ\\{スコアアップ効果量\\times(1.00+スコアアップ効果アップ効果量)\\}`
 
         オルタネイト:
-            :math:`1.00+切り上げ\{スコアアップ効果量\\times(1.00+オルタネイトによる効果量(極大))\}`
+            :math:`1.00+切り上げ\\{スコアアップ効果量\\times(1.00+オルタネイトによる効果量(極大))\\}`
 
     :math:`コンボボーナス系列=スキルブースト系\\timesミューチャル`
 
         スキルブースト系:
-            :math:`1.00+切り上げ\{コンボボーナス効果量\\times(1.00+コンボボーナス効果アップ効果量)\}`
+            :math:`1.00+切り上げ\\{コンボボーナス効果量\\times(1.00+コンボボーナス効果アップ効果量)\\}`
 
         ミューチャル:
-            :math:`1.00+切り上げ\{コンボボーナス効果量\\times(1.00+ミューチャルによる効果量(極大))\}`
+            :math:`1.00+切り上げ\\{コンボボーナス効果量\\times(1.00+ミューチャルによる効果量(極大))\\}`
 
     特技効果コピーは、スキルブースト系（スコアアップ効果アップ、コンボボーナス効果アップ）として扱う。
 
@@ -38,18 +38,18 @@
     :math:`スコアアップ系列=スキルブースト系\\timesオルタネイト`
 
         スキルブースト系:
-            :math:`1.0+切り上げ\{\sum{スコアアップ効果量}\\times(1.0+\sum{スコアアップ効果アップ効果量})\}`
+            :math:`1.0+切り上げ\\{\\sum{スコアアップ効果量}\\times(1.0+\\sum{スコアアップ効果アップ効果量})\\}`
 
         オルタネイト:
-            :math:`1.0+切り上げ\{\sum{スコアアップ効果量}\\times(1.0+\sum{オルタネイトによる効果量(極大)})\}`
+            :math:`1.0+切り上げ\\{\\sum{スコアアップ効果量}\\times(1.0+\\sum{オルタネイトによる効果量(極大)})\\}`
 
     :math:`コンボボーナス系列=スキルブースト系\\timesミューチャル`
 
         スキルブースト系:
-            :math:`1.0+切り上げ\{\sum{コンボボーナス効果量}\\times(1.0+\sum{コンボボーナス効果アップ効果量})\}`
+            :math:`1.0+切り上げ\\{\\sum{コンボボーナス効果量}\\times(1.0+\\sum{コンボボーナス効果アップ効果量})\\}`
 
         ミューチャル:
-            :math:`1.0+切り上げ\{\sum{コンボボーナス効果量}\\times(1.0+\sum{ミューチャルによる効果量(極大)})\}`
+            :math:`1.0+切り上げ\\{\\sum{コンボボーナス効果量}\\times(1.0+\\sum{ミューチャルによる効果量(極大)})\\}`
 
 
 - ライブ中のスコア計算の ``特技倍率`` に関わらない特技効果の処理
@@ -80,12 +80,13 @@ from enum import StrEnum
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from deredata.libs.database.enums import IdolType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsSkillsLogger
 
-SKILLSDB = "database/skills.json"
-SKILLSDB_MYSTYLE = "database/skills_mystyle.json"
+SKILLSDB: str = database_folder() + "skills.json"
+SKILLSDB_MYSTYLE: str = database_folder() + "skills_mystyle.json"
 
 
 class SkillsError(Exception):

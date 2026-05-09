@@ -11,10 +11,11 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsMusiclevelsLogger
 
-MUSICLEVELSDB = "database/musiclevels.json"
+MUSICLEVELSDB: str = database_folder() + "musiclevels.json"
 
 
 class MusiclevelsError(Exception):

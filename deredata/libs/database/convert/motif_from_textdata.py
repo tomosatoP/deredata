@@ -3,25 +3,22 @@
 """
 
 import csv
-import tomllib
 
-import deredata.libs.database.motif as mf
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.motif import Motif, Motives
 
-motives: mf.Motives = mf.Motives()
-load_motives: mf.Motives = mf.Motives()
+motives: Motives = Motives()
+load_motives: Motives = Motives()
+
+MOTIFDATA: str = textdata_folder() + "appendix_motif.txt"
+MOTIFDATA_GRAND: str = textdata_folder() + "appendix_motif_grand.txt"
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        MOTIFDATA: str = TEXTDATAFOLDER + "appendix_motif.txt"
-        MOTIFDATA_GRAND: str = TEXTDATAFOLDER + "appendix_motif_grand.txt"
-
     with open(MOTIFDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
-            motif = mf.Motif(
+            motif = Motif(
                 appeal=int(data["アピール値"]),
                 rate=float(data["倍率"]),
             )
@@ -31,7 +28,7 @@ if __name__ == "__main__":
         datas = csv.DictReader(f)
 
         for data in datas:
-            motif = mf.Motif(
+            motif = Motif(
                 appeal=int(data["アピール値"]),
                 rate=float(data["倍率"]),
             )

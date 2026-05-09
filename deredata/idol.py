@@ -31,9 +31,6 @@ HIRAGANA: dict[str, tuple[str, ...]] = {
 class IdolDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     """
     アイドルのデータを表示するウィジット。
-
-    ``RecycleView`` のビュー **viewclass**。
-    ``RecycleView`` のレイアウト ``LayoutSelectionBehavior`` により、選択操作が可能。
     """
 
     index = None

@@ -13,9 +13,6 @@ from kivy.uix.recycleview import RecycleView
 from kivy.graphics import Color, Line
 from kivy.logger import Logger as MusicLogger
 
-# デレステ譜面データのデータベースフォルダ
-MUSICDBFOLDER = "database/music"
-
 
 class TimeChart(Factory.Widget):
     """

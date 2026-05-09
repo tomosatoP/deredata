@@ -3,39 +3,36 @@
 """
 
 import csv
-import tomllib
 
-from deredata.libs.database import enums
-from deredata.libs.database import idols
-from deredata.libs.database import profiles
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.enumerations import IdolType
+from deredata.libs.database.idols import Idol, Idols
+from deredata.libs.database.profiles import Profile, Profiles
 
-idoldatas = idols.Idols()
-profiledatas = profiles.Profiles()
+idoldatas = Idols()
+profiledatas = Profiles()
 
-load_idoldatas = idols.Idols()
-load_profiledatas = profiles.Profiles()
+load_idoldatas = Idols()
+load_profiledatas = Profiles()
+
+IDOLDATA: str = textdata_folder() + "idols.txt"
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        IDOLDATA: str = TEXTDATAFOLDER + "idols.txt"
-
     with open(IDOLDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
-            idol = idols.Idol(
+            idol = Idol(
                 ruby=data["ふりがな"],
                 name=data["名前"],
-                type=enums.IdolType(data["アイドルタイプ"]),
+                type=IdolType(data["アイドルタイプ"]),
                 life=int(data["ライフ"]),
                 vocal=int(data["ボーカル"]),
                 dance=int(data["ダンス"]),
                 visual=int(data["ビジュアル"]),
                 skill=int(data["特技"]),
             )
-            profile = profiles.Profile(
+            profile = Profile(
                 ruby=data["ふりがな"],
                 age=data["年齢"],
                 birthday=data["誕生日"].strip("'"),

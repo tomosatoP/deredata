@@ -3,25 +3,22 @@
 """
 
 import csv
-import tomllib
 
-import deredata.libs.database.lifesparkle as ls
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.lifesparkle import Lifesparkle, Lifesparkles
 
-lifesparkles: ls.Lifesparkles = ls.Lifesparkles()
-load_lifesparkles: ls.Lifesparkles = ls.Lifesparkles()
+lifesparkles: Lifesparkles = Lifesparkles()
+load_lifesparkles: Lifesparkles = Lifesparkles()
+
+SSRDATA: str = textdata_folder() + "appendix_lifesparkle_SSR.txt"
+SRDATA: str = textdata_folder() + "appendix_lifesparkle_SR.txt"
 
 if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        SSRDATA: str = TEXTDATAFOLDER + "appendix_lifesparkle_SSR.txt"
-        SRDATA: str = TEXTDATAFOLDER + "appendix_lifesparkle_SR.txt"
-
     with open(SSRDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
-            lifesparkle = ls.Lifesparkle(
+            lifesparkle = Lifesparkle(
                 life=int(data["残ライフ値"]),
                 rate=float(data["倍率"]),
             )
@@ -31,7 +28,7 @@ if __name__ == "__main__":
         datas = csv.DictReader(f)
 
         for data in datas:
-            lifesparkle = ls.Lifesparkle(
+            lifesparkle = Lifesparkle(
                 life=int(data["残ライフ値"]),
                 rate=float(data["倍率"]),
             )

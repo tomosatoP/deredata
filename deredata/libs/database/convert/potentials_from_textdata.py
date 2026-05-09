@@ -3,22 +3,19 @@
 """
 
 import csv
-import tomllib
 
-from deredata.libs.database.enums import RareClass
+from deredata.libs.database.configurations import textdata_folder
+from deredata.libs.database.enumerations import RareClass
 from deredata.libs.database.potentials import Appeal, Ability, Life, Potentials
 
 potentials: Potentials = Potentials()
 load_potentials: Potentials = Potentials()
 
-if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        APPEALDATA: str = TEXTDATAFOLDER + "appendix_appeals.txt"
-        LIFEDATA: str = TEXTDATAFOLDER + "appendix_lives.txt"
-        ABILITYDATA: str = TEXTDATAFOLDER + "appendix_abilities.txt"
+APPEALDATA: str = textdata_folder() + "appendix_appeals.txt"
+LIFEDATA: str = textdata_folder() + "appendix_lives.txt"
+ABILITYDATA: str = textdata_folder() + "appendix_abilities.txt"
 
+if __name__ == "__main__":
     with open(APPEALDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 

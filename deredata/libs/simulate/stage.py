@@ -76,7 +76,7 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 
 from deredata.libs.database.musics import FPS, Note, NoteType, SongType, Music
-from deredata.libs.database.enums import IdolType, DominantType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.skills import Skill, Skills, EffectType, IconType
 from deredata.libs.database.musiclevels import MusicLevels

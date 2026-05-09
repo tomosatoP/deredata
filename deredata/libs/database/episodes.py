@@ -12,11 +12,12 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from setuptools._distutils.util import strtobool
 
-from deredata.libs.database import enums
+from deredata.libs.database.enumerations import IdolType, DominantType, RareClass
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsEpisodesLogger
 
-EPISODESDB = "database/episodes.json"
+EPISODESDB: str = database_folder() + "episodes.json"
 
 
 class EpisodesError(Exception):
@@ -55,10 +56,10 @@ class Episode:
 
     ruby: str = "ふりがな"  # ふりがな。アイドル情報（idols, profiles）のアクセスキー。
     episode: str = "エピソード"  # エピソード。エピソード情報（episodes, flavors, buffs, skills）へのアクセスキー。
-    type: enums.IdolType = field(default=enums.IdolType.NA, compare=False)  # アイドルタイプ
-    dominant: enums.DominantType = field(default=enums.DominantType.NA, compare=False)  # ドミナントアイドルタイプ
+    type: IdolType = field(default=IdolType.NA, compare=False)  # アイドルタイプ
+    dominant: DominantType = field(default=DominantType.NA, compare=False)  # ドミナントアイドルタイプ
     mystyle: bool = field(default=False, compare=False)  # マイスタイル
-    rare: enums.RareClass = field(default=enums.RareClass.N, compare=False)  # レア度
+    rare: RareClass = field(default=RareClass.N, compare=False)  # レア度
     star_rank: int = field(default=0, compare=False)  # スターランク
     skill_level: int = field(default=0, compare=False)  # 特技レベル
     level: int = field(default=1, compare=False)  # レベル
@@ -162,10 +163,10 @@ class Episodes:
             episode = Episode(
                 ruby=data["ふりがな"],
                 episode=data["エピソード"],
-                type=enums.IdolType(data["アイドルタイプ"]),
-                dominant=enums.DominantType(data["ドミナントアイドルタイプ"]),
+                type=IdolType(data["アイドルタイプ"]),
+                dominant=DominantType(data["ドミナントアイドルタイプ"]),
                 mystyle=strtobool(data["マイスタイル"]),
-                rare=enums.RareClass(data["レア度"]),
+                rare=RareClass(data["レア度"]),
                 star_rank=int(data["スターランク"]),
                 skill_level=int(data["特技レベル"]),
                 level=int(data["レベル"]),
@@ -197,10 +198,10 @@ class Episodes:
             {
                 "ふりがな": episode.ruby,
                 "エピソード": episode.episode,
-                "アイドルタイプ": enums.IdolType(episode.type),
-                "ドミナントアイドルタイプ": enums.DominantType(episode.dominant),
+                "アイドルタイプ": IdolType(episode.type),
+                "ドミナントアイドルタイプ": DominantType(episode.dominant),
                 "マイスタイル": str(episode.mystyle),
-                "レア度": enums.RareClass(episode.rare),
+                "レア度": RareClass(episode.rare),
                 "スターランク": int(episode.star_rank),
                 "特技レベル": int(episode.skill_level),
                 "レベル": int(episode.level),

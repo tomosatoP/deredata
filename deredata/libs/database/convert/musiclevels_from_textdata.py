@@ -3,19 +3,16 @@
 """
 
 import csv
-import tomllib
 
+from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.musiclevels import MusicLevel, MusicLevels
 
 musicleveldatas: MusicLevels = MusicLevels()
 load_musicleveldatas: MusicLevels = MusicLevels()
 
-if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        MUSICLEVELDATA: str = TEXTDATAFOLDER + "appendix_musiclevel.txt"
+MUSICLEVELDATA: str = textdata_folder() + "appendix_musiclevel.txt"
 
+if __name__ == "__main__":
     with open(MUSICLEVELDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 

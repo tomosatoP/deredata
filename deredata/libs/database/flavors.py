@@ -10,11 +10,12 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from setuptools._distutils.util import strtobool
 
-from deredata.libs.database import enums
+from deredata.libs.database.enumerations import GachaType
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsFlavorsLogger
 
-FLAVORSDB = "database/flavors.json"
+FLAVORSDB: str = database_folder() + "flavors.json"
 
 
 class FlavorsError(Exception):
@@ -41,7 +42,7 @@ class Flavor:
     episode: str = "エピソード"  # エピソード。エピソード情報（episodes, flavors, buffs, skills）へのアクセスキー。
     voice: bool = field(default=False, compare=False)  # ボイス
     solo: bool = field(default=False, compare=False)  # ソロ
-    gacha: enums.GachaType = field(default=enums.GachaType.NORMAL, compare=False)  # 入手枠
+    gacha: GachaType = field(default=GachaType.NORMAL, compare=False)  # 入手枠
     registration_date: str = field(default="登録日", compare=False)  # 登録日
 
 
@@ -122,7 +123,7 @@ class Flavors:
                 episode=data["エピソード"],
                 voice=strtobool(data["ボイス"]),
                 solo=strtobool(data["ソロ"]),
-                gacha=enums.GachaType(data["入手枠"]),
+                gacha=GachaType(data["入手枠"]),
                 registration_date=data["登録日"],
             )
             self._flavors.add(flavor)
@@ -144,7 +145,7 @@ class Flavors:
                 "エピソード": flavor.episode,
                 "ボイス": str(flavor.voice),
                 "ソロ": str(flavor.solo),
-                "入手枠": enums.GachaType(flavor.gacha),
+                "入手枠": GachaType(flavor.gacha),
                 "登録日": flavor.registration_date,
             }
             for flavor in sorted(self.gets())

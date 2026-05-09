@@ -9,9 +9,11 @@ import json
 from pathlib import Path
 from dataclasses import dataclass, field
 
+from deredata.libs.database.configurations import database_folder
+
 from kivy.logger import Logger as LibsProfilesLogger
 
-PROFILESDB = "database/profiles.json"
+PROFILESDB: str = database_folder() + "profiles.json"
 
 
 class ProfilesError(Exception):

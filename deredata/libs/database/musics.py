@@ -8,11 +8,12 @@ from math import ceil
 from pathlib import Path
 
 from deredata.libs.derenotes.song import Note, Song, SongCategory, SongType, NoteType, Chart
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as MusicsLogger
 
 FPS = 60
-MUSICDBFOLDER = "database/music"
+MUSICDBFOLDER: str = database_folder() + "music"
 
 
 #### musics API用のエラーハンドラ

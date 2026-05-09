@@ -3,19 +3,17 @@
 """
 
 import csv
-import tomllib
 
+from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.comborates import Comborate, ComboRates
 
 comboratedatas: ComboRates = ComboRates()
 load_comboratedatas: ComboRates = ComboRates()
 
-if __name__ == "__main__":
-    with open("config/config.toml", "rb") as f:
-        config = tomllib.load(f)
-        TEXTDATAFOLDER: str = config["textdata_folder"]
-        COMBORATEDATA: str = TEXTDATAFOLDER + "appendix_comborate.txt"
+COMBORATEDATA: str = textdata_folder() + "appendix_comborate.txt"
 
+
+if __name__ == "__main__":
     with open(COMBORATEDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 

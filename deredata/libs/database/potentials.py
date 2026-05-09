@@ -13,11 +13,12 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 
-from deredata.libs.database.enums import RareClass
+from deredata.libs.database.enumerations import RareClass
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsPotentialsLogger
 
-POTENTIALSDB = "database/potentials.json"
+POTENTIALSDB: str = database_folder() + "potentials.json"
 
 
 class PotentialsError(Exception):

@@ -43,7 +43,8 @@ def setup_files() -> None:
     site_packages_folder = Path(__file__).parents[1]
 
     for foldername in zip(
-        ["*.toml", "*.txt", "*.json", "*.json"], ["config", "textdata", "database", "database/music"]
+        ["*.toml", "*.txt", "*.json", "*.json"],
+        ["config", "textdata", "database", "database/music"],
     ):
         [
             copy(path, Path("./" + foldername[1]))

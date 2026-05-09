@@ -11,9 +11,11 @@ import json
 from pathlib import Path
 from dataclasses import dataclass
 
+from deredata.libs.database.configurations import database_folder
+
 from kivy.logger import Logger as LibsDominantLogger
 
-DOMINANTDB = "database/dominant.json"
+DOMINANTDB: str = database_folder() + "dominant.json"
 
 
 class DominantError(Exception):

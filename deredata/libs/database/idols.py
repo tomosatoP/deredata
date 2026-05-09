@@ -9,11 +9,12 @@ import json
 from pathlib import Path
 from dataclasses import dataclass, field
 
-from deredata.libs.database import enums
+from deredata.libs.database.enumerations import IdolType
+from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsIdolsLogger
 
-IDOLSDB = "database/idols.json"
+IDOLSDB: str = database_folder() + "idols.json"
 
 
 class IdolsError(Exception):
@@ -44,7 +45,7 @@ class Idol:
 
     ruby: str = "ふりがな"  # ふりがな
     name: str = field(default="名前", compare=False)  # 名前
-    type: enums.IdolType = field(default=enums.IdolType.CUTE, compare=False)  # アイドルタイプ
+    type: IdolType = field(default=IdolType.CUTE, compare=False)  # アイドルタイプ
     life: int = field(default=0, compare=False)  # ライフ
     vocal: int = field(default=0, compare=False)  # ボーカル
     dance: int = field(default=0, compare=False)  # ダンス
@@ -144,7 +145,7 @@ class Idols:
             idol = Idol(
                 ruby=data["ふりがな"],
                 name=data["名前"],
-                type=enums.IdolType(data["アイドルタイプ"]),
+                type=IdolType(data["アイドルタイプ"]),
                 life=int(data["ライフ"]),
                 vocal=int(data["ボーカル"]),
                 dance=int(data["ダンス"]),
@@ -169,7 +170,7 @@ class Idols:
             {
                 "ふりがな": idol.ruby,
                 "名前": idol.name,
-                "アイドルタイプ": enums.IdolType(idol.type),
+                "アイドルタイプ": IdolType(idol.type),
                 "ライフ": int(idol.life),
                 "ボーカル": int(idol.vocal),
                 "ダンス": int(idol.dance),
