@@ -53,12 +53,7 @@ class IdolDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
-        データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
+        データの作成・変更時、ビューに反映する。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -68,28 +63,41 @@ class IdolDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         :rtype: Any
         """
 
-        self.idol = data["idoldata"]
         self.index = index
 
-        self.name.text = self.idol.name
-        self.type.text = self.idol.type.name
-        self.sum.text = str(sum([self.idol.vocal, self.idol.dance, self.idol.visual, self.idol.life, self.idol.skill]))
-        self.vocal.text = str(self.idol.vocal)
-        self.dance.text = str(self.idol.dance)
-        self.visual.text = str(self.idol.visual)
-        self.life.text = str(self.idol.life)
-        self.skill.text = str(self.idol.skill)
+        self.name.text = data["idoldata"].name
+        self.type.text = data["idoldata"].type.name
+        self.sum.text = str(
+            sum(
+                [
+                    data["idoldata"].vocal,
+                    data["idoldata"].dance,
+                    data["idoldata"].visual,
+                    data["idoldata"].life,
+                    data["idoldata"].skill,
+                ]
+            )
+        )
+        self.vocal.text = str(data["idoldata"].vocal)
+        self.dance.text = str(data["idoldata"].dance)
+        self.visual.text = str(data["idoldata"].visual)
+        self.life.text = str(data["idoldata"].life)
+        self.skill.text = str(data["idoldata"].skill)
         self.overflow.text = "0"
 
         return super().refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        タッチイベントを受け取ったとき、ビューの選択状態を変更する。
 
-        :param MotionEvent touch:
+        ビューの継承元でタッチイベントを処理する場合を除き、タッチイベントを受け取とるとレイアウトにディスパッチする。
+
+        :param MotionEvent touch: 受け取ったタッチイベント。
 
         :return:
+            ``True`` の場合は、ビューの継承元クラスのインスタンスでタッチイベントを処理した。
+            そうでない場合は、レイアウトにディスパッチ（結果として、選択状態を変更）。
         :rtype: Any
         """
 
@@ -103,7 +111,7 @@ class IdolDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         """
         ビューの選択変更時、ビューに反映する。
 
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
+        ビューの選択変更時、ビューに反映する。また、選択状態でのみ、数値入力を可能にする。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -246,17 +254,18 @@ class IdolView(Factory.BoxLayout):
         self.idoldataviews.data = [{"idoldata": idol} for idol in idols]
         self.update_profile()
 
-    def selected(self) -> list[Idol]:
+    def selected(self) -> Idol | None:
         """
-        選択されているアイドルデータを返す。
+        選択されているアイドルデータを返す。選択されていない場合は ``None`` を返す。
         """
 
-        result: list[Idol] = [
-            data["idoldata"]
-            for i, data in enumerate(self.idoldataviews.data)
-            if i in self.idoldataviews.layout_manager.selected_nodes
-        ]
-        return result
+        index: int = (
+            self.idoldataviews.layout_manager.selected_nodes[0]
+            if self.idoldataviews.layout_manager.selected_nodes
+            else -1
+        )
+
+        return self.idoldataviews.data[index]["idoldata"] if index >= 0 else None
 
 
 if __name__ == "__main__":

@@ -167,7 +167,40 @@
                 touch_multiselect: True
                 key_selection: "episodeinfo"
 
-<BuffSkillView>:
+<FiveMemberUnit>:
+    centerposition: centerposition
+    leftposition: leftposition
+    rightposition: rightposition
+    leftendposition: leftendposition
+    rightendposition: rightendposition
+
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 6
+    tab_height: set_height
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: centerposition
+        text: "センター"
+
+    TabbedPanelItem:
+        id: leftposition
+        text: "左隣り"
+
+    TabbedPanelItem:
+        id: rightposition
+        text: "右隣り"
+
+    TabbedPanelItem:
+        id: leftendposition
+        text: "左端"
+
+    TabbedPanelItem:
+        id: rightendposition
+        text: "右端"
+
+<SixMemberUnit>:
     centerposition: centerposition
     leftposition: leftposition
     rightposition: rightposition
@@ -177,8 +210,8 @@
 
 
     tab_pos: "top_left" # "bottom_left"
-    tab_width: self.width / 8
-    tab_height: set_height * 2
+    tab_width: self.width / 6
+    tab_height: set_height
     do_default_tab: False
 
     TabbedPanelItem:
@@ -204,3 +237,35 @@
     TabbedPanelItem:
         id: guestposition
         text: "ゲスト"
+
+<BuffSKillView>
+    wideguest: wideguest
+    widenoguest: widenoguest
+    granda: granda
+    grandb: grandb
+    grandc: grandc
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 5
+    tab_height: set_height
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: wideguest
+        text: "Wide with Guest"
+
+    TabbedPanelItem:
+        id: widenoguest
+        text: "Wide"
+
+    TabbedPanelItem:
+        id: granda
+        text: "GrandLive A"
+
+    TabbedPanelItem:
+        id: grandb
+        text: "GrandLive B"
+
+    TabbedPanelItem:
+        id: grandc
+        text: "GrandLive C"

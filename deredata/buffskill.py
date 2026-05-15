@@ -29,16 +29,11 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
-        データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
+        データ、ビューの初期化時、インデックスを付け直す（class ``RecycleAdapter`` が呼び出す）。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
-        :param dict data: ビューに表示するデータ。
+        :param dict data: ビューに設定されるデータ。
 
         :return: 継承元クラスのメソッドを呼び出す。
         :rtype: Any
@@ -60,11 +55,14 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        ビューがタッチイベントを受け取る。
 
-        :param MotionEvent touch:
+        選択可能である（``selectable`` が **True**）とき、
+        選択状態を反転することを親レイアウトに伝播する。
 
-        :return:
+        :param MotionEvent touch: 受け取ったタッチイベント。
+
+        :return: 親レイアウトに選択状態の反転を要請する。
         :rtype: Any
         """
 
@@ -77,8 +75,6 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     def apply_selection(self, rv: RecycleView, index: int, is_selected: bool) -> None:
         """
         ビューの選択変更時、ビューに反映する。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -122,36 +118,20 @@ class EpisodeSelector(Factory.BoxLayout):
         self.framework.add_widget(self.hold)
 
         self.framework.add_widget(Factory.StrView(text="タイプ"))
-        self.cute = Factory.StrToggleButton(text="CUTE", state="down")
-        self.cute.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.cute)
-        self.cool = Factory.StrToggleButton(text="COOL", state="down")
-        self.cool.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.cool)
-        self.passion = Factory.StrToggleButton(text="PASSION", state="down")
-        self.passion.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.passion)
+        for idoltype in ["CUTE", "COOL", "PASSION"]:
+            togglebutton = Factory.StrToggleButton(text=idoltype, state="normal")
+            togglebutton.bind(state=lambda instance, values: self.update())
+            self.framework.add_widget(togglebutton)
 
         self.framework.add_widget(Factory.StrView(text="レア度"))
-        self.usrplus = Factory.StrToggleButton(text="USRPLUS", state="normal")
-        self.usrplus.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.usrplus)
-        self.ssrplus = Factory.StrToggleButton(text="SSRPLUS", state="down")
-        self.ssrplus.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.ssrplus)
-        self.srplus = Factory.StrToggleButton(text="SRPLUS", state="normal")
-        self.srplus.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.srplus)
-        self.rplus = Factory.StrToggleButton(text="RPLUS", state="normal")
-        self.rplus.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.rplus)
-        self.nplus = Factory.StrToggleButton(text="NPLUS", state="normal")
-        self.nplus.bind(state=lambda instance, values: self.update())
-        self.framework.add_widget(self.nplus)
+        for rare in ["USRPLUS", "SSRPLUS", "SRPLUS", "RPLUS", "NPLUS"]:
+            togglebutton = Factory.StrToggleButton(text=rare, state="normal")
+            togglebutton.bind(state=lambda instance, values: self.update())
+            self.framework.add_widget(togglebutton)
 
         self.framework.add_widget(Factory.StrView(text="特技発動間隔"))
         for interval in sorted({skill.interval for skill in BuffSkillView._skills.gets()}, reverse=True):
-            togglebutton = Factory.StrToggleButton(text=str(interval), state="down")
+            togglebutton = Factory.StrToggleButton(text=str(interval), state="normal")
             togglebutton.bind(state=lambda instance, values: self.update())
             self.framework.add_widget(togglebutton)
 
@@ -186,22 +166,23 @@ class EpisodeSelector(Factory.BoxLayout):
             episodes_by_hold = {episode for episode in BuffSkillView._episodes.gets()}
 
         # アイドルタイプでエピソードを制限
+        types: set[str] = {
+            widget.text
+            for widget in self.framework.children
+            if widget.text in ["CUTE", "COOL", "PASSION"] and widget.state == "down"
+        }
         episodes_by_type: set[Episode] = {
-            episode
-            for episode in BuffSkillView._episodes.gets()
-            if episode.type.name in [type.text for type in [self.cute, self.cool, self.passion] if type.state == "down"]
+            episode for episode in BuffSkillView._episodes.gets() if episode.type.name in types
         }
 
         # レア度でエピソードを制限
+        rares: set[str] = {
+            widget.text
+            for widget in self.framework.children
+            if widget.text in ["USRPLUS", "SSRPLUS", "SRPLUS", "RPLUS", "NPLUS"] and widget.state == "down"
+        }
         episodes_by_rare: set[Episode] = {
-            episode
-            for episode in BuffSkillView._episodes.gets()
-            if episode.rare.name
-            in [
-                rare.text
-                for rare in [self.usrplus, self.ssrplus, self.srplus, self.rplus, self.nplus]
-                if rare.state == "down"
-            ]
+            episode for episode in BuffSkillView._episodes.gets() if episode.rare.name in rares
         }
 
         # センター効果でエピソードを制限
@@ -263,12 +244,56 @@ class EpisodeSelector(Factory.BoxLayout):
         return reslut
 
 
-class BuffSkillView(Factory.TabbedPanel):
+class FiveMemberUnit(Factory.TabbedPanel):
     """
-    立ち位置別、各種条件でアイドルのエピソードを絞り込むウィジット。
+    5人編成
+    """
 
-    :立ち位置:
-      センター、左隣り、右隣り、左端、右端、ゲスト
+    centerposition = Factory.ObjectProperty(None)
+    leftposition = Factory.ObjectProperty(None)
+    rightposition = Factory.ObjectProperty(None)
+    leftendposition = Factory.ObjectProperty(None)
+    rightendposition = Factory.ObjectProperty(None)
+
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
+        super().__init__(**kwargs)
+
+        self.centerposition.add_widget(EpisodeSelector())
+        self.leftposition.add_widget(EpisodeSelector())
+        self.rightposition.add_widget(EpisodeSelector())
+        self.leftendposition.add_widget(EpisodeSelector())
+        self.rightendposition.add_widget(EpisodeSelector())
+
+        BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
+
+    def update(self) -> None:
+        self.centerposition.content.update()
+        self.leftposition.content.update()
+        self.rightposition.content.update()
+        self.leftendposition.content.update()
+        self.rightendposition.content.update()
+
+    def selected(self) -> list[Episode]:
+        """
+        選択されたエピソードを返す。
+        """
+
+        result: list[Episode] = []
+        for position in [
+            self.centerposition,
+            self.leftposition,
+            self.rightposition,
+            self.leftendposition,
+            self.rightendposition,
+        ]:
+            result.append(position.content.selected())
+
+        return result
+
+
+class SixMemberUnit(Factory.TabbedPanel):
+    """
+    6人編成
     """
 
     centerposition = Factory.ObjectProperty(None)
@@ -277,11 +302,6 @@ class BuffSkillView(Factory.TabbedPanel):
     leftendposition = Factory.ObjectProperty(None)
     rightendposition = Factory.ObjectProperty(None)
     guestposition = Factory.ObjectProperty(None)
-
-    _idols: Idols = Idols()
-    _buffs: Buffs = Buffs()
-    _skills: Skills = Skills()
-    _episodes: Episodes = Episodes()
 
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
@@ -292,6 +312,63 @@ class BuffSkillView(Factory.TabbedPanel):
         self.leftendposition.add_widget(EpisodeSelector())
         self.rightendposition.add_widget(EpisodeSelector())
         self.guestposition.add_widget(EpisodeSelector())
+
+        BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
+
+    def update(self) -> None:
+        self.centerposition.content.update()
+        self.leftposition.content.update()
+        self.rightposition.content.update()
+        self.leftendposition.content.update()
+        self.rightendposition.content.update()
+        self.guestposition.content.update()
+
+    def selected(self) -> list[Episode]:
+        """
+        選択されたエピソードを返す。
+        """
+
+        reslut: list[Episode] = []
+        for position in [
+            self.centerposition,
+            self.leftposition,
+            self.rightposition,
+            self.leftendposition,
+            self.rightendposition,
+            self.guestposition,
+        ]:
+            reslut.append(position.content.selected())
+
+        return reslut
+
+
+class BuffSkillView(Factory.TabbedPanel):
+    """
+    立ち位置別、各種条件でアイドルのエピソードを絞り込むウィジット。
+
+    :立ち位置:
+      センター、左隣り、右隣り、左端、右端、ゲスト
+    """
+
+    wideguest = Factory.ObjectProperty(None)
+    widenoguest = Factory.ObjectProperty(None)
+    granda = Factory.ObjectProperty(None)
+    grandb = Factory.ObjectProperty(None)
+    grandc = Factory.ObjectProperty(None)
+
+    _idols: Idols = Idols()
+    _buffs: Buffs = Buffs()
+    _skills: Skills = Skills()
+    _episodes: Episodes = Episodes()
+
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
+        super().__init__(**kwargs)
+
+        self.wideguest.add_widget(SixMemberUnit())
+        self.widenoguest.add_widget(FiveMemberUnit())
+        self.granda.add_widget(FiveMemberUnit())
+        self.grandb.add_widget(FiveMemberUnit())
+        self.grandc.add_widget(FiveMemberUnit())
 
         BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 
@@ -320,29 +397,18 @@ class BuffSkillView(Factory.TabbedPanel):
         更新。
         """
 
-        self.centerposition.content.update()
-        self.leftposition.content.update()
-        self.rightposition.content.update()
-        self.leftendposition.content.update()
-        self.rightendposition.content.update()
-        self.guestposition.content.update()
+        self.wideguest.content.update()
+        self.widenoguest.content.update()
+        self.granda.content.update()
+        self.grandb.content.update()
+        self.grandc.content.update()
 
     def selected(self) -> list[Episode]:
         """
         選択されたエピソードを返す。
         """
 
-        reslut: list[Episode] = []
-        for position in [
-            self.centerposition,
-            self.leftposition,
-            self.rightposition,
-            self.leftendposition,
-            self.rightendposition,
-            self.guestposition,
-        ]:
-            reslut.append(position.content.selected())
-
+        reslut: list[Episode] = self.current_tab.content.selected()
         return reslut
 
 

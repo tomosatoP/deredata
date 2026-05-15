@@ -1,5 +1,5 @@
 """
-モジュール。
+シミュレーターのモジュール。
 """
 
 from asyncio import as_completed, create_task, get_running_loop
@@ -8,7 +8,7 @@ from statistics import median
 from collections.abc import AsyncGenerator
 from concurrent.futures import ProcessPoolExecutor
 
-from deredata.libs.database.idols import Idols
+from deredata.libs.database.idols import Idol, Idols
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.buffs import Buffs
 from deredata.libs.database.skills import Skills
@@ -18,8 +18,6 @@ from deredata.libs.database.musics import Music
 from deredata.libs.simulate.appeal import Calculator
 from deredata.libs.simulate.stage import Simulator
 
-
-from kivy.uix.widget import Widget
 from kivy.factory import Factory
 from kivy.input.motionevent import MotionEvent
 from kivy.uix.recycleview import RecycleView
@@ -37,16 +35,11 @@ class SimulatorDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout)
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
-        データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
+        データの作成・変更時、ビューに反映する。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
-        :param dict data: ビューに結びつけられたデータ。
+        :param dict data: ビューに表示するデータ。
 
         :return: 継承元クラスのメソッドを呼び出す。
         :rtype: Any
@@ -54,34 +47,31 @@ class SimulatorDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout)
 
         self.index = index
 
-        self.music: Music = data["music"]
-        self.unit: Unit = data["unit"]
-        self.scoreview.text = "/".join([str(data["median"]), str(data["max"])])
+        self.musicname.text = data["music"].song.name
 
-        if data["status"] == "追加":
-            # ビューに追加した時に、アピール値計算を行っておく。
-            self.appeals: Calculator = Calculator(self.music)
-            self.appeals.run(self.unit)
-            data["status"] = "アピール値計算完了"
+        self.centerepisode.text = data["unit"].positions.centerposition
+        self.leftepisode.text = data["unit"].positions.leftposition
+        self.rightepisode.text = data["unit"].positions.rightposition
+        self.leftendepisode.text = data["unit"].positions.leftendposition
+        self.rightendepisode.text = data["unit"].positions.rightendposition
+        self.guestepisode.text = data["unit"].positions.guestposition
+
         self.progressview.text = data["status"]
-
-        self.musicname.text = self.music.song.name
-        self.centerepisode.text = self.unit.positions.centerposition
-        self.leftepisode.text = self.unit.positions.leftposition
-        self.rightepisode.text = self.unit.positions.rightposition
-        self.leftendepisode.text = self.unit.positions.leftendposition
-        self.rightendepisode.text = self.unit.positions.rightendposition
-        self.guestepisode.text = self.unit.positions.guestposition
+        self.scoreview.text = "/".join([str(data["median"]), str(data["max"])])
 
         return super().refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        タッチイベントを受け取ったとき、ビューの選択状態を変更する。
 
-        :param MotionEvent touch:
+        ビューの継承元でタッチイベントを処理する場合を除き、タッチイベントを受け取とるとレイアウトにディスパッチする。
+
+        :param MotionEvent touch: 受け取ったタッチイベント。
 
         :return:
+            ``True`` の場合は、ビューの継承元クラスのインスタンスでタッチイベントを処理した。
+            そうでない場合は、レイアウトにディスパッチ（結果として、選択状態を変更）。
         :rtype: Any
         """
 
@@ -95,7 +85,7 @@ class SimulatorDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout)
         """
         ビューの選択変更時、ビューに反映する。
 
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
+        ビューの選択変更時、ビューに反映する。また、選択状態でのみ、数値入力を可能にする。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -106,7 +96,18 @@ class SimulatorDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout)
 
 
 class SimulatorView(Factory.BoxLayout):
+    """
+    シミュレーター（アピール値計算とスコア計算）。
+
+    :ステータス 追加: ライブデータを追加し、アピール値計算待ち状態（楽曲と編成の確認）。
+    :ステータス アピール値計算済: ライブデータのアピール値計算を完了し、スコア計算待ち状態。
+    :ステータス （数字）: ライブデータの繰り返しスコア計算中。数字は終了したスコア計算の回数。
+    :ステータス 完了: ライブデータの繰り返しスコア計算を終了した状態。
+    """
+
     simulatordataviews = Factory.ObjectProperty(None)
+
+    _episodes: Episodes = Episodes()
 
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
@@ -115,71 +116,91 @@ class SimulatorView(Factory.BoxLayout):
 
     @classmethod
     def load(cls) -> None:
+        cls._episodes.load()
         Calculator.load()
         Simulator.load()
 
+        SimulatorLogger.info(f"{cls.__name__}: データベースを読み込みました。")
+
+    def close(self) -> None:
+
+        SimulatorLogger.info(f"{self.__class__.__name__}: 終了します。")
+
     def unit_live(self, music: Music, unit: Unit) -> None:
         """
-        シミュレーターにライブを追加する。
+        シミュレーター（RecycleView）にライブデータを追加する。
 
         :param Music music: ライブのデレステ譜面データ。
         :param Unit unit: ライブのユニット。
-
-        :todo: 追加したら選択状態にしたい。
         """
 
-        # key_selection: "status"
-        self.simulatordataviews.data.append({"status": "追加", "music": music, "unit": unit, "median": 0, "max": 0})
+        # 6人編成のみ。
+        # :todo: 6人編成を確認
+        status: str = "追加"
+        episodes: list[Episode] = [SimulatorView._episodes.get(episodename) for episodename in unit.positions.list()]
+        if music.note_number != 0 and len(episodes) == 6:
+            appeal = Calculator(music)
+            appeal.run(unit)
+            status = "アピール値計算済"
 
-    def buffskill_live(self) -> None:
-        pass
+        self.simulatordataviews.data.append(
+            {
+                "status": status,  # key_selection
+                "music": music,
+                "unit": unit,
+                "appeal": appeal if status == "アピール値計算済" else 0,
+                "median": 0,
+                "max": 0,
+            }
+        )
 
-    def clear_live(self) -> None:
-        pass
+    def buffskill_live(self) -> None: ...
 
     def simulate_live(self) -> None:
         """
-        ライブをシミュレーションする。
+        ライブデータ（状態：アピール値計算済）の繰り返しスコア計算を行う。
 
-        シミュレーションを非同期タスクに投入し、完了したらデータ更新を行う（ビューの更新に波及する）。
+        繰り返しスコア計算を非同期タスクに投入し、完了したらデータ更新する（コールバック）。
         """
 
-        for live in self.simulatordataviews.layout_manager.children:
-            task = create_task(self.async_process_pool_simulate(live))
-            task.add_done_callback(self.simulatordataviews.refresh_from_data)
+        for livedata in self.simulatordataviews.data:
+            if livedata["status"] == "アピール値計算済":
+                task = create_task(self._async_process_pool_simulate(livedata))
+                task.add_done_callback(self.simulatordataviews.refresh_from_data)
 
-    async def async_process_pool_simulate(self, live: Widget) -> None:
+    async def _async_process_pool_simulate(self, livedata: dict) -> None:
         """
-        デレステライブのスコア計算の進捗を live ウィジットに表示する。
+        ライブデータの繰り返しスコア計算の進捗をステータスに書き込む。
 
-        非同期および複数プロセスで実行されたデレステライブのスコア計算結果を順次に受け取り、
-        進捗度（計算回数）を live ウィジットに表示する。
-        全ての計算が完了したら、統計処理（中央値／最大値）の結果を data に反映する。
+        非同期および複数プロセスで実行されたライブデータの繰り返しスコア計算結果を順次に受け取り、
+        進捗度（計算回数）をライブデータのステータスに書き込む。
+        全ての計算が完了したら、統計処理（中央値／最大値）の結果をライブデータに反映する。
 
-        :param Widget live: スコア計算の条件（デレステ楽曲、ユニットメンバーなど）を保持しているウィジット。
+        :param dict livedata: スコア計算の条件（デレステ楽曲、ユニットメンバーなど）を保持しているライブデータ。
         """
 
-        i: int = 0
         items: list = []
-        async for item in self.processpool_simulate(live):
-            i += 1
-            live.progressview.text = str(i)
-            items.append(sum(item))
+        async for i, result in self._processpool_simulate(livedata):
+            livedata["status"] = str(i)
+            items.append(sum(result))
+            self.simulatordataviews.refresh_from_data()
 
-        live.selected = False
-        self.simulatordataviews.data[live.index]["status"] = "完了"
-        self.simulatordataviews.data[live.index]["max"] = int(max(items))
-        self.simulatordataviews.data[live.index]["median"] = int(median(items))
+        livedata["status"] = "完了"
+        livedata["max"] = int(max(items))
+        livedata["median"] = int(median(items))
 
-    async def processpool_simulate(self, live: Widget) -> AsyncGenerator:
+        # :todo: シミュレーション完了後、ライブデータを選択状態を解除。
+        # self.simulatordataviews.layout_manager.deselect_node(livedata["index"])
+
+    async def _processpool_simulate(self, livedata: dict) -> AsyncGenerator:
         """
-        デレステライブのスコア計算を実行する。
+        ライブデータの非同期繰り返しスコア計算を実行する。
 
         特技発動確率で計算結果が変動するので、複数回計算を行う。
         計算の実行時間が長いので、複数プロセスに分散する。
         完了するまで kivy クロックをブロックさせないため、非同期にそれぞれの計算結果を取り出す。
 
-        :param Widget live: スコア計算の条件（デレステ楽曲、ユニットメンバーなど）を保持しているウィジット。
+        :param dict livedata: スコア計算の条件（デレステ楽曲、ユニットメンバーなど）を保持している。
 
         :return: 非同期に取り出されたそれぞれのスコアの計算結果で、ノートスコアのリスト。
         :rtype: AsyncGenerator
@@ -192,16 +213,29 @@ class SimulatorView(Factory.BoxLayout):
             futures = [
                 get_running_loop().run_in_executor(
                     executor,
-                    Simulator(live.music).run,
-                    live.appeals.isresonance,
-                    live.appeals.unit,
-                    live.appeals.supports,
+                    Simulator(livedata["music"]).run,
+                    livedata["appeal"].isresonance,
+                    livedata["appeal"].unit,
+                    livedata["appeal"].supports,
                 )
                 for _ in range(repetitions)
             ]
 
-            for future in as_completed(futures):
-                yield await future
+            for i, future in enumerate(as_completed(futures), start=1):
+                yield (i, await future)
+
+    def selected(self) -> tuple[Music, Unit] | None:
+
+        index: int = (
+            self.simulatordataviews.layout_manager.selected_nodes[0]
+            if self.simulatordataviews.layout_manager.selected_nodes
+            else -1
+        )
+        return (
+            (self.simulatordataviews.data[index]["music"], self.simulatordataviews.data[index]["unit"])
+            if index >= 0
+            else None
+        )
 
 
 if __name__ == "__main__":

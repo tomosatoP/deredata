@@ -29,7 +29,7 @@
         text: "ゲスト"
 
     StrFrameView:
-        text: "進行度"
+        text: "状態"
 
     StrFrameView:
         text: "スコア"
@@ -86,13 +86,14 @@
 
     StrFrameView:
         id: progressview
-        text: "進行度"
+        text: "状態"
 
     StrFrameView:
         id: scoreview
         text: "スコア"
 
 <SimulatorView>:
+    simulatordataviewlabel: simulatordataviewlabel
     simulatordataviews: simulatordataviews
 
     orientation: "vertical"
@@ -113,6 +114,7 @@
             size_hint_y: None
             height: self.minimum_height
             orientation: "vertical"
-            multiselect: True
-            touch_multiselect: True
+            multiselect: False
+            touch_multiselect: False
+            touch_deselect_last: True
             key_selection: "status"

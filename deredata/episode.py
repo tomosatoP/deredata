@@ -170,12 +170,7 @@ class EpisodeDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
         データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -185,34 +180,37 @@ class EpisodeDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         :rtype: Any
         """
 
-        self.episode: Episode = data["episodedata"]
         self.index = index
 
-        self.name.text = self.episode.episode
-        self.type.text = self.episode.type.name
-        self.dominant.text = self.episode.dominant.name
-        self.mystyle.text = str(self.episode.mystyle)
-        self.rare.text = self.episode.rare.name
-        self.buff_class.text = self.episode.buff_class
-        self.skill_class.text = self.episode.skill_class
-        self.star_rank.text = str(self.episode.star_rank)
-        self.skill_level.text = str(self.episode.skill_level)
-        self.level.text = str(self.episode.level)
-        self.affection.text = str(self.episode.affection)
-        self.vocal.text = str(self.episode.vocal)
-        self.dance.text = str(self.episode.dance)
-        self.visual.text = str(self.episode.visual)
-        self.life.text = str(self.episode.life)
+        self.name.text = data["episodedata"].episode
+        self.type.text = data["episodedata"].type.name
+        self.dominant.text = data["episodedata"].dominant.name
+        self.mystyle.text = str(data["episodedata"].mystyle)
+        self.rare.text = data["episodedata"].rare.name
+        self.buff_class.text = data["episodedata"].buff_class
+        self.skill_class.text = data["episodedata"].skill_class
+        self.star_rank.text = str(data["episodedata"].star_rank)
+        self.skill_level.text = str(data["episodedata"].skill_level)
+        self.level.text = str(data["episodedata"].level)
+        self.affection.text = str(data["episodedata"].affection)
+        self.vocal.text = str(data["episodedata"].vocal)
+        self.dance.text = str(data["episodedata"].dance)
+        self.visual.text = str(data["episodedata"].visual)
+        self.life.text = str(data["episodedata"].life)
 
         return super().refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        タッチイベントを受け取ったとき、ビューの選択状態を変更する。
 
-        :param MotionEvent touch:
+        ビューの継承元でタッチイベントを処理する場合を除き、タッチイベントを受け取とるとレイアウトにディスパッチする。
+
+        :param MotionEvent touch: 受け取ったタッチイベント。
 
         :return:
+            ``True`` の場合は、ビューの継承元クラスのインスタンスでタッチイベントを処理した。
+            そうでない場合は、レイアウトにディスパッチ（結果として、選択状態を変更）。
         :rtype: Any
         """
 
@@ -226,7 +224,7 @@ class EpisodeDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         """
         ビューの選択変更時、ビューに反映する。
 
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
+        ビューの選択変更時、ビューに反映する。また、選択状態でのみ、数値入力を可能にする。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -393,14 +391,18 @@ class EpisodeView(Factory.BoxLayout):
 
         self.episodeflavorview.update()
 
-    def selected(self) -> list[Episode]:
+    def selected(self) -> Episode | None:
+        """
+        選択されているエピソードデータを返す。選択されていない場合は ``None`` を返す。
+        """
 
-        result: list[Episode] = [
-            data["episodedata"]
-            for i, data in enumerate(self.episodedataviews.data)
-            if i in self.episodedataviews.layout_manager.selected_nodes
-        ]
-        return result
+        index: int = (
+            self.episodedataviews.layout_manager.selected_nodes[0]
+            if self.episodedataviews.layout_manager.selected_nodes
+            else -1
+        )
+
+        return self.episodedataviews.data[index]["episodedata"] if index >= 0 else None
 
 
 if __name__ == "__main__":

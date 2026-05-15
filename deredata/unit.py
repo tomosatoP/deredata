@@ -24,12 +24,7 @@ class UnitDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
-        データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
+        データの作成・変更時、ビューに反映する。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -39,26 +34,29 @@ class UnitDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         :rtype: Any
         """
 
-        self.unit = data["unitdata"]
         self.index = index
 
-        self.name.text = self.unit.name
-        self.centerposition.text = self.unit.positions.centerposition
-        self.leftposition.text = self.unit.positions.leftposition
-        self.rightposition.text = self.unit.positions.rightposition
-        self.leftendposition.text = self.unit.positions.leftendposition
-        self.rightendposition.text = self.unit.positions.rightendposition
-        self.guestposition.text = self.unit.positions.guestposition
+        self.name.text = data["unitdata"].name
+        self.centerposition.text = data["unitdata"].positions.centerposition
+        self.leftposition.text = data["unitdata"].positions.leftposition
+        self.rightposition.text = data["unitdata"].positions.rightposition
+        self.leftendposition.text = data["unitdata"].positions.leftendposition
+        self.rightendposition.text = data["unitdata"].positions.rightendposition
+        self.guestposition.text = data["unitdata"].positions.guestposition
 
         return super().refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        タッチイベントを受け取ったとき、ビューの選択状態を変更する。
 
-        :param MotionEvent touch:
+        ビューの継承元でタッチイベントを処理する場合を除き、タッチイベントを受け取とるとレイアウトにディスパッチする。
+
+        :param MotionEvent touch: 受け取ったタッチイベント。
 
         :return:
+            ``True`` の場合は、ビューの継承元クラスのインスタンスでタッチイベントを処理した。
+            そうでない場合は、レイアウトにディスパッチ（結果として、選択状態を変更）。
         :rtype: Any
         """
 
@@ -72,7 +70,7 @@ class UnitDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         """
         ビューの選択変更時、ビューに反映する。
 
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
+        ビューの選択変更時、ビューに反映する。また、選択状態でのみ、数値入力を可能にする。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。

@@ -22,7 +22,8 @@ class TimeChart(Factory.Widget):
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
-        self.bind(size=lambda instance, value: self.update())
+        self.music: Music = Music()
+        self.bind(size=lambda instance, value: self.update(self.music))
 
     def clear(self) -> None:
         """
@@ -31,7 +32,7 @@ class TimeChart(Factory.Widget):
 
         self.canvas.clear()
 
-    def update(self, music: Music | None = None) -> None:
+    def update(self, music: Music = Music()) -> None:
         """
         デレステ譜面データを更新する。
 
@@ -75,10 +76,10 @@ class TimeChart(Factory.Widget):
                 label.halign = "left"
                 widget.add_widget(label)
 
-        self.music: Music | None = music if music is not None else self.music if hasattr(self, "music") else None
+        self.music = music
 
         self.canvas.clear()
-        if self.music is not None:
+        if self.music.note_number != 0:
             for note in self.music.notes(include_intervals=5):
                 # 5秒ごとにカウンターを表示する。
 
@@ -97,12 +98,7 @@ class MusicDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
 
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
-        ビューの変更時、インデックスを付け直す。
-
-        データの変更、ビューポートの変更がビューに波及する際に、呼び出される。
-        レイアウトにも波及する場合には、``refresh_view_layout`` も呼び出される。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のメソッドを継承。
+        データの作成・変更時、ビューに反映する。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -112,28 +108,31 @@ class MusicDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         :rtype: Any
         """
 
-        self.music: Music = data["musicdata"]
         self.index = index
 
-        self.songcategory.text = self.music.song.name
-        self.songtype.text = self.music.song.type.name
-        self.songtitle.text = self.music.song.name
-        self.songlevel.text = str(self.music.song.level)
-        self.songtime.text = str(self.music.length)
-        self.notenumber.text = str(self.music.note_number)
-        self.flicknumber.text = str(self.music.flick_number)
-        self.longnumber.text = str(self.music.long_number)
-        self.slidenumber.text = str(self.music.slide_number)
+        self.songcategory.text = data["musicdata"].song.name
+        self.songtype.text = data["musicdata"].song.type.name
+        self.songtitle.text = data["musicdata"].song.name
+        self.songlevel.text = str(data["musicdata"].song.level)
+        self.songtime.text = str(data["musicdata"].length)
+        self.notenumber.text = str(data["musicdata"].note_number)
+        self.flicknumber.text = str(data["musicdata"].flick_number)
+        self.longnumber.text = str(data["musicdata"].long_number)
+        self.slidenumber.text = str(data["musicdata"].slide_number)
 
         return super().refresh_view_attrs(rv, index, data)
 
     def on_touch_down(self, touch: MotionEvent) -> Any:
         """
-        Addselectionontouchdown
+        タッチイベントを受け取ったとき、ビューの選択状態を変更する。
 
-        :param MotionEvent touch:
+        ビューの継承元でタッチイベントを処理する場合を除き、タッチイベントを受け取とるとレイアウトにディスパッチする。
+
+        :param MotionEvent touch: 受け取ったタッチイベント。
 
         :return:
+            ``True`` の場合は、ビューの継承元クラスのインスタンスでタッチイベントを処理した。
+            そうでない場合は、レイアウトにディスパッチ（結果として、選択状態を変更）。
         :rtype: Any
         """
 
@@ -146,8 +145,6 @@ class MusicDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     def apply_selection(self, rv: RecycleView, index: int, is_selected: bool) -> None:
         """
         ビューの選択変更時、ビューに反映する。
-
-        ``kivy.uix.recycleview.views.RecycleDataViewBehavior`` のオーバーライド専用メソッド。
 
         :param RecycleView rv: ビューの親リサイクルビュー。
         :param int index: ビューのインデックス。
@@ -202,7 +199,7 @@ class MusicView(Factory.BoxLayout):
 
     def update_timechart(self, selected_nodes: list[int] = []) -> None:
 
-        music: Music | None = self.musicdataviews.data[selected_nodes[0]]["musicdata"] if selected_nodes else None
+        music: Music = self.musicdataviews.data[selected_nodes[0]]["musicdata"] if selected_nodes else Music()
         self.timechart.update(music)
 
     def update(self) -> None:
@@ -240,14 +237,18 @@ class MusicView(Factory.BoxLayout):
             )
         ]
 
-    def selected(self) -> list[Music]:
+    def selected(self) -> Music | None:
+        """
+        選択されているデレステ譜面データを返す。選択されていない場合は ``None`` を返す。
+        """
 
-        result: list[Music] = [
-            data["musicdata"]
-            for i, data in enumerate(self.musicdataviews.data)
-            if i in self.musicdataviews.layout_manager.selected_nodes
-        ]
-        return result
+        index: int = (
+            self.musicdataviews.layout_manager.selected_nodes[0]
+            if self.musicdataviews.layout_manager.selected_nodes
+            else -1
+        )
+
+        return self.musicdataviews.data[index]["musicdata"] if index >= 0 else None
 
 
 if __name__ == "__main__":
