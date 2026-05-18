@@ -13,7 +13,7 @@ from deredata.libs.database.skills import (
     SkillTriggerType,
     ProbabilityType,
     DurationType,
-    BuffType,
+    PartType,
     IconType,
     PerfectionType,
     EffectType,
@@ -44,7 +44,7 @@ if __name__ == "__main__":
         for data in datas:
             part = SkillPart(
                 name=data["特技パーツ"],
-                bufftype=BuffType(data["特技パーツ効果分類"]),
+                parttype=PartType(data["特技パーツ効果分類"]),
                 member=IdolType(data["適用メンバー"]),
                 icon=IconType(data["適用アイコン"]),
                 perfection=PerfectionType(data["適用判定"]),

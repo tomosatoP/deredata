@@ -141,7 +141,7 @@ class DurationType(StrEnum):
     SIX = "かなりの間"  # 6秒
 
 
-class BuffType(StrEnum):
+class PartType(StrEnum):
     """
     特技パーツ効果分類
     """
@@ -191,31 +191,34 @@ class EffectType(StrEnum):
     """
 
     NA = "非該当"
-    SUPPORT_COMBO = "COMBOサポート"  # COMBO継続｜ライフ計算
-    SUPPORT_PERFECT = "PERFECTサポート"  # **をPERFECTにする
     CONCENTRATION = "集中"  # PERFECT判定される時間が短くなる
-    ADD_LIFE = "ライフ回復"  # **でライフを**回復｜ライフ計算
-    NO_DAMAGE = "ダメージガード"  # ライフが減少しなくなる｜ライフ計算
+    BOOST_DOWN_DAMAGE = "ライフ減少量ダウンブースト"  # ライフ減少量ダウン効果アップ｜ライフ計算
     DOWN_DAMAGE = "ライフ減少量ダウン"  # クリスタル・ヒール｜ライフ計算
-    ADD_LIFE_AT_START = "LIVE開始時にライフ回復"  # クリスタル・ヒール｜ライフ計算
-    BONUS_COMBO = "COMBOボーナス"  # ｜特技倍率（COMBO系）、ライフ計算
-    BONUS_SCORE = "スコアボーナス"  # ｜特技倍率（スコア系）、アピール値、ライフ計算
-    BOOST_COMBO = "COMBOブースト"  # ｜特技倍率（COMBO系）、アイドル人数
-    BOOST_SCORE = "スコアブースト"  # ｜特技倍率（スコア系）、アイドル人数
-    BOOST_SKILL = "特技ブースト"  # ｜特技倍率（スコア系、COMBO系）、他特技
-    BOOST_OTHER_SKILL = "他特技ブースト"  # 他特技
-    ENCORE = "アンコール"  # コピー
-    COPY_BOOST_COMBO = "COMBOブーストコピー"  # ｜特技倍率（COMBO系ミューチャル）
-    COPY_BONUS_COMBO = "COMBOボーナスコピー"  # リフレイン
-    COPY_BOOST_SCORE = "スコアブーストコピー"  # ｜特技倍率（スコア系オルタネイト）
+    ADD_RECOVERY = "ライフ回復付与"  # ダメージガードにライフ回復を付与｜ライフ計算
+    BOOST_RECOVERY = "ライフ回復ブースト"  # ライフ回復量アップ｜ライフ計算
+    RECOVERY = "ライフ回復"  # **でライフを**回復｜ライフ計算
+    NO_DAMAGE = "ダメージガード"  # ライフが減少しなくなる｜ライフ計算
     COPY_BONUS_SCORE = "スコアボーナスコピー"  # リフレイン
+    BONUS_SCORE = "スコアボーナス"  # ｜特技倍率（スコア系）、アピール値、ライフ計算
+    COPY_BOOST_SCORE = "スコアブーストコピー"  # ｜特技倍率（スコア系オルタネイト）
+    BOOST_SCORE = "スコアブースト"  # ｜特技倍率（スコア系）、アイドル人数
     MAGIC = "シンデレラマジック"  # ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用｜
+    ENCORE = "アンコール"  # コピー
+    BOOST_SUPPORT_PERFECT = "PERFECTサポートブースト"  # PERFECTサポート効果アップ
+    SUPPORT_PERFECT = "PERFECTサポート"  # **をPERFECTにする
+    RECOVERY_AT_START = "LIVE開始時にライフ回復"  # クリスタル・ヒール｜ライフ計算
+    COPY_BONUS_COMBO = "COMBOボーナスコピー"  # リフレイン
+    BONUS_COMBO = "COMBOボーナス"  # ｜特技倍率（COMBO系）、ライフ計算
+    COPY_BOOST_COMBO = "COMBOブーストコピー"  # ｜特技倍率（COMBO系ミューチャル）
+    BOOST_COMBO = "COMBOブースト"  # ｜特技倍率（COMBO系）、アイドル人数
+    BOOST_SUPPORT_COMBO = "COMBOサポートブースト"  # COMBOサポート効果アップ
+    SUPPORT_COMBO = "COMBOサポート"  # COMBO継続｜ライフ計算
 
 
 @dataclass(order=True, frozen=True)
 class SkillPart:
     name: str = "特技パーツ"  # 特技パーツ
-    bufftype: BuffType = field(default=BuffType.NA, compare=False)  # 特技パーツ効果分類
+    parttype: PartType = field(default=PartType.NA, compare=False)  # 特技パーツ効果分類
     member: IdolType = field(default=IdolType.NA, compare=False)  # 適用メンバー
     icon: IconType = field(default=IconType.NA, compare=False)  # 適用アイコン
     perfection: PerfectionType = field(default=PerfectionType.NA, compare=False)  # 適用判定
@@ -367,7 +370,7 @@ class Skills:
             for skillpart in data["特技パーツ"]:
                 skillpart = SkillPart(
                     name=skillpart["特技パーツ"],
-                    bufftype=skillpart["特技パーツ効果分類"],
+                    parttype=skillpart["特技パーツ効果分類"],
                     member=IdolType(skillpart["適用メンバー"]),
                     icon=IconType(skillpart["適用アイコン"]),
                     perfection=PerfectionType(skillpart["適用判定"]),
@@ -414,7 +417,7 @@ class Skills:
                 "特技パーツ": [
                     {
                         "特技パーツ": skillpart.name,
-                        "特技パーツ効果分類": BuffType(skillpart.bufftype),
+                        "特技パーツ効果分類": PartType(skillpart.parttype),
                         "適用メンバー": IdolType(skillpart.member),
                         "適用アイコン": IconType(skillpart.icon),
                         "適用判定": PerfectionType(skillpart.perfection),
