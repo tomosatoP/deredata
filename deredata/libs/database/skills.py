@@ -217,17 +217,44 @@ class EffectType(StrEnum):
 
 @dataclass(order=True, frozen=True)
 class SkillPart:
-    name: str = "特技パーツ"  # 特技パーツ
-    parttype: PartType = field(default=PartType.NA, compare=False)  # 特技パーツ効果分類
-    member: IdolType = field(default=IdolType.NA, compare=False)  # 適用メンバー
-    icon: IconType = field(default=IconType.NA, compare=False)  # 適用アイコン
-    perfection: PerfectionType = field(default=PerfectionType.NA, compare=False)  # 適用判定
-    effect: EffectType = field(default=EffectType.NA, compare=False)  # 特技パーツ効果
-    value: str | float = field(default=0.0, compare=False)  # 効果量
+    """
+    特技パーツのデータクラス。
+
+    :param str name: 特技パーツ（アクセスキー）。
+    :param PartType parttype: 特技パーツ効果分類。
+    :param IdolType member: 適用メンバー。
+    :param IconType icon: 適用アイコン。
+    :param PerfectionType perfection: 適用判定。
+    :param EffectType effect: 特技パーツ効果。
+    :param str | float value: 効果量。
+    """
+
+    name: str = "特技パーツ"
+    parttype: PartType = field(default=PartType.NA, compare=False)
+    member: IdolType = field(default=IdolType.NA, compare=False)
+    icon: IconType = field(default=IconType.NA, compare=False)
+    perfection: PerfectionType = field(default=PerfectionType.NA, compare=False)
+    effect: EffectType = field(default=EffectType.NA, compare=False)
+    value: str | float = field(default=0.0, compare=False)
 
 
 @dataclass(order=True, frozen=True)
 class Skill:
+    """
+    特技のデータクラス。
+
+    :param str name: 特技説明（アクセスキー）。
+    :param str skill: 特技。
+    :param str category: 特技分類。
+    :param SkillTriggerType trigger: 発動要件。
+    :param MusicType music: 楽曲要件。
+    :param UnitType formation: 編成要件。
+    :param int interval: 発動間隔（秒）。
+    :param ProbabilityType probability: 発動確率。
+    :param DurationType duration: 継続期間。
+    :param set[SkillPart] skillparts: 特技パーツの集合。
+    """
+
     name: str = "特技説明"  # 特技説明
     skill: str = field(default="特技", compare=False)  # 特技
     category: str = field(default="特技分類", compare=False)  # 特技分類
