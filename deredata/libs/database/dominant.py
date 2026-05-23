@@ -73,7 +73,7 @@ class Dominants:
         アイドルの編成人数によって決まる特技モチーフの効果量。
 
         :param int number: アイドルの編成人数。
-        :param int type: ``0`` の時は、スコアボーナス効果量。``1`` の時は、COMBOボーナス効果量。
+        :param int type: ``0`` の時は、スコアブースト効果量。``1`` の時は、COMBOブースト効果量。
         :param bool guest: 初期値 ``True`` の場合にゲスト有り。``False`` の時はゲスト無し。
 
         :retrun: 特技効果量。
