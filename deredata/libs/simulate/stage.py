@@ -478,13 +478,15 @@ def skillpart_boost_score(
     :rtype: np.ndarray
     """
 
+    result: np.ndarray = data[IndicesSkillCategory.SCORE]
+
     match skillpart.member:
         case IdolType.UNITS:
             # スキルブースト
             # トリコロール・シンフォニー
             # スターライトアンサンブル
             for i in range(context.size):
-                data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = SkillPart.value
+                result[i][IndicesSkillCategoryElement.BOOST] = SkillPart.value
 
         case IdolType.CUTE_OF_UNITS:
             for i in range(context.size):
@@ -492,12 +494,12 @@ def skillpart_boost_score(
                     match skillpart.value:
                         case float(value):
                             # キュートアンサンブル
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = value
+                            result[i][IndicesSkillCategoryElement.BOOST] = value
 
                         case str(HARMONY) if HARMONY == "キュートアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = (
-                                Simulator._dominants.value(number=context.list_numbers_by_type[0], type=0, guest=True)
+                            result[i][IndicesSkillCategoryElement.BOOST] = Simulator._dominants.value(
+                                number=context.list_numbers_by_type[0], type=0, guest=True
                             )
 
                         case _:
@@ -509,12 +511,12 @@ def skillpart_boost_score(
                     match skillpart.value:
                         case float(value):
                             # クールアンサンブル
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = value
+                            result[i][IndicesSkillCategoryElement.BOOST] = value
 
                         case str(HARMONY) if HARMONY == "クールアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = (
-                                Simulator._dominants.value(number=context.list_numbers_by_type[1], type=0, guest=True)
+                            result[i][IndicesSkillCategoryElement.BOOST] = Simulator._dominants.value(
+                                number=context.list_numbers_by_type[1], type=0, guest=True
                             )
 
                         case _:
@@ -526,12 +528,12 @@ def skillpart_boost_score(
                     match skillpart.value:
                         case float(value):
                             # パッションアンサンブル
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = value
+                            result[i][IndicesSkillCategoryElement.BOOST] = value
 
                         case str(HARMONY) if HARMONY == "パッションアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            data[IndicesSkillCategory.SCORE][i][IndicesSkillCategoryElement.BOOST] = (
-                                Simulator._dominants.value(number=context.list_numbers_by_type[2], type=0, guest=True)
+                            result[i][IndicesSkillCategoryElement.BOOST] = Simulator._dominants.value(
+                                number=context.list_numbers_by_type[2], type=0, guest=True
                             )
 
                         case _:
@@ -540,6 +542,7 @@ def skillpart_boost_score(
         case _:
             LibsStageLogger.error(f"特技パーツ：スコアブーストの条件不適合。{skillpart.icon}, {skillpart.value}")
 
+    data[IndicesSkillCategory.SCORE] = result
     return data
 
 
@@ -1360,6 +1363,7 @@ class Simulator:
                 number_type(episodes, IdolType.COOL, DominantType.COOL),
                 number_type(episodes, IdolType.PASSION, DominantType.PASSION),
             ],
+            list_idoltypes=[episode.type for episode in episodes[:UNIT_SIZE]],
             list_intervals=[
                 int(Simulator._skills.get(episode.skill).interval * FPS) for episode in episodes[:UNIT_SIZE]
             ],
