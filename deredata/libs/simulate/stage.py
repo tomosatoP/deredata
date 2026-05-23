@@ -1248,7 +1248,7 @@ skill_restricted_funcname: dict[str, Callable] = {
     "トリコロール・シナジー": skill_restricted_unit,
     "トリコロール・シンフォニー": skill_restricted_unit,
     # skill_restricted_music
-    "スターライト・アンサンブル": skill_restricted_music,
+    "スターライトアンサンブル": skill_restricted_music,
     # skill_restricted_music_and_unit
     "トリコロール・スパイク": skill_restricted_music_and_unit,
     "ドミナント・ハーモニー": skill_restricted_music_and_unit,
