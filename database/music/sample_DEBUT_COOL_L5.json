@@ -1,9 +1,9 @@
 {
     "video": "input/sample_DEBUT_ALL_L5.mp4",
     "song": {
-        "name": "全体楽曲のサンプル",
+        "name": "クール楽曲のサンプル",
         "level": 5,
-        "type": "ALL",
+        "type": "COOL",
         "category": "WIDE:DEBUT"
     },
     "last_index": 2271,

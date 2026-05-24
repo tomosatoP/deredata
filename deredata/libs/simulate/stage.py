@@ -1,23 +1,33 @@
 """
 デレステの ``スコア計算`` を扱うモジュール。
 
-``アピール値計算モジュール`` で求めたアピール値からスコアをシミュレートする。
+``アピール値計算モジュール`` で求めたアピール値などからスコアをシミュレートする。
 まずは、通常のゲストメンバー有りの ``WIDEライブ`` に対応する。
 ``GrandLive`` や ``LiveCarnival（Booth効果）`` にも対応したい。
 
 :入力:
-    | デレステ譜面データのファイル名
-    | レゾナンスの適否
-    | ゲストを含むユニットメンバーのエピソード名リスト
-    | ゲストを含むユニットメンバーのアピール値（ボーカル・ダンス・ビジュアル）
-    | ゲストを含むユニットメンバーのライフ
-    | ユニットメンバーの特技発動確率
-    | ユニットメンバーの特技継続期間
-    | サポートメンバーのエピソード名リスト。*LiveCarnivalでは、不要。*
-    | サポートメンバーのアピール値（ボーカル・ダンス・ビジュアル）。*LiveCarnivalでは、不要。*
+    デレステ譜面データのファイル名。アピール値計算に用いたファイルと一致させること。
+    
+    アピール値計算の結果 ``isresonance``
+        - レゾナンスの適否。
+
+    アピール値計算の結果 ``unit``
+        - 0: ゲストを含むユニットメンバーのエピソード名リスト。
+        - 1: ゲストを含むユニットメンバーのボーカルアピール値リスト。
+        - 2: ゲストを含むユニットメンバーのダンスアピール値リスト。
+        - 3: ゲストを含むユニットメンバーのビジュアルアピール値リスト。
+        - 4: ゲストを含むユニットメンバーのライフのリスト。
+        - 5: ユニットメンバーの特技発動確率のリスト。
+        - 6: ユニットメンバーの特技継続期間のリスト。
+    
+    アピール値計算の結果 ``supports`` （*LiveCarnivalでは、不要。*）
+        - 0: サポートメンバーのエピソード名リスト。
+        - 1: サポートメンバーのボーカルアピール値リスト。
+        - 2: サポートメンバーのダンスアピール値リスト。
+        - 3: サポートメンバーのビジュアルアピール値リスト。
 
 :出力:
-    ノートごとのスコアリスト
+    ノートスコアのリスト
 
 スコア計算の流れ
 
@@ -66,6 +76,7 @@
 """
 
 import numpy as np
+import re
 from functools import reduce, partial, wraps
 from typing import Callable, Any
 from operator import mul
@@ -88,6 +99,7 @@ from deredata.libs.database.lifesparkle import Lifesparkles
 from kivy.logger import Logger as LibsStageLogger
 
 UNIT_SIZE: int = 5  # とりあえず5人固定で実装
+re_excluding_digits = re.compile(r"\D")  # 数字以外に適用する正規表現
 
 
 class StageError(Exception):
@@ -188,9 +200,35 @@ class Life:
 
 
 @dataclass
+class LiveStatus:
+    """
+    ライブ進行（ノートのスコア計算）のステータスのデータクラス。
+
+    :param Life life:
+        ライフ。
+    :param Skill skill:
+        特技。
+    :param int position:
+        特技を持つアイドルのライブ中の立ち位置。
+
+        - 0: センター
+        - 1: 左隣り
+        - 2: 右隣り
+        - 3: 左端
+        - 4: 右端
+
+    :todo: 特技発動時間割
+    """
+
+    life: Life = field(default_factory=Life)
+    skill: Skill = field(default=Skill())
+    position: int = 0
+
+
+@dataclass
 class LiveContext:
     """
-    ノートのスコア計算のライブコンテキストのデータクラス。
+    ライブ進行（ノートのスコア計算）のコンテキストのデータクラス。
 
     :param Life life:
         ライフ。
@@ -203,30 +241,42 @@ class LiveContext:
     :param int size:
         人数。
     :param int vocal_appeal:
-        ゲストを除くユニットメンバーのボーカルアピール値
+        ゲストを除くユニットメンバーのボーカルアピール値。
+        特技・ボーカルモチーフの効果量の評価に用いる。
     :param int dance_appeal:
-        ゲストを除くユニットメンバーのダンスアピール値
+        ゲストを除くユニットメンバーのダンスアピール値。
+        特技・ダンスモチーフの効果量の評価に用いる。
     :param int visual_appeal:
-        ゲストを除くユニットメンバーのビジュアルアピール値
+        ゲストを除くユニットメンバーのビジュアルアピール値。
+        特技・ビジュアルモチーフの効果量の評価に用いる。
     :param SongType livesong_type:
-        ライブの楽曲タイプ。楽曲要件の判定に用いる。
+        ライブの楽曲タイプ。
+        楽曲要件の判定に用いる。
     :param set[IdolType] set_idoltypes:
         ゲストを含むユニットメンバーのアイドルタイプの集合。
+        編成要件の判定に用いる。
     :param list[int] list_numbers_by_type:
         ゲストを含むユニットメンバーのアイドルタイプ（ドミナントアイドルタイプを含む）別の人数リスト。
-            - 0: キュートアイドルタイプ、キュートドミナントアイドルタイプ、
-            - 1: クールアイドルタイプ、クールドミナントアイドルタイプ、
-            - 2 パッションアイドルタイプ、パッションドミナントアイドルタイプ
+        特技・ドミナント・ハーモニーの効果量の評価に用いる。
+
+        - 0: キュートアイドルタイプ、キュートドミナントアイドルタイプ、
+        - 1: クールアイドルタイプ、クールドミナントアイドルタイプ、
+        - 2 パッションアイドルタイプ、パッションドミナントアイドルタイプ
     :param list[IdolType] list_idoltypes:
         ゲストを除くユニットメンバーのアイドルタイプ。
+        特技・アイドルタイプ・アンサンブル、ドミナント・ハーモニーの適用メンバーの評価に用いる。
     :param list[int] list_intervals:
         ゲストを除くユニットメンバーの特技の発動間隔（単位時間当たり）のリスト。
+        特技発動時間割の作成、更新に用いる。
     :param list[float] list_probabilities:
         ``appeals`` で求めたゲストを除くユニットメンバーの特技の発動確率のリスト。
+        特技発動時間割の作成、更新に用いる。
     :param list[int] list_durations:
         ``appeals`` で求めたゲストを除くユニットメンバーの特技の継続期間（単位時間当たり）のリスト。
+        特技発動時間割の作成、更新に用いる。
     :param list[Skill] list_skills:
         ゲストを除くユニットメンバーの特技リスト。
+        特技発動時間割の作成、更新に用いる。
     """
 
     life: Life = field(default_factory=Life)
@@ -283,7 +333,9 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
         """
 
         result = partial(func, note, position, context, skillpart, data)()
-        LibsStageLogger.debug(f"特技パーツ・{skillpart.name}の特技効果量配列: {result.ravel()}")
+        LibsStageLogger.debug(
+            f"stage: 特技パーツ・{skillpart.name}の特技効果量配列 {','.join(str(result).splitlines())}"
+        )
         return result
 
     return wrapper
@@ -1388,6 +1440,8 @@ class Simulator:
 
         timetables: list[list[TimeTable]] = self._skill_timetables(live_context)
 
+        live_status = LiveStatus(life=Life(value=sum([life for life in unit[4]])))
+
         LibsStageLogger.debug(f"楽曲: {self._music.song.type}タイプ、レベル{self._music.song.level}")
         LibsStageLogger.debug(f"特技: {[skill.skill for skill in live_context.list_skills]}")
         LibsStageLogger.debug(f"特技発動確率: {live_context.list_probabilities}")
@@ -1402,14 +1456,23 @@ class Simulator:
             filter(
                 None,
                 (
-                    self._streaming_note_by_note(note=note, context=live_context, timetables=timetables)
+                    self._streaming_note_by_note(
+                        note=note,
+                        context=live_context,
+                        status=live_status,
+                        timetables=timetables,
+                    )
                     for note in sorted(self._music.notes(include_intervals=1))
                 ),
             )
         )
 
     def _streaming_note_by_note(
-        self, note: Note, context: LiveContext, timetables: list[list[TimeTable]]
+        self,
+        note: Note,
+        context: LiveContext,
+        status: LiveStatus,
+        timetables: list[list[TimeTable]],
     ) -> int | None:
         """
         **note** 単位でライブを進める。
@@ -1429,16 +1492,23 @@ class Simulator:
         match note.type:
             case NoteType.COUNT:
                 # 特技発動時間割を更新（ライフ消費などの際）。
-                self._substract_life_upon(note, context, timetables)
+                self._substract_life_upon(note, context, status, timetables)
                 return None
 
             case _:
                 # ノートのスコアを計算。
 
                 self.combo += 1  # コンボ継続
-                return self._note_score(self.combo, note, context, timetables)
+                return self._note_score(self.combo, note, context, status, timetables)
 
-    def _note_score(self, combo: int, note: Note, context: LiveContext, timetables: list[list[TimeTable]]) -> int:
+    def _note_score(
+        self,
+        combo: int,
+        note: Note,
+        context: LiveContext,
+        status: LiveStatus,
+        timetables: list[list[TimeTable]],
+    ) -> int:
         """
         ノートのスコアを計算する。
 
@@ -1463,7 +1533,7 @@ class Simulator:
                     Simulator._comborates.rate(combo / self._music.note_number),
                     reduce(
                         mul,  # 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系）倍率
-                        self._skillcategory_rates(note=note, context=context, timetables=timetables),
+                        self._skillcategory_rates(note, context, status, timetables),
                     ),
                 ],
             )
@@ -1545,7 +1615,13 @@ class Simulator:
 
         return timetables
 
-    def _substract_life_upon(self, note: Note, context: LiveContext, timetables: list[list[TimeTable]]) -> None:
+    def _substract_life_upon(
+        self,
+        note: Note,
+        context: LiveContext,
+        status: LiveStatus,
+        timetables: list[list[TimeTable]],
+    ) -> None:
         """
         発動時にライフ消費を必要とする特技の発動評価を特技時間割に反映する。
 
@@ -1572,29 +1648,18 @@ class Simulator:
             ]:
                 for th in timetable:
                     if th.start == note.timestamp:
-                        match context.list_skills[position].trigger:
-                            case SkillTriggerType.SUBSTRACTLIFE_06:
-                                th.active = context.life.update(-6)
+                        value = int(re_excluding_digits.sub("", context.list_skills[position].trigger.value))
+                        th.active = status.life.update(-value)
 
-                            case SkillTriggerType.SUBSTRACTLIFE_09:
-                                th.active = context.life.update(-9)
+        LibsStageLogger.debug(f"{self.__class__.__name__}._substract_life_upon: 残ライフ値 {status.life.value}")
 
-                            case SkillTriggerType.SUBSTRACTLIFE_11:
-                                th.active = context.life.update(-11)
-
-                            case SkillTriggerType.SUBSTRACTLIFE_15:
-                                th.active = context.life.update(-15)
-
-                            case SkillTriggerType.SUBSTRACTLIFE_18:
-                                th.active = context.life.update(-18)
-
-                            case SkillTriggerType.SUBSTRACTLIFE_25:
-                                th.active = context.life.update(-25)
-
-                            case SkillTriggerType.SUBSTRACTLIFE_28:
-                                th.active = context.life.update(-28)
-
-    def _skillcategory_rates(self, note: Note, context: LiveContext, timetables: list[list[TimeTable]]) -> list[float]:
+    def _skillcategory_rates(
+        self,
+        note: Note,
+        context: LiveContext,
+        status: LiveStatus,
+        timetables: list[list[TimeTable]],
+    ) -> list[float]:
         """
         ノートの特技系統（参照：列挙クラス ``IndicesSkillCategory``）倍率を計算する。
 
