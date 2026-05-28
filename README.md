@@ -38,7 +38,7 @@
 
 ## インストール手順
 
-WSL2 ubutntu 環境で動作します。
+WSL2 ubuntu 環境で動作します。
 
 ### 前準備
 
@@ -59,6 +59,15 @@ cd derenotes
 . venv/bin/activate
 pip install git+https://github.com/tomosatoP/deredata.git
 init
+~~~
+
+### アップデート
+
+~~~shell
+cd derenotes
+
+. venv/bin/activate
+pip install -U git+https://github.com/tomosatoP/deredata.git
 ~~~
 
 ## 使い方
