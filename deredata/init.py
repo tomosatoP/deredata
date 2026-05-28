@@ -21,7 +21,7 @@ TEXTDATA_FOLDERNAME: str = "textdata"
 # データベースファイルのフォルダ
 DATABASE_FOLDERNAME: str = "database"
 # デレステ譜面データファイルのフォルダ
-MUSIC_FOLDERNAME: str = "databese/music"
+MUSIC_FOLDERNAME: str = "database/music"
 
 
 def setup_folders() -> None:
