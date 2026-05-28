@@ -102,7 +102,22 @@ class SkillsError(Exception):
 
 class SkillTriggerType(StrEnum):
     """
-    特技発動要件
+    特技発動要件の列挙クラス。
+
+    :param str NA: "非該当"
+    :param str SUBSTRACTLIFE_06: "ライフを6消費"
+    :param str SUBSTRACTLIFE_09: "ライフを9消費"
+    :param str SUBSTRACTLIFE_11: "ライフを11消費"
+    :param str SUBSTRACTLIFE_15: "ライフを15消費"
+    :param str SUBSTRACTLIFE_18: "ライフを18消費"
+    :param str SUBSTRACTLIFE_25: "ライフを25消費"
+    :param str SUBSTRACTLIFE_28: "ライフを28消費"
+    :param str REFRAIN: "リフレイン"
+    :param str ALTERNATE: "オルタネイト"
+    :param str MUTUAL: "ミューチャル"
+    :param str ENCORE: "アンコール"
+    :param str MAGIC: "シンデレラマジック" - ユニット編成アイドル全員の特技効果を発動
+    :param str NO_ENCORE_OR_MAGIC: "アンコール、シンデレラマジックで発動不可" - クリスタル・ヒール
     """
 
     NA = "非該当"
@@ -113,8 +128,12 @@ class SkillTriggerType(StrEnum):
     SUBSTRACTLIFE_18 = "ライフを18消費"
     SUBSTRACTLIFE_25 = "ライフを25消費"
     SUBSTRACTLIFE_28 = "ライフを28消費"
-    MAGIC = "シンデレラマジック"  # "ユニット編成アイドル全員の特技効果を発動"
-    NO_ENCORE_OR_MAGIC = "アンコール、シンデレラマジックで発動不可"  # クリスタル・ヒール
+    REFRAIN = "リフレイン"
+    ALTERNATE = "オルタネイト"
+    MUTUAL = "ミューチャル"
+    ENCORE = "アンコール"
+    MAGIC = "シンデレラマジック"
+    NO_ENCORE_OR_MAGIC = "アンコール、シンデレラマジックで発動不可"
 
 
 class ProbabilityType(StrEnum):
