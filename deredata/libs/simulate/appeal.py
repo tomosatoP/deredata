@@ -7,28 +7,37 @@
 ``GrandLive`` や ``LiveCarnival（Booth効果）`` にも対応したい。
 
     .. csv-table:: 通常ライブとLiveCarnivalのライブの比較
-      :header-rows: 1
+        :header-rows: 1
+        :stub-columns: 1
 
-      "項目", "通常ライブ", "LiveCarnival"
-      "サポートメンバー", "有り", "無し"
-      "ゲスト", "有り", "無し"
-      "ゲストサポート", "無し", "センター以外に1名配置可能。ライブ全体で3名まで配置可能"
-      "マイスタイル", "？", "ユニットに1名配置可能"
+        "項目", "通常ライブ", "LiveCarnival"
+        "サポートメンバー", "有り", "無し"
+        "ゲスト", "有り", "無し"
+        "ゲストサポート", "無し", "センター以外に1名配置可能。ライブ全体で3名まで配置可能"
+        "マイスタイル", "？", "ユニットに1名配置可能"
 
     .. csv-table:: LiveCarnivalのBooth効果
-      :header-rows: 1
+        :header-rows: 1
+        :stub-columns: 1
+        :widths: 1, 3
 
-      "BOOTH効果", "説明"
-      "キュート／クール／パッション", "対象タイプ楽曲のみ選択可能、対象タイプアイドルのアピール値アップ。"
-      "全てのアイドル", "全アイドルのアピール値がアップ。"
-      "ボーカル／ダンス／ビジュアル", "対象アピール値がアップ。"
-      "ボーカルのみ／ダンスのみ／ビジュアルのみ", "対象アピール値がアップ、それ以外はゼロ。"
-      "ユニットのライフ", "ユニットのライフに応じてアピール値がアップ。"
-      "アイドルのスターランク", "アイドルのスターランクに応じてアピール値がアップ。"
-      "プロデュースpt", "アイドルの開放されているプロデュースptに応じてアピール値がアップ。"
-      "イベント指定アイドル", "イベント指定アイドルのアピール値アップ。"
-      "選曲指定", "アピール値アップ。"
-      "特技指定", "対象の特技を持つアイドルのみアピール値アップ。"
+        "BOOTH効果", "説明"
+        "| キュート
+        | クール
+        | パッション", "対象タイプ楽曲のみ選択可能、対象タイプアイドルのアピール値アップ。"
+        "全てのアイドル", "全アイドルのアピール値がアップ。"
+        "| ボーカル
+        | ダンス
+        | ビジュアル", "対象アピール値がアップ。"
+        "| ボーカルのみ
+        | ダンスのみ
+        | ビジュアルのみ", "対象アピール値がアップ、それ以外はゼロ。"
+        "ユニットのライフ", "ユニットのライフに応じてアピール値がアップ。"
+        "アイドルのスターランク", "アイドルのスターランクに応じてアピール値がアップ。"
+        "プロデュースpt", "アイドルの開放されているプロデュースptに応じてアピール値がアップ。"
+        "イベント指定アイドル", "イベント指定アイドルのアピール値アップ。"
+        "選曲指定", "アピール値アップ。"
+        "特技指定", "対象の特技を持つアイドルのみアピール値アップ。"
 
 :入力:
     - デレステ譜面データ
@@ -39,18 +48,18 @@
 
     ユニット情報
         - 0: ゲストを含むユニットメンバーのエピソード名リスト
-        - 1: ゲストを含むユニットメンバーのボーカルアピール値
-        - 2: ゲストを含むユニットメンバーのダンスアピール値
-        - 3: ゲストを含むユニットメンバーのビジュアルアピール値
-        - 4: ゲストを含むユニットメンバーのライフ
-        - 5: ユニットメンバーの特技発動確率
-        - 6 ユニットメンバーの特技継続期間
+        - 1: ゲストを含むユニットメンバーのボーカルアピール値リスト
+        - 2: ゲストを含むユニットメンバーのダンスアピール値リスト
+        - 3: ゲストを含むユニットメンバーのビジュアルアピール値リスト
+        - 4: ゲストを含むユニットメンバーのライフリスト
+        - 5: ユニットメンバーの特技発動確率リスト
+        - 6: ユニットメンバーの特技継続期間リスト
 
     サポートメンバー情報
         - 0: サポートメンバーのエピソード名リスト
-        - 1: サポートメンバーのボーカルアピール値
-        - 2: サポートメンバーのダンスアピール値
-        - 3: サポートメンバーのビジュアルアピール値
+        - 1: サポートメンバーのボーカルアピール値リスト
+        - 2: サポートメンバーのダンスアピール値リスト
+        - 3: サポートメンバーのビジュアルアピール値リスト
 """
 
 import numpy as np
@@ -81,7 +90,7 @@ class AppealError(Exception):
         LibsAppealLogger.error(f"AppealError: {args}")
 
 
-class AppealID(IntEnum):
+class AppealIndices(IntEnum):
     """
     アピール値（エピソード名を除く）タイプの列挙クラス。
 
@@ -93,12 +102,12 @@ class AppealID(IntEnum):
     :DURATION: 5: 特技継続期間
     """
 
-    VOCAL = 0  # ボーカル
-    DANCE = 1  # ダンス
-    VISUAL = 2  # ビジュアル
-    LIFE = 3  # ライフ
-    PROBABILITY = 4  # 特技発動率
-    DURATION = 5  # 特技継続期間
+    VOCAL = 0
+    DANCE = 1
+    VISUAL = 2
+    LIFE = 3
+    PROBABILITY = 4
+    DURATION = 5
 
 
 @dataclass
@@ -120,15 +129,15 @@ class BuffPartContext:
     :アピール: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
 
     :param BuffPart buffpart: センター効果パーツ。
-    :param SongType livesong_type: ライブの楽曲タイプ。
-    :param list[IdolType] idol_typelist: ゲストを含むユニットメンバーのアイドルタイプリスト
-    :param list[DominantType] dominant_typelist: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
+    :param SongType live_songtype: ライブの楽曲タイプ。
+    :param list[IdolType] idoltypes_list: ゲストを含むユニットメンバーのアイドルタイプリスト
+    :param list[DominantType] dominanttypes_list: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
     """
 
     buffpart: BuffPart = BuffPart()
-    livesong_type: SongType = SongType.ALL
-    idol_typelist: list[IdolType] = field(default_factory=list)
-    dominant_typelist: list[DominantType] = field(default_factory=list)
+    live_songtype: SongType = SongType.ALL
+    idoltypes_list: list[IdolType] = field(default_factory=list)
+    dominanttypes_list: list[DominantType] = field(default_factory=list)
 
 
 @dataclass
@@ -143,65 +152,76 @@ class BuffContext:
     :param bool on_resonance: レゾナンス（全ての特技効果が重複時に加算）
     :param int position: 立ち位置（センター、左隣、右隣、左端、右端、ゲスト）
     :param Buff buff: センター効果
-    :param SongType livesong_type: ライブの楽曲のタイプ
-    :param set[IdolType] idol_typeset: ゲストを含むユニットメンバーのアイドルタイプ集合
-    :param set[DominantType] dominant_typeset: ゲストを含むユニットメンバーのドミナントアイドルタイプ集合
-    :param set[str] skill_classset: ゲストを含むユニットメンバーの特技集合
-    :param list[IdolType] idol_typelist: ゲストを含むユニットメンバーのアイドルタイプリスト
-    :param list[DominantType] dominant_typelist: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
-    :param list[Episode] episode_list: ゲストを含むユニットメンバーのエピソードリスト
-    :param list[Buff] buff_list: ゲストを含むユニットメンバーのセンター効果リスト
+    :param SongType live_songtype: ライブの楽曲のタイプ
+    :param set[IdolType] idoltypes_set: ゲストを含むユニットメンバーのアイドルタイプ集合
+    :param set[DominantType] dominanttypes_set: ゲストを含むユニットメンバーのドミナントアイドルタイプ集合
+    :param set[str] skillclasses_set: ゲストを含むユニットメンバーの特技集合
+    :param list[IdolType] idoltypes_list: ゲストを含むユニットメンバーのアイドルタイプリスト
+    :param list[DominantType] dominanttypes_list: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
+    :param list[Episode] episodes_list: ゲストを含むユニットメンバーのエピソードリスト
+    :param list[Buff] buffs_list: ゲストを含むユニットメンバーのセンター効果リスト
     """
 
     on_resonance: bool = False
     position: int = 0
     buff: Buff = Buff()
-    livesong_type: SongType = SongType.ALL
-    idol_typeset: set[IdolType] = field(default_factory=set)
-    dominant_typeset: set[DominantType] = field(default_factory=set)
-    skill_classset: set[str] = field(default_factory=set)
-    idol_typelist: list[IdolType] = field(default_factory=list)
-    dominant_typelist: list[DominantType] = field(default_factory=list)
-    episode_list: list[Episode] = field(default_factory=list)
-    buff_list: list[Buff] = field(default_factory=list)
+    live_songtype: SongType = SongType.ALL
+    idoltypes_set: set[IdolType] = field(default_factory=set)
+    dominanttypes_set: set[DominantType] = field(default_factory=set)
+    skillclasses_set: set[str] = field(default_factory=set)
+    idoltypes_list: list[IdolType] = field(default_factory=list)
+    dominanttypes_list: list[DominantType] = field(default_factory=list)
+    episodes_list: list[Episode] = field(default_factory=list)
+    buffs_list: list[Buff] = field(default_factory=list)
 
 
-def appeal_formula(factors: list[np.ndarray]) -> np.ndarray:
+def appeal_formula(bonuses: list[np.ndarray]) -> np.ndarray:
     """
-    アピール値の計算式。
+    ボーナス（基礎値、様々な効果など）NUMPY配列からアピール値、ライフ、特技発動確率、特技継続期間を計算する。
+
+        計算式: :math:`(bonuses[0]+bonuses[1])\\times(1.00+\\displaystyle \\sum{bonuses[2:]})`
+
+    アピール値
+        ボーカル・ダンス・ビジュアル、小数点以下切り上げ
+
+            ゲストを含むユニットメンバーの場合
+                - bonuses[0]: 基礎値
+                - bonuses[1]: ポテンシャル補正
+                - bonuses[2]: 楽曲タイプ一致効果
+                - bonuses[3]: ルーム効果
+                - bonuses[4]: センター効果
+                - bonuses[5]: ゲストのセンター効果
+
+            サポートメンバーの場合（**0.5倍する**）
+                - bonuses[0]: 基礎値
+                - bonuses[1]: ポテンシャル補正
+                - bonuses[2]: 楽曲タイプ一致効果
+
+    ライフ
+        小数点以下切り上げ
+                - bonuses[0]: 基礎値
+                - bonuses[1]: ポテンシャル補正
+                - bonuses[2]: センター効果
+                - bonuses[3]: ゲストのセンター効果
+
+    特技発動確率
+                - bonuses[0]: :math:`基礎値\\times(1.00+\\dfrac{特技LV-1}{18})`
+                - bonuses[1]: ポテンシャル補正
+                - bonuses[2]: 楽曲タイプ一致効果
+                - bonuses[3]: センター効果
+                - bonuses[4]: ゲストのセンター効果
 
 
-    :アピール値:
-      ボーカル・ダンス・ビジュアル、小数点以下切り上げ
+    特技継続時間
+                - bonuses[0]: :math:`基礎値\\times(1.00+\\dfrac{特技LV-1}{18})`
 
-      ゲストを含むユニットメンバーの場合:
-
-        :math:`(基礎値+ポテンシャル補正)\\times(1.0+楽曲タイプ一致効果+ルーム効果+センター効果+ゲストのセンター効果)`
-
-      サポートメンバーの場合:
-
-        :math:`(基礎値+ポテンシャル補正)\\times(1.0+楽曲タイプ一致効果)\\times0.5`
-
-    :ライフ:
-      小数点以下切り上げ
-
-      :math:`(基礎値+ポテンシャル補正)\\times(1.0+センター効果+ゲストのセンター効果)`
-
-    :特技発動率:
-
-      :math:`(基礎値\\times(1.0+\\dfrac{特技LV-1}{18})+ポテンシャル補正)\\times(1.0+楽曲タイプ一致効果+センター効果+ゲストのセンター効果)`
-
-    :特技継続時間:
-
-      :math:`基礎値\\times(1.0+\\dfrac{特技LV-1}{18})`
-
-    :param list[np.ndarray] factors: 計算に用いる項目リスト。
+    :param list[np.ndarray] bonuses: 計算に用いる項目リスト。
 
     :return: 計算結果。
     :rtype: np.ndarray
     """
 
-    return (factors[0] + factors[1]) * (1.0 + sum(factors[2:]))
+    return (bonuses[0] + bonuses[1]) * (1.0 + sum(bonuses[2:]))
 
 
 @singledispatch
@@ -212,14 +232,14 @@ def ismatch(type: Any, member: IdolType | DominantType) -> bool:
     *type* 引数と *member* 引数のタイプが一致する場合に、``True`` を返す。
     それ以外は、 ``False`` を返す。
 
-    :param SongType | IdolType type: 適用楽曲タイプ／適用アイドルタイプ。
-    :param IdolType | DominantType member: 適用メンバーのアイドルタイプ／ドミナントアイドルタイプ。
+    :param Any type: 適用楽曲タイプ（SongType）／適用アイドルタイプ（IdolType）。
+    :param IdolType|DominantType member: 適用メンバーのアイドルタイプ／ドミナントアイドルタイプ。
 
     :return: タイプが一致する時は **True** 、一致しない時は **False** を返す。
     :rtype: bool
     """
 
-    LibsAppealLogger.error("appeal.ismatch: 比較タイプが、不正です。")
+    LibsAppealLogger.error(f"appeal.ismatch: {type}が、不正です。")
     return False
 
 
@@ -227,12 +247,6 @@ def ismatch(type: Any, member: IdolType | DominantType) -> bool:
 def _(type: SongType, member: IdolType | DominantType) -> bool:
     """
     タイプ一致（SongType）。
-
-    :param SongType type: 適用楽曲タイプ。
-    :param IdolType | DominantType member: 適用メンバーのアイドルタイプ／ドミナントアイドルタイプ。
-
-    :return: タイプが一致する時は **True** 、一致しない時は **False** を返す。
-    :rtype: bool
     """
 
     match [type, member]:
@@ -254,12 +268,6 @@ def _(type: SongType, member: IdolType | DominantType) -> bool:
 def _(type: IdolType, member: IdolType | DominantType) -> bool:
     """
     タイプ一致（IdolType）。
-
-    :param IdolType type: 適用アイドルタイプ。
-    :param IdolType | DominantType member: 適用メンバーのアイドルタイプ／ドミナントアイドルタイプ。
-
-    :return: タイプが一致する時は **True** 、一致しない時は **False** を返す。
-    :rtype: bool
     """
 
     match [type, member]:
@@ -279,20 +287,17 @@ def _(type: IdolType, member: IdolType | DominantType) -> bool:
 
 def buffpartwrap(func: Callable) -> Callable:
     """
-    センター効果パーツのアピールのボーナス配列を返すラッパー関数。
+    センター効果パーツのボーナス配列を返すラッパー関数。
 
-    :ボーナス配列: アピールのボーナスを要素とする二次元NUMPY配列（アピールタイプ, ユニットメンバー配置）。
+    ボーナス配列
+        ボーナスを要素とする二次元（軸0: アピールタイプ, 軸1: ユニットメンバーの立ち位置）NUMPY配列。
+    前処理
+        デバッグ用ログを出力する。
+    後処理
+        ボーナス配列を初期化する。
+        AppealIndicesリストで指定されたアピールタイプのボーナス配列を更新する。
 
-    :前処理: アピールのボーナス配列を初期化する。
-    :後処理: AppealIDリストに含まれるアピールタイプで、ボーナス配列を書き換える。
-
-    :param Callable func:
-        センター効果パーツ__のAppealIDリストを返す。
-
-        :param BuffPartContext context: センター効果パーツ__のコンテキスト。
-
-        :return: AppealIDリスト。
-        :rtype: list[AppealID]
+    :param Callable func: センター効果パーツのAppealIndicesリストを返す関数。
 
     :return: ラッパー関数
     :rtype: Callable
@@ -300,23 +305,32 @@ def buffpartwrap(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(context: BuffPartContext) -> np.ndarray:
+        """
+        センター効果パーツのAppealIndicesリストを返す。
 
-        LibsAppealLogger.debug(f"appeal: センター効果パーツ・{context.buffpart.name}を処理。")
+        :param BuffPartContext context: センター効果パーツのコンテキスト。
 
-        array_bonus: np.ndarray = np.zeros((len(AppealID), len(context.idol_typelist)))
+        :return: AppealIndicesリスト。
+        :rtype: list[AppealIndices]
+        """
 
-        appealids: list[AppealID] = partial(func, context)()
+        # 前処理
+        LibsAppealLogger.debug(f"appeal.buffpartwrap: センター効果パーツ・{context.buffpart.name}を処理。")
 
+        appealidices: list[AppealIndices] = partial(func, context)()
+
+        # 後処理
         bonus: float = context.buffpart.value
         member: IdolType = context.buffpart.member
-        idoltypes: list[IdolType] = context.idol_typelist
-        dominanttypes: list[DominantType] = context.dominant_typelist
+        idoltypes: list[IdolType] = context.idoltypes_list
+        dominanttypes: list[DominantType] = context.dominanttypes_list
 
-        for appealid in appealids:
+        array_bonus: np.ndarray = np.zeros((len(AppealIndices), len(context.idoltypes_list)))
+        for id in appealidices:
             if not dominanttypes:
-                array_bonus[appealid] = np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes])
+                array_bonus[id] = np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes])
             else:
-                array_bonus[appealid] = np.maximum(
+                array_bonus[id] = np.maximum(
                     np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes]),
                     np.array([bonus if ismatch(member, type) else 0.0 for type in dominanttypes]),
                 )
@@ -327,14 +341,14 @@ def buffpartwrap(func: Callable) -> Callable:
 
 
 @buffpartwrap
-def buffpart_all(context: BuffPartContext) -> list[AppealID]:
+def buffpart_all(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・全アピール（ボーカル、ダンス、ビジュアル）のAppealIDリストを返す。
+    センター効果パーツ・全アピール（ボーカル、ダンス、ビジュアル）のAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・全アピールのコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
     """
 
     match context.buffpart.music:
@@ -343,108 +357,109 @@ def buffpart_all(context: BuffPartContext) -> list[AppealID]:
         case MusicType.NA:
             pass
 
-        case MusicType.ALL if context.livesong_type == SongType.ALL:
+        case MusicType.ALL if context.live_songtype == SongType.ALL:
             pass
 
-        case MusicType.CUTE if context.livesong_type == SongType.CUTE:
+        case MusicType.CUTE if context.live_songtype == SongType.CUTE:
             pass
 
-        case MusicType.COOL if context.livesong_type == SongType.COOL:
+        case MusicType.COOL if context.live_songtype == SongType.COOL:
             pass
 
-        case MusicType.PASSION if context.livesong_type == SongType.PASSION:
+        case MusicType.PASSION if context.live_songtype == SongType.PASSION:
             pass
 
         case _:
             LibsAppealLogger.error(f"appeal.buffpart_all: {context.buffpart.name} 対象外の楽曲。")
             return []
 
-    return [AppealID.VOCAL, AppealID.DANCE, AppealID.VISUAL]
+    return [AppealIndices.VOCAL, AppealIndices.DANCE, AppealIndices.VISUAL]
 
 
 @buffpartwrap
-def buffpart_vocal(context: BuffPartContext) -> list[AppealID]:
+def buffpart_vocal(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ボーカルのAppealIDリストを返す。
+    センター効果パーツ・ボーカルのAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・ボーカルのコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
     """
 
-    return [AppealID.VOCAL]
+    return [AppealIndices.VOCAL]
 
 
 @buffpartwrap
-def buffpart_dance(context: BuffPartContext) -> list[AppealID]:
+def buffpart_dance(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ダンスのAppealIDリストを返す。
+    センター効果パーツ・ダンスのAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・ダンスのコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
 
     :todo: ワールドオープン（ヘレン）
     """
 
-    return [AppealID.DANCE]
+    LibsAppealLogger.error("appeal.buffpart_dance: 特技・ワールドオープン対応を未実装。")
+    return [AppealIndices.DANCE]
 
 
 @buffpartwrap
-def buffpart_visual(context: BuffPartContext) -> list[AppealID]:
+def buffpart_visual(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ビジュアルのAppealIDリストを返す。
+    センター効果パーツ・ビジュアルのAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・ビジュアルのコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
     """
 
-    return [AppealID.VISUAL]
+    return [AppealIndices.VISUAL]
 
 
 @buffpartwrap
-def buffpart_life(context: BuffPartContext) -> list[AppealID]:
+def buffpart_life(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ライフのAppealIDリストを返す。
+    センター効果パーツ・ライフのAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・ライフのコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
     """
 
-    return [AppealID.LIFE]
+    return [AppealIndices.LIFE]
 
 
 @buffpartwrap
-def buffpart_probability(context: BuffPartContext) -> list[AppealID]:
+def buffpart_probability(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・特技発動確率のAppealIDリストを返す。
+    センター効果パーツ・特技発動確率のAppealIndicesリストを返す。
 
     :param BuffPartContext context: センター効果パーツ・特技発動確率のコンテキスト。
 
-    :return: AppealIDリスト。
-    :rtype: list[AppealID]
+    :return: AppealIndicesリスト。
+    :rtype: list[AppealIndices]
     """
 
-    return [AppealID.PROBABILITY]
+    return [AppealIndices.PROBABILITY]
 
 
 def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
     """
     センター効果パーツに展開しておいてセンター効果で、``拡大ボーナス配列`` を適用する。
 
-    :todo: この関数は ``buffwrap`` に組み込む。
-
     :param BuffContext context: センター効果コンテキスト。
     :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の ``拡大ボーナス配列`` 。
 
     :return: センター効果の ``拡大ボーナス配列`` 。
     :rtype: np.ndarray
+
+    :todo: この関数は ``buffwrap`` に組み込む。
     """
 
     contexts: list[BuffPartContext] = list()
@@ -458,9 +473,9 @@ def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarr
                 contexts.append(
                     BuffPartContext(
                         buffpart,
-                        buffcontext.livesong_type,
-                        buffcontext.idol_typelist,
-                        buffcontext.dominant_typelist,
+                        buffcontext.live_songtype,
+                        buffcontext.idoltypes_list,
+                        buffcontext.dominanttypes_list,
                     )
                 )
     else:
@@ -469,8 +484,8 @@ def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarr
                 contexts.append(
                     BuffPartContext(
                         buffpart,
-                        buffcontext.livesong_type,
-                        buffcontext.idol_typelist,
+                        buffcontext.live_songtype,
+                        buffcontext.idoltypes_list,
                     )
                 )
 
@@ -485,23 +500,23 @@ def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarr
 
 def buffwrap(func: Callable) -> Callable:
     """
-    センター効果のアピールのボーナス配列を返すラッパー関数。
+    センター効果のボーナス配列を返すラッパー関数。
 
-    :ボーナス配列: アピールのボーナスを要素とする二次元NUMPY配列（アピールタイプ, ユニットメンバー配置）。
-    :拡大ボーナス配列:
-        アピールのボーナスを要素とする三次元NUMPY配列（センター効果パーツ, アピールタイプ, ユニットメンバー配置）。
+    ボーナス配列
+        ボーナスを要素とする二次元（軸0: アピールタイプ, 軸1: ユニットメンバーの立ち位置）NUMPY配列。
 
-    :前処理: アピールの拡大ボーナス配列を初期化する。
-    :後処理: 拡大ボーナス配列からボーナス配列に変換する。
+    拡大ボーナス配列
+        ボーナスを要素とする三次元\
+            （軸0: センター効果パーツ, 軸1: アピールタイプ, 軸2: ユニットメンバー立ち位置）NUMPY配列。
 
-    :param Callable func:
-        センター効果__のボーナス配列を返す。
+    前処理
+        デバッグ用ログを出力する。
+        拡大ボーナス配列を初期化する。
 
-        :param BuffContext context: コンテキスト。
-        :param np.ndarray array_bonus_expanded: 初期化済みの拡大ボーナス配列。
+    後処理
+        拡大ボーナス配列からボーナス配列に変換する。
 
-        :return: センター効果__のボーナス配列。
-        :rtype: np.ndarray
+    :param Callable func: センター効果のボーナス配列を返す関数。
 
     :return: ラッパー関数
     :rtype: Callable
@@ -509,13 +524,22 @@ def buffwrap(func: Callable) -> Callable:
 
     @wraps(func)
     def wrapper(context: BuffContext) -> np.ndarray:
+        """
+        センター効果のボーナス配列を返す。
+
+        :param BuffContext context: コンテキスト。
+        :param np.ndarray array_bonus_expanded: 初期化済みの拡大ボーナス配列。
+
+        :return: センター効果__のボーナス配列。
+        :rtype: np.ndarray
+        """
 
         # 絶対値で比較して大きい方を返すnumpy.ufunc定義
         abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
-        LibsAppealLogger.debug(f"appeal: センター効果・{context.buff.buff}を処理。")
+        LibsAppealLogger.debug(f"appeal.buffwrap: センター効果・{context.buff.buff}を処理。")
 
-        array_bonus_expanded = np.zeros((len(context.buff.buffparts), len(AppealID), len(context.episode_list)))
+        array_bonus_expanded = np.zeros((len(context.buff.buffparts), len(AppealIndices), len(context.episodes_list)))
         result = partial(func, context, array_bonus_expanded)
 
         return abs_max.reduce(result()[:])
@@ -544,11 +568,13 @@ def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray
         case 0 | 5:
             # センターもしくはゲストのセンター効果：シンデレラブレス。
 
-            temp = np.zeros((len(context.episode_list), len(AppealID), len(context.episode_list)))
+            temp = np.zeros((len(context.episodes_list), len(AppealIndices), len(context.episodes_list)))
 
-            for member, episode in enumerate(context.episode_list):
+            for member, episode in enumerate(context.episodes_list):
                 if member != context.position or episode.buff_class != "シンデレラブレス":
-                    LibsAppealLogger.debug(f"シンデレラブレス[{context.position}]  {member}人目")
+                    LibsAppealLogger.debug(
+                        f"appeal.buff_cinderella_bless: シンデレラブレス[{context.position}]  {member}人目"
+                    )
 
                     if episode.buff_class in buff_funcname:
                         # アピール値の計算に必要、かつ実装済みのセンター効果
@@ -556,27 +582,27 @@ def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray
                         temp[member] = buff_funcname[episode.buff_class](
                             BuffContext(
                                 position=member,
-                                buff=Calculator._buffs.get(context.episode_list[member].buff),
-                                livesong_type=context.livesong_type,
-                                idol_typeset=context.idol_typeset,
-                                dominant_typeset=context.dominant_typeset,
-                                skill_classset=context.skill_classset,
-                                idol_typelist=context.idol_typelist,
-                                dominant_typelist=context.dominant_typelist,
-                                episode_list=context.episode_list,
-                                buff_list=context.buff_list,
+                                buff=Calculator._buffs.get(context.episodes_list[member].buff),
+                                live_songtype=context.live_songtype,
+                                idoltypes_set=context.idoltypes_set,
+                                dominanttypes_set=context.dominanttypes_set,
+                                skillclasses_set=context.skillclasses_set,
+                                idoltypes_list=context.idoltypes_list,
+                                dominanttypes_list=context.dominanttypes_list,
+                                episodes_list=context.episodes_list,
+                                buffs_list=context.buffs_list,
                             )
                         )
 
                     else:
                         LibsAppealLogger.debug(f"appeal.buff_cinderella_bless: {episode.buff_class}は、未実装です。")
-                        temp[member] = np.zeros((len(AppealID), len(context.episode_list)))
+                        temp[member] = np.zeros((len(AppealIndices), len(context.episodes_list)))
 
             array_bonus_expanded[0] = temp.max(axis=0)
 
         case _:
             # 以外（効果がセンターもしくはゲストと重複するだけなので、何もしない）。
-            LibsAppealLogger.debug("シンデレラブレス: センター、ゲスト以外")
+            LibsAppealLogger.debug("appeal.buff_cinderella_bless: シンデレラブレス - センター、ゲスト以外なので無効。")
 
     return array_bonus_expanded
 
@@ -611,19 +637,19 @@ def buff_multi_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) ->
             # キュート・ユニゾン、クール・ユニゾン、パッション・ユニゾン。
             pass
 
-        case UnitType.ONLY_CUTE if context.idol_typeset == {IdolType.CUTE}:
+        case UnitType.ONLY_CUTE if context.idoltypes_set == {IdolType.CUTE}:
             # キュートプリンセス（キュートアイドルのみ編成時）
             pass
 
-        case UnitType.ONLY_COOL if context.idol_typeset == {IdolType.COOL}:
+        case UnitType.ONLY_COOL if context.idoltypes_set == {IdolType.COOL}:
             # クールプリンセス（クールアイドルのみ編成時）
             pass
 
-        case UnitType.ONLY_PASSION if context.idol_typeset == {IdolType.PASSION}:
+        case UnitType.ONLY_PASSION if context.idoltypes_set == {IdolType.PASSION}:
             # パッションプリンセス（パッションアイドルのみ編成時）
             pass
 
-        case UnitType.ALL if context.idol_typeset == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
+        case UnitType.ALL if context.idoltypes_set == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
             # トリコロール・ユニゾン（3タイプ全てのアイドル編成時）
             pass
 
@@ -670,7 +696,7 @@ def buff_single_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -
 
             pass
 
-        case UnitType.ALL if context.idol_typeset == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
+        case UnitType.ALL if context.idoltypes_set == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
             # トリコロール・ボイス、トリコロール・ステップ、トリコロール・メイク（3タイプ全てのアイドル編成時）
 
             pass
@@ -706,16 +732,16 @@ def buff_life(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
 
             pass
 
-        case UnitType.ONLY_CUTE if context.idol_typeset == {IdolType.CUTE}:
+        case UnitType.ONLY_CUTE if context.idoltypes_set == {IdolType.CUTE}:
             # キュートチアー（キュートアイドルのみ編成時）
 
             pass
 
-        case UnitType.ONLY_COOL if context.idol_typeset == {IdolType.COOL}:
+        case UnitType.ONLY_COOL if context.idoltypes_set == {IdolType.COOL}:
             # クールチアー（クールアイドルのみ編成時）
 
             pass
-        case UnitType.ONLY_PASSION if context.idol_typeset == {IdolType.PASSION}:
+        case UnitType.ONLY_PASSION if context.idoltypes_set == {IdolType.PASSION}:
             # パッションチアー（パッションアイドルのみ編成時）
 
             pass
@@ -751,7 +777,7 @@ def buff_probability(context: BuffContext, array_bonus_expanded: np.ndarray) -> 
 
             pass
 
-        case UnitType.ALL if context.idol_typeset == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
+        case UnitType.ALL if context.idoltypes_set == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
             # トリコロール・アビリティ（3タイプ全てのアイドル編成時）
 
             pass
@@ -778,7 +804,7 @@ def buff_resonance(context: BuffContext, array_bonus_expanded: np.ndarray) -> np
     :rtype: np.ndarray
     """
 
-    if len(context.skill_classset) >= 5:  # 5種類の特技編成時
+    if len(context.skillclasses_set) >= 5:  # 5種類の特技編成時
         context.on_resonance = True  # 全ての特技効果が重複時に加算
 
     else:
@@ -816,19 +842,19 @@ def buff_cross(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.nda
     """
 
     match context.buff.formation:
-        case UnitType.CUTE_AND_COOL | UnitType.COOL_AND_CUTE if context.idol_typeset >= {
+        case UnitType.CUTE_AND_COOL | UnitType.COOL_AND_CUTE if context.idoltypes_set >= {
             IdolType.CUTE,
             IdolType.COOL,
         }:
             pass
 
-        case UnitType.COOL_AND_PASSION | UnitType.PASSION_AND_COOL if context.idol_typeset >= {
+        case UnitType.COOL_AND_PASSION | UnitType.PASSION_AND_COOL if context.idoltypes_set >= {
             IdolType.COOL,
             IdolType.PASSION,
         }:
             pass
 
-        case UnitType.PASSION_AND_CUTE | UnitType.CUTE_AND_PASSION if context.idol_typeset >= {
+        case UnitType.PASSION_AND_CUTE | UnitType.CUTE_AND_PASSION if context.idoltypes_set >= {
             IdolType.PASSION,
             IdolType.CUTE,
         }:
@@ -852,14 +878,14 @@ def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
 
         __アイドルのみ編成時、__楽曲で全員のダンス＆ビジュアルアピール値__%アップ。
 
-    | キュート・デュエット（ステップ＆メイク）
-    | クール・デュエット（ステップ＆メイク）
+    | キュート・デュエット（ステップ＆メイク）。
+    | クール・デュエット（ステップ＆メイク）。
     | パッション・デュエット（ステップ＆メイク）。
 
         __アイドルのみ編成時、__楽曲で全員のビジュアル＆ボーカルアピール値__%アップ。
 
-    | キュート・デュエット（メイク＆ボイス）
-    | クール・デュエット（メイク＆ボイス）
+    | キュート・デュエット（メイク＆ボイス）。
+    | クール・デュエット（メイク＆ボイス）。
     | パッション・デュエット（メイク＆ボイス）。
 
         __アイドルのみ編成時、__楽曲で全員のボーカル＆ダンスアピール値__%アップ。
@@ -873,17 +899,17 @@ def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
 
     match [context.buff.formation, context.buff.music]:
         case [UnitType.ONLY_CUTE, SongType.CUTE] if (
-            context.idol_typeset == {IdolType.CUTE} and context.livesong_type == SongType.CUTE
+            context.idoltypes_set == {IdolType.CUTE} and context.live_songtype == SongType.CUTE
         ):
             pass
 
         case [UnitType.ONLY_COOL, SongType.COOL] if (
-            context.idol_typeset == {IdolType.COOL} and context.livesong_type == SongType.COOL
+            context.idoltypes_set == {IdolType.COOL} and context.live_songtype == SongType.COOL
         ):
             pass
 
         case [UnitType.ONLY_PASSION, SongType.PASSION] if (
-            context.idol_typeset == {IdolType.PASSION} and context.livesong_type == SongType.PASSION
+            context.idoltypes_set == {IdolType.PASSION} and context.live_songtype == SongType.PASSION
         ):
             pass
 
@@ -913,13 +939,13 @@ def buff_dominant_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -
     """
 
     match context.buff.music:
-        case MusicType.CUTE if context.livesong_type == SongType.CUTE:
+        case MusicType.CUTE if context.live_songtype == SongType.CUTE:
             pass
 
-        case MusicType.COOL if context.livesong_type == SongType.COOL:
+        case MusicType.COOL if context.live_songtype == SongType.COOL:
             pass
 
-        case MusicType.PASSION if context.livesong_type == SongType.PASSION:
+        case MusicType.PASSION if context.live_songtype == SongType.PASSION:
             pass
 
         case _:
@@ -1049,7 +1075,7 @@ class Calculator:
     @property
     def isresonance(self) -> bool:
         """
-        True の時、センター効果・レゾナンスが有効。False の時は、無効。
+        **True** の時、センター効果・レゾナンスが有効。**False** の時は、無効。
         """
 
         return self._resonance
@@ -1059,29 +1085,28 @@ class Calculator:
         """
         ゲストを含むユニットメンバーのアピール値などのデータリスト。
 
+        .. csv-table:: データリストの要素の型
+            :header-rows: 1
+            :stub-columns: 1
 
-        =========== ========== ============= ============== ========= ========== =====
-        parameters  Center     Left neighbor Right neighbor Left edge Right edge Guest
-        =========== ========== ============= ============== ========= ========== =====
-        Episode     STR        STR           STR            STR       STR        STR
-        Vocal       INT        INT           INT            INT       INT        INT
-        Dance       INT        INT           INT            INT       INT        INT
-        Visual      INT        INT           INT            INT       INT        INT
-        Life        INT        INT           INT            INT       INT        INT
-        Probability FLOAT      FLOAT         FLOAT          FLOAT     FLOAT      FLOAT
-        Duration    FLOAT      FLOAT         FLOAT          FLOAT     FLOAT      FLOAT
-        =========== ========== ============= ============== ========= ========== =====
-
+            "項目", "センター", "左隣り", "右隣り", "左端", "右端", "ゲスト"
+            "0: エピソード名", "str", "str", "str", "str", "str", "str"
+            "1: ボーカル", "int", "int", "int", "int", "int", "int"
+            "2: ダンス", "int", "int", "int", "int", "int", "int"
+            "3: ビジュアル", "int", "int", "int", "int", "int", "int"
+            "4: ライフ", "int", "int", "int", "int", "int", "int"
+            "5: 特技発動確率", "float", "float", "float", "float", "float", "float"
+            "6: 特技継続期間", "float", "float", "float", "float", "float", "float"
         """
 
         return [
             [episode.episode for episode in self._unit_episodes if isinstance(episode, Episode)],
-            np.ceil(self._unit[AppealID.VOCAL]).tolist(),
-            np.ceil(self._unit[AppealID.DANCE]).tolist(),
-            np.ceil(self._unit[AppealID.VISUAL]).tolist(),
-            np.ceil(self._unit[AppealID.LIFE]).tolist(),
-            self._unit[AppealID.PROBABILITY].tolist(),
-            self._unit[AppealID.DURATION].tolist(),
+            np.ceil(self._unit[AppealIndices.VOCAL]).tolist(),
+            np.ceil(self._unit[AppealIndices.DANCE]).tolist(),
+            np.ceil(self._unit[AppealIndices.VISUAL]).tolist(),
+            np.ceil(self._unit[AppealIndices.LIFE]).tolist(),
+            self._unit[AppealIndices.PROBABILITY].tolist(),
+            self._unit[AppealIndices.DURATION].tolist(),
         ]
 
     @property
@@ -1089,22 +1114,22 @@ class Calculator:
         """
         サポートメンバーのアピール値のデータリスト。
 
-        =========== ===========
-        parameters  Support(10)
-        =========== ===========
-        Episode     STR
-        Vocal       INT
-        Dance       INT
-        Visual      INT
-        =========== ===========
+        .. csv-table:: データリストの要素の型
+            :header-rows: 1
+            :stub-columns: 1
 
+            "項目", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"
+            "0: エピソード名", "str", "str", "str", "str", "str", "str", "str", "str", "str", "str"
+            "1: ボーカル", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int"
+            "2: ダンス", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int"
+            "3: ビジュアル", "int", "int", "int", "int", "int", "int", "int", "int", "int", "int"
         """
 
         return [
             [episode.episode for episode in self._support_episodes if isinstance(episode, Episode)],
-            np.ceil(self._support[AppealID.VOCAL]).tolist(),
-            np.ceil(self._support[AppealID.DANCE]).tolist(),
-            np.ceil(self._support[AppealID.VISUAL]).tolist(),
+            np.ceil(self._support[AppealIndices.VOCAL]).tolist(),
+            np.ceil(self._support[AppealIndices.DANCE]).tolist(),
+            np.ceil(self._support[AppealIndices.VISUAL]).tolist(),
         ]
 
     def run(self, unit: Unit) -> None:
@@ -1159,14 +1184,16 @@ class Calculator:
         """
 
         # 全エピソードのアピール値合計を計算し、リスト化。
-        # まず未所有（スターランク=0）を取り除く
+        # まず、未所有（スターランク=0）を取り除く
         episode_all = sorted({episode for episode in Calculator._episodes.gets() if episode.star_rank > 0})
         episode_all_factors = [
             self._base(episode_all),  # 基礎値
             self._potential(episode_all),  # ポテンシャル補正
             self._musicbuff(episode_all),  # 楽曲タイプ一致効果
         ]
-        appeal_all = np.sum(np.ceil(0.5 * appeal_formula(episode_all_factors))[: AppealID.VISUAL + 1], axis=0).tolist()
+        appeal_all = np.sum(
+            np.ceil(0.5 * appeal_formula(episode_all_factors))[: AppealIndices.VISUAL + 1], axis=0
+        ).tolist()
 
         # アピール値合計の高い順にエピソードをリスト化し、トップ10を選出。
         # スターランク分の重複を許容し、ユニットメンバーとの重複分は差し引く。
@@ -1269,20 +1296,20 @@ class Calculator:
         """
 
         return np.array(
-            [[0.1 for _ in episodes] for _ in [AppealID.VOCAL, AppealID.DANCE, AppealID.VISUAL]]
-            + [[0.0 for _ in episodes] for _ in [AppealID.LIFE, AppealID.PROBABILITY, AppealID.DURATION]]
+            [[0.1 for _ in episodes] for _ in [AppealIndices.VOCAL, AppealIndices.DANCE, AppealIndices.VISUAL]]
+            + [[0.0 for _ in episodes] for _ in [AppealIndices.LIFE, AppealIndices.PROBABILITY, AppealIndices.DURATION]]
         )
 
     def _musicbuff(self, episodes: list[Episode]) -> np.ndarray:
         """
         楽曲タイプ一致効果（ボーカル・ダンス・ビジュアル・特技発動確率）。
 
-        :todo: とりあえず組み込んだドミナント・デュエットのドミナントアイドルの楽曲タイプ一致コードを見直す。
-
         :param list[Episode] episodes: エピソードリスト
 
         :return: 楽曲タイプ一致効果
         :rtype: np.ndarray
+
+        :todo: typematch() の実装中。
         """
 
         def basematch(type: SongType | IdolType, episodes: list[Episode]) -> np.ndarray:
@@ -1322,13 +1349,13 @@ class Calculator:
 
                     case AppealType.BLESS:
                         # ブレス
-                        # :todo: ちゃんと実装しろ！
+                        LibsAppealLogger.error(f"{self.__class__.__name__}._musicbuff(typematch): ちゃんと実装しろ！")
                         pass
 
-            return np.zeros((len(AppealID), len(episodes)))
+            return np.zeros((len(AppealIndices), len(episodes)))
 
         lstype = self._music.song.type  # ライブの楽曲タイプ
-        np3d = np.zeros((3, len(AppealID), len(episodes)))
+        np3d = np.zeros((3, len(AppealIndices), len(episodes)))
 
         # 通常の楽曲タイプ一致
         np3d[0] = basematch(lstype, episodes)
@@ -1350,7 +1377,8 @@ class Calculator:
 
         :param list[Episode] episodes: エピソードリスト
         :param int position: センター効果を発動するメンバーの立ち位置。
-        :return: センター効果データ配列
+
+        :return: センター効果データ配列。
         :rtype: np.ndarray
         """
 
@@ -1358,14 +1386,14 @@ class Calculator:
             on_resonance=self._resonance,
             position=position,
             buff=Calculator._buffs.get(episodes[position].buff),
-            livesong_type=self._music.song.type,
-            idol_typeset={episode.type for episode in episodes},
-            dominant_typeset={episode.dominant for episode in episodes},
-            skill_classset={episode.skill_class for episode in episodes},
-            idol_typelist=[episode.type for episode in episodes],
-            dominant_typelist=[episode.dominant for episode in episodes],
-            episode_list=episodes,
-            buff_list=[Calculator._buffs.get(episode.buff) for episode in episodes],
+            live_songtype=self._music.song.type,
+            idoltypes_set={episode.type for episode in episodes},
+            dominanttypes_set={episode.dominant for episode in episodes},
+            skillclasses_set={episode.skill_class for episode in episodes},
+            idoltypes_list=[episode.type for episode in episodes],
+            dominanttypes_list=[episode.dominant for episode in episodes],
+            episodes_list=episodes,
+            buffs_list=[Calculator._buffs.get(episode.buff) for episode in episodes],
         )
 
         if episodes[position].buff_class in buff_funcname:
@@ -1374,12 +1402,14 @@ class Calculator:
             self._resonance = context.on_resonance
 
         else:
-            result = np.zeros((len(AppealID), len(episodes)))
+            result = np.zeros((len(AppealIndices), len(episodes)))
             LibsAppealLogger.error(
                 f"{self.__class__.__name__}._centerbuff: {episodes[position].buff_class}は、未実装です。"
             )
 
-        LibsAppealLogger.debug(f"{','.join(str(result).splitlines())}")
+        LibsAppealLogger.debug(
+            f"{self.__class__.__name__}._centerbuff: センター効果 - {','.join(str(result).splitlines())}"
+        )
         return result
 
 

@@ -111,7 +111,7 @@ class StageError(Exception):
         LibsStageLogger.error(f"StageError: {args}")
 
 
-class IndicesSkillCategoryElement(IntEnum):
+class SkillCategoryElementIndices(IntEnum):
     """
     特技系統の要素の列挙クラス。特技効果量リストもしくは配列の添え字に相当する。
 
@@ -123,7 +123,7 @@ class IndicesSkillCategoryElement(IntEnum):
     BOOST = 1
 
 
-class IndicesSkillCategory(IntEnum):
+class SkillCategoryIndices(IntEnum):
     """
     特技系統の列挙クラス。特技効果量リストもしくは配列の添え字に相当する。
 
@@ -131,29 +131,56 @@ class IndicesSkillCategory(IntEnum):
     :param 1 COMBO: COMBOボーナス系（オルタネイト・COMBOダウンも含む）。
     :param 2 ALTERNATE: オルタネイト系。
     :param 3 MUTUAL: ミューチャル系。
+    :param 4 RECOVERY: ライフ回復系。
     """
 
     SCORE = 0
     COMBO = 1
     ALTERNATE = 2
     MUTUAL = 3
+    RECOVERY = 4
+
+
+class ActiveStatus(IntEnum):
+    """
+    特技発動時間割の基礎情報・発動ステータスの列挙クラス。
+
+    :param 0 NONE: 不発動（False相当）。
+    :param 1 AVAILABLE: 発動待ち。
+    :param 2 USED: 発動済み。
+    """
+
+    NONE = 0
+    AVAILABLE = 1
+    USED = 2
 
 
 @dataclass
-class TimeTable:
+class Period:
     """
-    特技発動時間割の基礎情報のデータクラス。
+    特技発動時間割の基礎情報（コマ）のデータクラス。
 
-    :param bool active: 特技の発動不発。``True`` 時は発動、``False`` 時は不発。
+    :param ActiveStatus status: 特技の発動ステータス。
     :param int start: time_base 当たりの特技発動開始時間。
     :param int end: time_base 当たりの特技発動終了時間。
     :param fraction time_base: 単位時間（1/FPS秒）。
     """
 
-    active: bool = False  # 特技が発動か不発か。
-    start: int = 0  # 特技の開始時間。
-    end: int = 0  # 特技の終了時間。
-    time_base: Fraction = Fraction(1, FPS)  # 単位時間。
+    status: ActiveStatus = ActiveStatus.NONE
+    start: int = 0
+    end: int = 0
+    time_base: Fraction = Fraction(1, FPS)
+
+
+@dataclass
+class TimeTable:
+    """
+    特技発動時間割のデータクラス。
+
+    :param list[Period] periodes: 特技発動時間割。
+    """
+
+    periodes: list[Period] = field(default_factory=list)
 
 
 @dataclass
@@ -208,6 +235,8 @@ class LiveStatus:
         ライフ。
     :param Skill skill:
         特技。
+    :param SkillPart skillpart:
+        特技パーツ。
     :param int position:
         特技を持つアイドルのライブ中の立ち位置。
 
@@ -216,13 +245,17 @@ class LiveStatus:
         - 2: 右隣り
         - 3: 左端
         - 4: 右端
+    :param list[int] skill_activated:
+        Live中に発動した特技の発動タイミングのリスト（ゲストを除くユニットのアイドルの立ち位置順）。
 
     :todo: 特技発動時間割
     """
 
     life: Life = field(default_factory=Life)
     skill: Skill = field(default=Skill())
+    skillpart: SkillPart = field(default=SkillPart())
     position: int = 0
+    skill_activated: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -230,14 +263,12 @@ class LiveContext:
     """
     ライブ進行（ノートのスコア計算）のコンテキストのデータクラス。
 
-    :param Life life:
-        ライフ。
     :param bool on_resonance:
         センター効果・レゾナンスが有効かどうか。
     :param float base:
         ノートのスコア基礎値。
     :param int timelimit:
-        最後のノートの時間（単位時間当たり）。
+        最後のノートの（単位時間当たりの）時間。
     :param int size:
         人数。
     :param int vocal_appeal:
@@ -252,34 +283,33 @@ class LiveContext:
     :param SongType livesong_type:
         ライブの楽曲タイプ。
         楽曲要件の判定に用いる。
-    :param set[IdolType] set_idoltypes:
+    :param set[IdolType] idoltypes_set:
         ゲストを含むユニットメンバーのアイドルタイプの集合。
         編成要件の判定に用いる。
-    :param list[int] list_numbers_by_type:
+    :param list[int] type_numbers_list:
         ゲストを含むユニットメンバーのアイドルタイプ（ドミナントアイドルタイプを含む）別の人数リスト。
         特技・ドミナント・ハーモニーの効果量の評価に用いる。
 
         - 0: キュートアイドルタイプ、キュートドミナントアイドルタイプ、
         - 1: クールアイドルタイプ、クールドミナントアイドルタイプ、
         - 2 パッションアイドルタイプ、パッションドミナントアイドルタイプ
-    :param list[IdolType] list_idoltypes:
+    :param list[IdolType] idoltypes_list:
         ゲストを除くユニットメンバーのアイドルタイプ。
         特技・アイドルタイプ・アンサンブル、ドミナント・ハーモニーの適用メンバーの評価に用いる。
-    :param list[int] list_intervals:
+    :param list[int] intervals_list:
         ゲストを除くユニットメンバーの特技の発動間隔（単位時間当たり）のリスト。
         特技発動時間割の作成、更新に用いる。
-    :param list[float] list_probabilities:
+    :param list[float] probabilities_list:
         ``appeals`` で求めたゲストを除くユニットメンバーの特技の発動確率のリスト。
         特技発動時間割の作成、更新に用いる。
-    :param list[int] list_durations:
+    :param list[int] durations_list:
         ``appeals`` で求めたゲストを除くユニットメンバーの特技の継続期間（単位時間当たり）のリスト。
         特技発動時間割の作成、更新に用いる。
-    :param list[Skill] list_skills:
+    :param list[Skill] skills_list:
         ゲストを除くユニットメンバーの特技リスト。
         特技発動時間割の作成、更新に用いる。
     """
 
-    life: Life = field(default_factory=Life)
     on_resonance: bool = False
     base: float = 0.0
     timelimit: int = 0
@@ -288,13 +318,13 @@ class LiveContext:
     dance_appeal: int = 0
     visual_appeal: int = 0
     livesong_type: SongType = SongType.ALL
-    set_idoltypes: set[IdolType] = field(default_factory=set)
-    list_numbers_by_type: list[int] = field(default_factory=list)
-    list_idoltypes: list[IdolType] = field(default_factory=list)
-    list_intervals: list[int] = field(default_factory=list)
-    list_probabilities: list[float] = field(default_factory=list)
-    list_durations: list[int] = field(default_factory=list)
-    list_skills: list[Skill] = field(default_factory=list)
+    idoltypes_set: set[IdolType] = field(default_factory=set)
+    type_numbers_list: list[int] = field(default_factory=list)
+    idoltypes_list: list[IdolType] = field(default_factory=list)
+    intervals_list: list[int] = field(default_factory=list)
+    probabilities_list: list[float] = field(default_factory=list)
+    durations_list: list[int] = field(default_factory=list)
+    skills_list: list[Skill] = field(default_factory=list)
 
 
 def wrap_skillpart_effectvalues(func: Callable) -> Callable:
@@ -311,16 +341,23 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray) -> np.ndarray:
+    def wrapper(
+        note: Note,
+        context: LiveContext,
+        status: LiveStatus,
+        data: np.ndarray,
+    ) -> np.ndarray:
         """
         特技パーツの特技効果量配列を返す。
 
         適用メンバー（ブースト先）、適用アイコン、適用判定を調べ、効果量を返す。
 
-        :param Note note: スコア計算対象のノート。
-        :param int position: 特技を有するアイドルのライブ立ち位置。
-        :param LiveContext context: ライブコンテキスト。
-        :param SkillPart skillpart: 特技パーツ。
+        :param Note note:
+            スコア計算対象のノート。
+        :param LiveContext context:
+            ライブコンテキスト。
+        :param LiveStatus status:
+            ライブステータス。
         :param np.ndarray data:
             特技パーツの特技効果量配列。
 
@@ -328,13 +365,13 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
             - 1: メンバー
             - 2: 効果量（ボーナス、ブースト）
 
-        :return: 特技パーツの特技効果量配列。
+        :return: 特技パーツの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
         :rtype: np.ndarray
         """
 
-        result = partial(func, note, position, context, skillpart, data)()
+        result = partial(func, note, context, status, data)()
         LibsStageLogger.debug(
-            f"stage: 特技パーツ・{skillpart.name}の特技効果量配列 {','.join(str(result).splitlines())}"
+            f"stage: 特技パーツ・{status.skillpart.name}の特技効果量配列 {','.join(str(result).splitlines())}"
         )
         return result
 
@@ -343,7 +380,10 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
 
 @wrap_skillpart_effectvalues
 def skillpart_bonus_score(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・スコアボーナスの特技効果量配列を返す。
@@ -371,42 +411,41 @@ def skillpart_bonus_score(
             __秒毎、__確率で__間、スコア__%ダウン、LIVE中に発動した最も高いCOMBOボーナス効果を極大アップして適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・スコアボーナスの特技効果量配列。
+    :return: 特技パーツ・スコアボーナスの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    result: float = data[IndicesSkillCategory.SCORE][position][IndicesSkillCategoryElement.BONUS]
+    score_bonus: float = data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS]
 
-    match [skillpart.icon, skillpart.value]:
+    match [status.skillpart.icon, status.skillpart.value]:
         case [IconType.NA, float(value)] if value >= 0.0:
             # スライドアクト、フリックアクト、ロングアクトへの上書きを回避
-            result = value if value > result else result
+            score_bonus = value if value > score_bonus else score_bonus
 
         case [IconType.NA, float(value)] if value < 0.0:
             # ミューチャルのスコアボーナスダウン
-            result = value
+            score_bonus = value
 
         case [IconType.NA, str(MOTIF)]:
             match MOTIF:
                 case "ユニットのボーカルアピール値が多いほど":
                     # ボーカルモチーフ
-                    result = Simulator._motives.value(appeal=context.vocal_appeal, grand=False)
+                    score_bonus = Simulator._motives.value(appeal=context.vocal_appeal, grand=False)
 
                 case "ユニットのダンスアピール値が多いほど":
                     # ダンスモチーフ
-                    result = Simulator._motives.value(appeal=context.dance_appeal, grand=False)
+                    score_bonus = Simulator._motives.value(appeal=context.dance_appeal, grand=False)
 
                 case "ユニットのビジュアルアピール値が多いほど":
                     # ビジュアルモチーフ
-                    result = Simulator._motives.value(appeal=context.visual_appeal, grand=False)
+                    score_bonus = Simulator._motives.value(appeal=context.visual_appeal, grand=False)
 
                 case _:
-                    LibsStageLogger.error(f"特技パーツ：モチーフの効果量不明。{skillpart.value}")
+                    LibsStageLogger.error(f"特技パーツ：モチーフの効果量不明。{status.skillpart.value}")
 
         case [IconType.SLIDE, float(value)] if note.type in {
             NoteType.SLIDE_ON,
@@ -416,7 +455,7 @@ def skillpart_bonus_score(
             NoteType.SLIDE_FLICK_RIGHT,
         }:
             # スライドアクト
-            result = value
+            score_bonus = value
 
         case [IconType.FLICK, float(value)] if note.type in {
             NoteType.FLICK_LEFT,
@@ -427,7 +466,7 @@ def skillpart_bonus_score(
             NoteType.LONG_FLICK_RIGHT,
         }:
             # フリックアクト
-            result = value
+            score_bonus = value
 
         case [IconType.LONG, float(value)] if note.type in {
             NoteType.LONG_ON,
@@ -436,18 +475,23 @@ def skillpart_bonus_score(
             NoteType.LONG_FLICK_RIGHT,
         }:
             # ロングアクト
-            result = value
+            score_bonus = value
 
         case _:
-            LibsStageLogger.error(f"特技パーツ：スコアボーナスの条件不適合。{skillpart.icon}, {skillpart.value}")
+            LibsStageLogger.error(
+                f"特技パーツ：スコアボーナスの条件不適合。{status.skillpart.icon}, {status.skillpart.value}"
+            )
 
-    data[IndicesSkillCategory.SCORE][position][IndicesSkillCategoryElement.BONUS] = result
+    data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS] = score_bonus
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_bonus_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOボーナスの特技効果量配列を返す。
@@ -468,44 +512,47 @@ def skillpart_bonus_combo(
         チューニング
             __秒毎、__確率で__間、COMBOボーナス__%アップ、__をPERFECTにする
         トリコロール・スパイク
-            全タイプ楽曲で3タイプ全てのアイドル編成時、__秒毎、__確率でライフを__消費し、__間、__のスコア__%アップ、COMBOボーナス__%アップ
+            全タイプ楽曲で3タイプ全てのアイドル編成時、__秒毎、__確率でライフを__消費し、\
+                __間、__のスコア__%アップ、COMBOボーナス__%アップ
         トリコロール・シナジー
             3タイプ全てのアイドル編成時、__秒毎、__確率で__間、__のスコア__%アップ/ライフ__回復、COMBOボーナス__%アップ
         オルタネイト
             __秒毎、__確率で__間、COMBOボーナス__%ダウン、LIVE中に発動した最も高いスコアアップ効果を極大アップして適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・COMBOボーナスの特技効果量配列。
+    :return: 特技パーツ・COMBOボーナスの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    result: float = data[IndicesSkillCategory.COMBO][position][IndicesSkillCategoryElement.BONUS]
+    combo_bonus: float = data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS]
 
-    match skillpart.value:
+    match status.skillpart.value:
         case float(value):
-            result = value
+            combo_bonus = value
 
         case str(LIFESPARKLE) if LIFESPARKLE == "ライフ値が多いほど":
             # ライフスパークル
             # :todo: 残ライフ値
             # :todo: 特技を発動したアイドルのレア度
-            result = Simulator._lifesparkles.value(life=context.life.value, rare="SSR")
+            combo_bonus = Simulator._lifesparkles.value(life=status.life.value, rare="SSR")
 
         case _:
-            LibsStageLogger.error(f"特技パーツ：COMBOボーナスの条件不適合。{skillpart.value}")
+            LibsStageLogger.error(f"特技パーツ：COMBOボーナスの条件不適合。{status.skillpart.value}")
 
-    data[IndicesSkillCategory.COMBO][position][IndicesSkillCategoryElement.BONUS] = result
+    data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS] = combo_bonus
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_boost_score(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・スコアブーストの特技効果量配列を返す。
@@ -515,36 +562,39 @@ def skillpart_boost_score(
             __秒毎、__確率で__間、他アイドルの特技効果を__アップ
         キュートアンサンブル、クールアンサンブル、パッションアンサンブル
             __秒毎、__確率で__間、他の__アイドルのスコアアップ/COMBOボーナス効果を__アップ
+        スターライトアンサンブル
+            全タイプ楽曲で、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を極大アップ
         トリコロール・シンフォニー
-            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を__アップ、他特技効果を__アップ
+            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、\
+                他アイドルのスコアアップ/COMBOボーナス効果を__アップ、他特技効果を__アップ
         ドミナント・ハーモニー
-            __楽曲で__と__のアイドルのみ編成時、__秒毎、__確率で__間、__アイドルのスコアアップ効果と、__アイドルのCOMBOボーナス効果をそれぞれの人数に応じてアップ
+            __楽曲で__と__のアイドルのみ編成時、__秒毎、__確率で__間、__アイドルのスコアアップ効果と、\
+                __アイドルのCOMBOボーナス効果をそれぞれの人数に応じてアップ
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・スコアブーストの特技効果量配列。
+    :return: 特技パーツ・スコアブーストの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    result: np.ndarray = data[IndicesSkillCategory.SCORE]
-    elem: int = IndicesSkillCategoryElement.BOOST
+    result: np.ndarray = data[SkillCategoryIndices.SCORE]
+    elem: int = SkillCategoryElementIndices.BOOST
 
-    match skillpart.member:
+    match status.skillpart.member:
         case IdolType.UNITS:
             # スキルブースト
             # トリコロール・シンフォニー
             # スターライトアンサンブル
             for i in range(context.size):
-                result[i][elem] = SkillPart.value
+                result[i][elem] = status.skillpart.value
 
         case IdolType.CUTE_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.CUTE:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.CUTE:
+                    match status.skillpart.value:
                         case float(value):
                             # キュートアンサンブル
                             result[i][elem] = value
@@ -552,16 +602,16 @@ def skillpart_boost_score(
                         case str(HARMONY) if HARMONY == "キュートアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[0], type=0, guest=True
+                                number=context.type_numbers_list[0], type=0, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.COOL_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.COOL:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.COOL:
+                    match status.skillpart.value:
                         case float(value):
                             # クールアンサンブル
                             result[i][elem] = value
@@ -569,16 +619,16 @@ def skillpart_boost_score(
                         case str(HARMONY) if HARMONY == "クールアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[1], type=0, guest=True
+                                number=context.type_numbers_list[1], type=0, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.PASSION_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.PASSION:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.PASSION:
+                    match status.skillpart.value:
                         case float(value):
                             # パッションアンサンブル
                             result[i][elem] = value
@@ -586,22 +636,27 @@ def skillpart_boost_score(
                         case str(HARMONY) if HARMONY == "パッションアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[2], type=0, guest=True
+                                number=context.type_numbers_list[2], type=0, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case _:
-            LibsStageLogger.error(f"特技パーツ：スコアブーストの条件不適合。{skillpart.icon}, {skillpart.value}")
+            LibsStageLogger.error(
+                f"特技パーツ：スコアブーストの条件不適合。{status.skillpart.icon}, {status.skillpart.value}"
+            )
 
-    data[IndicesSkillCategory.SCORE] = result
+    data[SkillCategoryIndices.SCORE] = result
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_boost_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOブーストの特技効果量配列を返す。
@@ -611,36 +666,39 @@ def skillpart_boost_combo(
             __秒毎、__確率で__間、他アイドルの特技効果を__アップ
         キュートアンサンブル、クールアンサンブル、パッションアンサンブル
             __秒毎、__確率で__間、他の__アイドルのスコアアップ/COMBOボーナス効果を__アップ
+        スターライトアンサンブル
+            全タイプ楽曲で、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を極大アップ
         トリコロール・シンフォニー
-            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を__アップ、他特技効果を__アップ
+            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、\
+                他アイドルのスコアアップ/COMBOボーナス効果を__アップ、他特技効果を__アップ
         ドミナント・ハーモニー
-            __楽曲で__と__のアイドルのみ編成時、__秒毎、__確率で__間、__アイドルのスコアアップ効果と、__アイドルのCOMBOボーナス効果をそれぞれの人数に応じてアップ
+            __楽曲で__と__のアイドルのみ編成時、__秒毎、__確率で__間、__アイドルのスコアアップ効果と、\
+                __アイドルのCOMBOボーナス効果をそれぞれの人数に応じてアップ
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・スコアブーストの特技効果量配列。
+    :return: 特技パーツ・スコアブーストの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    result: np.ndarray = data[IndicesSkillCategory.COMBO]
-    elem: int = IndicesSkillCategoryElement.BOOST
+    result: np.ndarray = data[SkillCategoryIndices.COMBO]
+    elem: int = SkillCategoryElementIndices.BOOST
 
-    match skillpart.member:
+    match status.skillpart.member:
         case IdolType.UNITS:
             # スキルブースト
             # トリコロール・シンフォニー
             # スターライトアンサンブル
             for i in range(context.size):
-                result[i][elem] = SkillPart.value
+                result[i][elem] = status.skillpart.value
 
         case IdolType.CUTE_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.CUTE:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.CUTE:
+                    match status.skillpart.value:
                         case float(value):
                             # キュートアンサンブル
                             result[i][elem] = value
@@ -648,16 +706,16 @@ def skillpart_boost_combo(
                         case str(HARMONY) if HARMONY == "キュートアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[0], type=1, guest=True
+                                number=context.type_numbers_list[0], type=1, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.COOL_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.COOL:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.COOL:
+                    match status.skillpart.value:
                         case float(value):
                             # クールアンサンブル
                             result[i][elem] = value
@@ -665,16 +723,16 @@ def skillpart_boost_combo(
                         case str(HARMONY) if HARMONY == "クールアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[1], type=1, guest=True
+                                number=context.type_numbers_list[1], type=1, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.PASSION_OF_UNITS:
             for i in range(context.size):
-                if context.list_idoltypes[i] == IdolType.PASSION:
-                    match skillpart.value:
+                if context.idoltypes_list[i] == IdolType.PASSION:
+                    match status.skillpart.value:
                         case float(value):
                             # パッションアンサンブル
                             result[i][elem] = value
@@ -682,22 +740,27 @@ def skillpart_boost_combo(
                         case str(HARMONY) if HARMONY == "パッションアイドルの人数に応じて":
                             # ドミナント・ハーモニー
                             result[i][elem] = Simulator._dominants.value(
-                                number=context.list_numbers_by_type[2], type=1, guest=True
+                                number=context.type_numbers_list[2], type=1, guest=True
                             )
 
                         case _:
-                            LibsStageLogger.error("skillpart_boost_score")
+                            LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case _:
-            LibsStageLogger.error(f"特技パーツ：COMBOブーストの条件不適合。{skillpart.icon}, {skillpart.value}")
+            LibsStageLogger.error(
+                f"特技パーツ：COMBOブーストの条件不適合。{status.skillpart.icon}, {status.skillpart.value}"
+            )
 
-    data[IndicesSkillCategory.COMBO] = result
+    data[SkillCategoryIndices.COMBO] = result
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_copy_bonus_score(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・スコアボーナスコピーの特技効果量配列を返す。
@@ -707,23 +770,24 @@ def skillpart_copy_bonus_score(
             __秒毎、__確率で__間、LIVE中に発動した最も高いスコアアップ効果/COMBOボーナス効果を適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・スコアボーナスコピーの特技効果量配列。
+    :return: 特技パーツ・スコアボーナスコピーの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 発動済みのスコアボーナスの効果量を得るなら、特技系統効果量を保持すべきか？
-    # しかし、発動してもノートと合致したかは不明だな
+    LibsStageLogger.error("skillpart_copy_bonus_score: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_copy_bonus_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOボーナスコピーの特技効果量配列を返す。
@@ -733,22 +797,24 @@ def skillpart_copy_bonus_combo(
             __秒毎、__確率で__間、LIVE中に発動した最も高いスコアアップ効果/COMBOボーナス効果を適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・COMBOボーナスコピーの特技効果量配列。
+    :return: 特技パーツ・COMBOボーナスコピーの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 発動済みのCOMBOボーナスの効果量を得るなら、特技系統効果量を保持すべきか？
+    LibsStageLogger.error("skillpart_copy_bonus_combo: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_copy_boost_score(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・スコアブーストコピーの特技効果量配列を返す。
@@ -758,22 +824,24 @@ def skillpart_copy_boost_score(
             __秒毎、__確率で__間、COMBOボーナス20%ダウン、LIVE中に発動した最も高いスコアアップ効果を極大アップして適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・スコアブーストコピーの特技効果量配列。
+    :return: 特技パーツ・スコアブーストコピーの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 発動済みのCOMBOボーナスの効果量を得るなら、特技系統効果量を保持すべきか？
+    LibsStageLogger.error("skillpart_copy_boost_score: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_copy_boost_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOブーストコピーの特技効果量配列を返す。
@@ -783,22 +851,24 @@ def skillpart_copy_boost_combo(
             __秒毎、__確率で__間、スコア20%ダウン、LIVE中に発動した最も高いCOMBOボーナス効果を極大アップして適用
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・COMBOブーストコピーの特技効果量配列。
+    :return: 特技パーツ・COMBOブーストコピーの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 発動済みのCOMBOボーナスの効果量を得るなら、特技系統効果量を保持すべきか？
+    LibsStageLogger.error("skillpart_copy_boost_combo: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_encore(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・アンコールの特技効果量配列を返す。
@@ -809,22 +879,24 @@ def skillpart_encore(
             ただし、クリスタル・ヒールは、コピーしない。
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・アンコールの特技効果量配列。
+    :return: 特技パーツ・アンコールの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 未実装
+    LibsStageLogger.error("skillpart_encore: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_magic(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・シンデレラマジックの特技効果量配列を返す。
@@ -835,22 +907,148 @@ def skillpart_magic(
             ただし、クリスタル・ヒールは、発動しない。
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・シンデレラマジックの特技効果量配列。
+    :return: 特技パーツ・シンデレラマジックの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    # 未実装
+    LibsStageLogger.error("skillpart_magic: 実装中。")
+    return data
+
+
+@wrap_skillpart_effectvalues
+def skillpart_recovery(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
+) -> np.ndarray:
+    """
+    特技パーツ・ライフ回復の特技効果量配列を返す。
+
+    対象特技
+        ライフ回復。
+            __秒毎、__確率で__間、__でライフ__回復
+        トリコロール・シナジー。
+            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、__のスコア__%アップ/ライフ__回復、COMBOボーナス__%アップ
+        オールラウンド。
+            __秒毎、__確率で__間、COMBOボーナス__%アップ、__でライフ__回復
+        オーバードライブ。
+            __秒毎、__確率で__間、COMBOボーナス__%アップ、__でライフ__回復、PERFECTのみCOMBO継続
+
+    :param Note note: スコア計算対象のノート。
+    :param LiveContext context: ライブコンテキスト。
+    :param LiveStatus status: ライブステータス。
+    :param np.ndarray data: 特技パーツの特技効果量配列。
+
+    :return: 特技パーツ・PERFECTサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
+    :rtype: np.ndarray
+    """
+
+    data[SkillCategoryIndices.RECOVERY][status.position][SkillCategoryElementIndices.BONUS] = status.skillpart.value
+
+    return data
+
+
+@wrap_skillpart_effectvalues
+def skillpart_no_damage(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
+) -> np.ndarray:
+    """
+    特技パーツ・ダメージガードの特技効果量配列を返す。
+
+    対象特技
+        ダメージガード
+            __秒毎、__確率で__間、ライフが減少しなくなる
+
+    :param Note note: スコア計算対象のノート。
+    :param LiveContext context: ライブコンテキスト。
+    :param LiveStatus status: ライブステータス。
+    :param np.ndarray data: 特技パーツの特技効果量配列。
+
+    :return: 特技パーツ・PERFECTサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
+    :rtype: np.ndarray
+    """
+
+    # :todo: 特技発動要件のライフ消費
+    # :todo: ブーストでライフ回付付与
+    LibsStageLogger.error("skillpart_no_damage: 実装中。")
+    return data
+
+
+@wrap_skillpart_effectvalues
+def skillpart_boost_recovery(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
+) -> np.ndarray:
+    """
+    特技パーツ・ライフ回復ブーストの特技効果量配列を返す。
+
+    対象特技
+        スキルブースト。
+            __秒毎、__確率で__間、他アイドルの特技効果を__アップ
+        トリコロール・シンフォニー。
+            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を特大アップ、他特技効果を大アップ
+
+    :param Note note: スコア計算対象のノート。
+    :param LiveContext context: ライブコンテキスト。
+    :param LiveStatus status: ライブステータス。
+    :param np.ndarray data: 特技パーツの特技効果量配列。
+
+    :return: 特技パーツ・PERFECTサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
+    :rtype: np.ndarray
+    """
+
+    # :todo: ライフ回復の配列（ボーナス、ブースト）
+    LibsStageLogger.error("skillpart_boost_recovery: 実装中。")
+    return data
+
+
+@wrap_skillpart_effectvalues
+def skillpart_add_recovery(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
+) -> np.ndarray:
+    """
+    特技パーツ・ライフ回復付与の特技効果量配列を返す。
+
+    対象特技
+        スキルブースト。
+            __秒毎、__確率で__間、他アイドルの特技効果を__アップ
+        トリコロール・シンフォニー。
+            3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を特大アップ、他特技効果を大アップ
+
+    :param Note note: スコア計算対象のノート。
+    :param LiveContext context: ライブコンテキスト。
+    :param LiveStatus status: ライブステータス。
+    :param np.ndarray data: 特技パーツの特技効果量配列。
+
+    :return: 特技パーツ・PERFECTサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
+    :rtype: np.ndarray
+    """
+
+    # :todo: ライフ回復の配列（ボーナス、ブースト）
+    # :todo: ダメージガードの発動を確認する方法を決める。
+    LibsStageLogger.error("skillpart_add_recovery: 実装中。")
     return data
 
 
 @wrap_skillpart_effectvalues
 def skillpart_support_perfect(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・PERFECTサポートの特技効果量配列を返す。
@@ -862,12 +1060,11 @@ def skillpart_support_perfect(
             __秒毎、__確率で__間、COMBOボーナス__%アップ、__をPERFECTにする
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・PERFECTサポートの特技効果量配列。
+    :return: 特技パーツ・PERFECTサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
@@ -876,7 +1073,10 @@ def skillpart_support_perfect(
 
 @wrap_skillpart_effectvalues
 def skillpart_support_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOサポートの特技効果量配列を返す。
@@ -890,12 +1090,11 @@ def skillpart_support_combo(
             __秒毎、__確率で__間、COMBOボーナス__%アップ、PERFECTでライフ__回復、PERFECTのみCOMBO継続
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・COMBOサポートの特技効果量配列。
+    :return: 特技パーツ・COMBOサポートの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
@@ -904,7 +1103,10 @@ def skillpart_support_combo(
 
 @wrap_skillpart_effectvalues
 def skillpart_concentration(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・集中の特技効果量配列を返す。
@@ -914,12 +1116,11 @@ def skillpart_concentration(
             __秒毎、__確率で__間、PERFECTのスコア__%アップ、PERFECT判定される時間が短くなる
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・集中の特技効果量配列。
+    :return: 特技パーツ・集中の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
@@ -928,7 +1129,10 @@ def skillpart_concentration(
 
 @wrap_skillpart_effectvalues
 def skillpart_boost_support_perfect(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・PERFECTサポートブーストの特技効果量配列を返す。
@@ -940,12 +1144,11 @@ def skillpart_boost_support_perfect(
             3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を特大アップ、他特技効果を大アップ
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・非該当の特技効果量配列。
+    :return: 特技パーツ・非該当の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
@@ -954,7 +1157,10 @@ def skillpart_boost_support_perfect(
 
 @wrap_skillpart_effectvalues
 def skillpart_boost_support_combo(
-    note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
 ) -> np.ndarray:
     """
     特技パーツ・COMBOサポートブーストの特技効果量配列を返す。
@@ -966,12 +1172,11 @@ def skillpart_boost_support_combo(
             3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を特大アップ、他特技効果を大アップ
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・非該当の特技効果量配列。
+    :return: 特技パーツ・非該当の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
@@ -979,7 +1184,12 @@ def skillpart_boost_support_combo(
 
 
 @wrap_skillpart_effectvalues
-def skillpart_na(note: Note, position: int, context: LiveContext, skillpart: SkillPart, data: np.ndarray) -> np.ndarray:
+def skillpart_na(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    data: np.ndarray,
+) -> np.ndarray:
     """
     特技パーツ・非該当の特技効果量配列を返す。
 
@@ -987,54 +1197,83 @@ def skillpart_na(note: Note, position: int, context: LiveContext, skillpart: Ski
         非該当
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param SkillPart skillpart: 特技パーツ。
+    :param LiveStatus status: ライブステータス。
     :param np.ndarray data: 特技パーツの特技効果量配列。
 
-    :return: 特技パーツ・非該当の特技効果量配列。
+    :return: 特技パーツ・非該当の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
     return data
 
 
-def skill_effectvalue_array(
-    note: Note, position: int, context: LiveContext, timetables: list[list[TimeTable]]
+def skillcategory_menber_bonusboost_effectvalues(
+    note: Note,
+    context: LiveContext,
+    status: LiveStatus,
+    timetables: list[TimeTable],
 ) -> np.ndarray:
     """
-    特技系統の特技効果量配列を返す。
+    特技系統の特技効果量配列（次元：特技系統、メンバー、ボーナス＆ブースト）を返す。
 
-    - ``position`` で指定したアイドルエピソードの特技の特技効果量配列を用意する。
-        - 0: 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系の4種類）
-        - 1: メンバー（通常ライブで5人、GrandLiveで15人）
-        - 2: 効果量（ボーナス、ブーストの2種類）
+    - 効果量を要素とする配列を用意する。
+        - 0: 特技（通常ライブで5人分、GrandLiveで15人分）。
+        - 1: 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系の4種類）。
+        - 2: メンバー（通常ライブで5人、GrandLiveで15人）。ブースト対象の指定用。
+        - 3: 効果タイプ（ボーナス、ブーストの2種類）。
     - 特技発動時間割で特技の発動を確認し、特技パーツ評価で特技効果量配列を埋める。
-    - 特技系統の特技効果量配列を返す。
+    - **特技** で最大値を取って、特技系統の特技効果量配列に縮めて返す。
 
     :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
     :param LiveContext context: ライブコンテキスト。
-    :param list[list[TimeTable]] timetables: 特技発動時間割のリスト。
+    :param LiveStatus status: ライブステータス。
+    :param list[TimeTable] timetables: 特技発動時間割のリスト。
 
-    :return: 特技系統の特技効果量配列。
+    :return: 特技系統の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
 
-    skill: Skill = context.list_skills[position]
-    LibsStageLogger.debug(f"特技・{skill.skill}の特技効果量配列を計算。")
+    # 絶対値で比較して大きい方を返すnumpy.ufunc定義
+    abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
-    data = np.zeros((len(IndicesSkillCategory), context.size, len(IndicesSkillCategoryElement)), dtype=float)
+    data = np.zeros(
+        (
+            context.size,  # 特技
+            len(SkillCategoryIndices),  # 特技系統
+            context.size,  # メンバー
+            len(SkillCategoryElementIndices),  # 効果タイプ（ボーナス、ブースト）
+        ),
+        dtype=float,
+    )
 
-    # 巻き込みは、timetable.start, timetable.end を加減することで実装可能。
-    if any(
-        [timetable.active and timetable.start <= note.timestamp <= timetable.end for timetable in timetables[position]]
-    ):
-        for i, skillpart in enumerate(skill.skillparts):
-            if skillpart.effect.value in skillpart_effect_funcname:
-                data = skillpart_effect_funcname[skillpart.effect](note, position, context, skillpart, data)
+    for position, skill in enumerate(context.skills_list):
+        status.position = position
+        status.skill = skill
 
-    return data
+        # 巻き込みは、period.start, period.end を加減することで実装可能。
+        if any(
+            [
+                period.status and period.start <= note.timestamp <= period.end
+                for period in timetables[status.position].periodes
+            ]
+        ):
+            LibsStageLogger.debug(
+                f"stage.skillcategory_menber_bonusboost_effectvalues: 特技・{status.skill.skill}を処理。"
+            )
+
+            for i, skillpart in enumerate(status.skill.skillparts):
+                status.skillpart = skillpart
+                if skillpart.effect.value in skillpart_effect_funcname:
+                    data[position] = skillpart_effect_funcname[skillpart.effect](note, context, status, data[position])
+                else:
+                    LibsStageLogger.error(f"stage.skill_effectvalue_array: {skillpart.name} は、未実装です。")
+
+        status.skillpart = SkillPart()
+    status.position = 0
+    status.skill = Skill()
+
+    return abs_max.reduce(data, axis=0)
 
 
 def wrap_skill_restricted(func: Callable) -> Callable:
@@ -1078,7 +1317,7 @@ def wrap_skill_restricted(func: Callable) -> Callable:
         :rtype: bool
         """
 
-        LibsStageLogger.debug(f"特技・{context.list_skills[position].skill}を処理。")
+        LibsStageLogger.debug(f"stage.wrap_skill_restricted: 特技・{context.skills_list[position].skill}を処理。")
 
         return partial(func, note, position, context)()
 
@@ -1086,7 +1325,11 @@ def wrap_skill_restricted(func: Callable) -> Callable:
 
 
 @wrap_skill_restricted
-def skill_restricted_na(note: Note, position: int, context: LiveContext) -> bool:
+def skill_restricted_na(
+    note: Note,
+    position: int,
+    context: LiveContext,
+) -> bool:
     """
     特技の発動可否を評価する。
 
@@ -1128,7 +1371,11 @@ def skill_restricted_na(note: Note, position: int, context: LiveContext) -> bool
 
 
 @wrap_skill_restricted
-def skill_restricted_unit(note: Note, position: int, context: LiveContext) -> bool:
+def skill_restricted_unit(
+    note: Note,
+    position: int,
+    context: LiveContext,
+) -> bool:
     """
     特技の発動可否を評価する。
 
@@ -1148,21 +1395,21 @@ def skill_restricted_unit(note: Note, position: int, context: LiveContext) -> bo
     :rtype: bool
     """
 
-    skill: Skill = context.list_skills[position]
+    skill: Skill = context.skills_list[position]
     match skill.formation:
-        case UnitType.ONLY_CUTE if context.set_idoltypes == {IdolType.CUTE}:
+        case UnitType.ONLY_CUTE if context.idoltypes_set == {IdolType.CUTE}:
             # キュートフォーカス
             return True
 
-        case UnitType.ONLY_COOL if context.set_idoltypes == {IdolType.COOL}:
+        case UnitType.ONLY_COOL if context.idoltypes_set == {IdolType.COOL}:
             # クールフォーカス
             return True
 
-        case UnitType.ONLY_PASSION if context.set_idoltypes == {IdolType.PASSION}:
+        case UnitType.ONLY_PASSION if context.idoltypes_set == {IdolType.PASSION}:
             # パッションフォーカス
             return True
 
-        case UnitType.ALL if context.set_idoltypes == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
+        case UnitType.ALL if context.idoltypes_set == {IdolType.CUTE, IdolType.COOL, IdolType.PASSION}:
             # トリコロール・シナジー
             # トリコロール・シンフォニー
             return True
@@ -1171,7 +1418,11 @@ def skill_restricted_unit(note: Note, position: int, context: LiveContext) -> bo
 
 
 @wrap_skill_restricted
-def skill_restricted_music(note: Note, position: int, context: LiveContext) -> bool:
+def skill_restricted_music(
+    note: Note,
+    position: int,
+    context: LiveContext,
+) -> bool:
     """
     特技の発動可否を評価する。
 
@@ -1187,7 +1438,7 @@ def skill_restricted_music(note: Note, position: int, context: LiveContext) -> b
     :rtype: bool
     """
 
-    skill: Skill = context.list_skills[position]
+    skill: Skill = context.skills_list[position]
     match skill.music:
         case MusicType.ALL if context.livesong_type == SongType.ALL:
             # スターライト・アンサンブル
@@ -1197,7 +1448,11 @@ def skill_restricted_music(note: Note, position: int, context: LiveContext) -> b
 
 
 @wrap_skill_restricted
-def skill_restricted_music_and_unit(note: Note, position: int, context: LiveContext) -> bool:
+def skill_restricted_music_and_unit(
+    note: Note,
+    position: int,
+    context: LiveContext,
+) -> bool:
     """
     特技の発動可否を評価する。
 
@@ -1215,9 +1470,9 @@ def skill_restricted_music_and_unit(note: Note, position: int, context: LiveCont
     :rtype: bool
     """
 
-    skill: Skill = context.list_skills[position]
+    skill: Skill = context.skills_list[position]
     match [skill.music, skill.formation]:
-        case [MusicType.ALL, UnitType.ALL] if context.livesong_type == SongType.ALL and context.set_idoltypes == {
+        case [MusicType.ALL, UnitType.ALL] if context.livesong_type == SongType.ALL and context.idoltypes_set == {
             IdolType.CUTE,
             IdolType.COOL,
             IdolType.PASSION,
@@ -1226,25 +1481,25 @@ def skill_restricted_music_and_unit(note: Note, position: int, context: LiveCont
             return True
 
         case [MusicType.CUTE, UnitType.ONLY_COOL_AND_CUTE] if (
-            context.livesong_type == SongType.CUTE and context.set_idoltypes == {IdolType.CUTE, IdolType.COOL}
+            context.livesong_type == SongType.CUTE and context.idoltypes_set == {IdolType.CUTE, IdolType.COOL}
         ):
             # ドミナント・ハーモニー
             return True
 
         case [MusicType.CUTE, UnitType.ONLY_PASSION_AND_CUTE] if (
-            context.livesong_type == SongType.CUTE and context.set_idoltypes == {IdolType.CUTE, IdolType.PASSION}
+            context.livesong_type == SongType.CUTE and context.idoltypes_set == {IdolType.CUTE, IdolType.PASSION}
         ):
             # ドミナント・ハーモニー
             return True
 
         case [MusicType.COOL, UnitType.ONLY_CUTE_AND_COOL] if (
-            context.livesong_type == SongType.COOL and context.set_idoltypes == {IdolType.CUTE, IdolType.COOL}
+            context.livesong_type == SongType.COOL and context.idoltypes_set == {IdolType.CUTE, IdolType.COOL}
         ):
             # ドミナント・ハーモニー
             return True
 
         case [MusicType.COOL, UnitType.ONLY_PASSION_AND_COOL] if (
-            context.livesong_type == SongType.COOL and context.set_idoltypes == {IdolType.COOL, IdolType.PASSION}
+            context.livesong_type == SongType.COOL and context.idoltypes_set == {IdolType.COOL, IdolType.PASSION}
         ):
             # ドミナント・ハーモニー
             return True
@@ -1253,27 +1508,27 @@ def skill_restricted_music_and_unit(note: Note, position: int, context: LiveCont
 
 
 skillpart_effect_funcname: dict[str, Callable] = {
-    "スコアボーナス": skillpart_bonus_score,
-    "COMBOボーナス": skillpart_bonus_combo,
+    "スコアボーナス": skillpart_bonus_score,  # オルタネイトのマイナス効果を含む
+    "COMBOボーナス": skillpart_bonus_combo,  # ミューチャルのマイナス効果を含む
     "スコアブースト": skillpart_boost_score,
     "COMBOブースト": skillpart_boost_combo,
     "スコアボーナスコピー": skillpart_copy_bonus_score,  # リフレインの特技パーツ
     "COMBOボーナスコピー": skillpart_copy_bonus_combo,  # リフレインの特技パーツ
-    "スコアブーストコピー": skillpart_copy_boost_score,  # オルタネイトのメインの特技パーツ
-    "COMBOブーストコピー": skillpart_copy_boost_combo,  # ミューチャルのメインの特技パーツ
-    # "ライフ回復": skillpart_recovery,
-    # "ダメージガード": skillpart_no_damage,  # 他の特技のライフ消費を無効化
+    "スコアブーストコピー": skillpart_copy_boost_score,  # オルタネイトの特技パーツ
+    "COMBOブーストコピー": skillpart_copy_boost_combo,  # ミューチャルの特技パーツ
+    "ライフ回復": skillpart_recovery,
+    "ダメージガード": skillpart_no_damage,  # [特技発動要件のライフ消費] を無効化
+    "アンコール": skillpart_encore,  # コピーした特技によって異なる
+    "シンデレラマジック": skillpart_magic,  # コピーした特技によって異なる
+    "ライフ回復ブースト": skillpart_boost_recovery,
+    "ライフ回復付与": skillpart_add_recovery,  # ダメージガードをブーストし、ライフ回復
     # "ライフ減少量ダウン": skillpart_down_damage,  # クリスタル・ヒール、他の特技のライフ消費を減少
     # "LIVE開始時にライフ回復": skillpart_recovery_at_start,  # クリスタル・ヒール、ライブ開始時のみ発動
+    # "ライフ減少量ダウンブースト": skillpart_boost_down_damage,  # [特技発動要件のライフ消費] を軽減
     "非該当": skillpart_na,  # 無処理
     "集中": skillpart_concentration,  # 無処理
     "COMBOサポート": skillpart_support_combo,  # 無処理
     "PERFECTサポート": skillpart_support_perfect,  # 無処理
-    "アンコール": skillpart_encore,  # コピーした特技によって異なる
-    "シンデレラマジック": skillpart_magic,  # コピーした特技によって異なる
-    # "ライフ回復ブースト": skillpart_boost_recovery,
-    # "ライフ回復付与": skillpart_add_recovery,
-    # "ライフ減少量ダウンブースト": skillpart_boost_down_damage,
     "PERFECTサポートブースト": skillpart_boost_support_perfect,  # 無処理
     "COMBOサポートブースト": skillpart_boost_support_combo,  # 無処理
 }
@@ -1416,40 +1671,43 @@ class Simulator:
         live_context = LiveContext(
             on_resonance=isresonance,
             base=self._base_score_for_note(sum(sum(s) for s in unit[1:4]) + sum(sum(s) for s in supports[1:4])),
-            life=Life(value=sum([life for life in unit[4]])),
             timelimit=self._music.last_note.timestamp,
             size=UNIT_SIZE,
             vocal_appeal=sum(unit[1][:UNIT_SIZE]),
             dance_appeal=sum(unit[2][:UNIT_SIZE]),
             visual_appeal=sum(unit[3][:UNIT_SIZE]),
             livesong_type=self._music.song.type,
-            set_idoltypes={episode.type for episode in episodes},
-            list_numbers_by_type=[
+            idoltypes_set={episode.type for episode in episodes},
+            type_numbers_list=[
                 number_type(episodes, IdolType.CUTE, DominantType.CUTE),
                 number_type(episodes, IdolType.COOL, DominantType.COOL),
                 number_type(episodes, IdolType.PASSION, DominantType.PASSION),
             ],
-            list_idoltypes=[episode.type for episode in episodes[:UNIT_SIZE]],
-            list_intervals=[
+            idoltypes_list=[episode.type for episode in episodes[:UNIT_SIZE]],
+            intervals_list=[
                 int(Simulator._skills.get(episode.skill).interval * FPS) for episode in episodes[:UNIT_SIZE]
             ],
-            list_probabilities=unit[5][:UNIT_SIZE],
-            list_durations=[int(timestamp * FPS) for timestamp in unit[6][:UNIT_SIZE]],
-            list_skills=[Simulator._skills.get(episode.skill) for episode in episodes[:UNIT_SIZE]],
+            probabilities_list=unit[5][:UNIT_SIZE],
+            durations_list=[int(timestamp * FPS) for timestamp in unit[6][:UNIT_SIZE]],
+            skills_list=[Simulator._skills.get(episode.skill) for episode in episodes[:UNIT_SIZE]],
         )
 
-        timetables: list[list[TimeTable]] = self._skill_timetables(live_context)
+        timetables: list[TimeTable] = self._skill_timetables(live_context)
 
-        live_status = LiveStatus(life=Life(value=sum([life for life in unit[4]])))
+        live_status = LiveStatus(
+            life=Life(value=sum([life for life in unit[4]])), skill_activated=[0 for _ in range(UNIT_SIZE)]
+        )
 
-        LibsStageLogger.debug(f"楽曲: {self._music.song.type}タイプ、レベル{self._music.song.level}")
-        LibsStageLogger.debug(f"特技: {[skill.skill for skill in live_context.list_skills]}")
-        LibsStageLogger.debug(f"特技発動確率: {live_context.list_probabilities}")
-        LibsStageLogger.debug(f"特技継続期間: {live_context.list_durations}")
-        LibsStageLogger.debug(f"基礎値: {live_context.base}")
-        LibsStageLogger.debug(f"初期ライフ: {live_context.life}")
+        debug_massage = f"{self.__class__.__name__}.run: "
 
-        LibsStageLogger.info(f"{self.__class__.__name__}.run: シミュレーションを開始。")
+        LibsStageLogger.debug(f"{debug_massage}楽曲 - {self._music.song.type}タイプ、レベル{self._music.song.level}")
+        LibsStageLogger.debug(f"{debug_massage}特技 - {[skill.skill for skill in live_context.skills_list]}")
+        LibsStageLogger.debug(f"{debug_massage}特技発動確率 - {live_context.probabilities_list}")
+        LibsStageLogger.debug(f"{debug_massage}特技継続期間 - {live_context.durations_list}")
+        LibsStageLogger.debug(f"{debug_massage}基礎値 - {live_context.base:.2f}")
+        LibsStageLogger.debug(f"{debug_massage}初期ライフ - {live_status.life}")
+
+        LibsStageLogger.info(f"{debug_massage}シミュレーションを開始。")
 
         self.combo: int = 0
         return list(
@@ -1472,7 +1730,7 @@ class Simulator:
         note: Note,
         context: LiveContext,
         status: LiveStatus,
-        timetables: list[list[TimeTable]],
+        timetables: list[TimeTable],
     ) -> int | None:
         """
         **note** 単位でライブを進める。
@@ -1507,33 +1765,38 @@ class Simulator:
         note: Note,
         context: LiveContext,
         status: LiveStatus,
-        timetables: list[list[TimeTable]],
+        timetables: list[TimeTable],
     ) -> int:
         """
         ノートのスコアを計算する。
 
         :ノートのスコア:
-          :math:`基礎値\times判定倍率\timesコンボ倍率\times特技倍率`
+            :math:`基礎値\\times判定倍率\\timesコンボ倍率\\times特技倍率`
 
         :param int combo: コンボ数。
         :param Note note: スコア計算対象のノート。
         :param LiveContext context: ライブコンテキスト。
-        :param list[list[TimeTable]] timetables: 特技発動時間割。
+        :param list[TimeTable] timetables: 特技発動時間割。
 
         :return: ノートのスコア。
         :rtype: int
         """
 
         return round(
-            reduce(
-                mul,  # 基礎値、判定倍率、コンボ倍率、特技倍率
+            reduce(  # 基礎値 * 判定倍率 * コンボ倍率 * 特技倍率
+                mul,
                 [
                     context.base,
                     self._perfection_rate("PERFECT"),
                     Simulator._comborates.rate(combo / self._music.note_number),
-                    reduce(
-                        mul,  # 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系）倍率
-                        self._skillcategory_rates(note, context, status, timetables),
+                    reduce(  # スコア系倍率 * COMBO系倍率 * オルタネイト系倍率 * ミューチャル系倍率
+                        mul,
+                        self._skillcategory_rates(
+                            note=note,
+                            context=context,
+                            status=status,
+                            timetables=timetables,
+                        ),
                     ),
                 ],
             )
@@ -1566,48 +1829,55 @@ class Simulator:
 
         return 1.0
 
-    def _skill_timetables(self, context: LiveContext) -> list[list[TimeTable]]:
+    def _skill_timetables(self, context: LiveContext) -> list[TimeTable]:
         """
         ゲストを除くユニットメンバーの特技発動タイムテーブルを作成する。
 
         特技の発動要件・楽曲要件・編成要件を満たし、特技発動確率が乱数値以上の時に発動する。
-        ただし、残ライフ値が判らないので、発動要件 **ライフを__消費** は暫定で :math:`active=True` とする。
+        ただし、残ライフ値が判らないので、発動要件 **ライフを__消費** の特技を暫定で ``ActiveStatus.AVAILABLE`` とする。
         最後のノートの3秒前までが、特技発動の限界。
 
         :param LiveContext context: 特技発動時間割のコンテキスト。
 
         :return: 特技発動タイムテーブル。
-        :rtype: list[list[TimeTable]]
+        :rtype: list[TimeTable]
         """
 
         timetables: list = list()
 
         # ユニットメンバーの特技時間割
-        for position, skill in enumerate(context.list_skills):
+        for position, skill in enumerate(context.skills_list):
             # 初回、特技は発動しない。
-            # :todo: クリスタル・ヒールは、初回だけ発動（発動間隔 0）する。
-            timetable: list = [TimeTable(active=False, start=0, end=int(context.list_durations[position]))]
+            # :todo: クリスタル・ヒールの特技は、初回だけ発動（発動間隔 0）。
+            timetable: TimeTable = TimeTable()
+            timetable.periodes.append(
+                Period(
+                    start=0,
+                    end=int(context.durations_list[position]),
+                )
+            )
 
             jcycle: int = 1
-            while skill.interval != 0 and (context.timelimit - 3 * FPS) > context.list_intervals[position] * jcycle:
-                # 特技発動間隔が 0 の場合は、次回以降の特技時間割が不要
-                # 初回より後から、最後のノートの3秒前までの特技時間割を作成
+            while skill.interval != 0 and (context.timelimit - 3 * FPS) > context.intervals_list[position] * jcycle:
+                # 特技発動間隔が 0 の場合（クリスタル・ヒールの特技）は、次回以降の特技時間割が不要。
+                # 初回より後から、最後のノートの3秒前までの特技時間割を作成。
 
-                pass_song_and_unit: bool = False  # 特技の発動／不発
-                if skill_restricted_funcname[skill.skill](
-                    note=Note(timestamp=context.list_intervals[position] * jcycle),
+                # True: 楽曲要件と編成要件を満たしてる。
+                pass_song_and_unit: bool = skill_restricted_funcname[skill.skill](
+                    note=Note(timestamp=context.intervals_list[position] * jcycle),
                     position=position,
                     context=context,
-                ):
-                    pass_song_and_unit = True
+                )
 
-                timetable.append(
-                    TimeTable(
-                        active=True
-                        if random() < context.list_probabilities[position] and pass_song_and_unit
-                        else False,
-                        start=context.list_intervals[position] * jcycle,
-                        end=context.list_intervals[position] * jcycle + context.list_durations[position],
+                # True: 特技発動確率が乱数を超えている。
+                # 特技発動時間割のコマを作成。
+                timetable.periodes.append(
+                    Period(
+                        status=ActiveStatus.AVAILABLE
+                        if context.probabilities_list[position] > random() and pass_song_and_unit
+                        else ActiveStatus.NONE,
+                        start=context.intervals_list[position] * jcycle,
+                        end=context.intervals_list[position] * jcycle + context.durations_list[position],
                     )
                 )
                 jcycle += 1
@@ -1620,45 +1890,112 @@ class Simulator:
         note: Note,
         context: LiveContext,
         status: LiveStatus,
-        timetables: list[list[TimeTable]],
+        timetables: list[TimeTable],
     ) -> None:
         """
-        発動時にライフ消費を必要とする特技の発動評価を特技時間割に反映する。
+        毎秒（カウンターノートを受け取った）、発動ステータス ``ActiveStatus.AVAILABLE`` の特技発動を確認する。
 
-        特技発動時間割の作成時、発動時にライフ消費を伴う特技は、仮に発動する（acitive=True）としているので、
-        再評価し、発動・不発を確定する。
+        発動ステータス ``ActiveStatus.AVAILABLE`` の特技のみ処理し、以外はスルー。
+        発動時にライフ消費を必要とする特技は、残ライフ量で発動ステータスを ``USED`` ／ ``NONE`` を仕分ける。
+        これ以外の特技は、発動ステータスを ``USED`` にする。
+        シンデレラマジックの発動時、他のアイドルの特技を発動（コマを挿入）させる。
 
         :param Note note: カウンターノート。
-        :param LiveContext context: 特技コンテキスト。
-        :param list[list[TimeTable]] timetables: 特技発動時間割
+        :param LiveContext context: ライブコンテキスト。
+        :param LiveStatus status: ライブステータス。
+        :param list[TimeTable] timetables: 特技発動時間割。
 
         :todo: 特技・ダメージガードの発動時は、ライフ消費無しで発動確定。
-        :todo: 特技・ライフ消費量ダウンの発動時は、減少したライフ消費量で評価する。
+        :todo: 特技パーツ・ライフ消費量ダウン（特技・クリスタル・ヒール）の発動時は、減少したライフ消費量で評価する。
         """
 
-        for position, timetable in enumerate(timetables):
-            if context.list_skills[position].trigger in [
-                SkillTriggerType.SUBSTRACTLIFE_06,
-                SkillTriggerType.SUBSTRACTLIFE_09,
-                SkillTriggerType.SUBSTRACTLIFE_11,
-                SkillTriggerType.SUBSTRACTLIFE_15,
-                SkillTriggerType.SUBSTRACTLIFE_18,
-                SkillTriggerType.SUBSTRACTLIFE_25,
-                SkillTriggerType.SUBSTRACTLIFE_28,
-            ]:
-                for th in timetable:
-                    if th.start == note.timestamp:
-                        value = int(re_excluding_digits.sub("", context.list_skills[position].trigger.value))
-                        th.active = status.life.update(-value)
+        # まず、発動要件・アンコールを評価。直前の発動が同時発動で上書きされるのを避けるため。
+        for poistion, timetable in enumerate(timetables):
+            match context.skills_list[poistion].trigger:
+                case SkillTriggerType.ENCORE:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            before_useds: list[int] = [
+                                i
+                                for i, timestamp in enumerate(status.skill_activated)
+                                if timestamp == max(status.skill_activated)
+                            ]
+                            LibsStageLogger.debug(f"{self.__class__.__name__}.: {before_useds}")
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[poistion] = note.timestamp
 
-        LibsStageLogger.debug(f"{self.__class__.__name__}._substract_life_upon: 残ライフ値 {status.life.value}")
+                case _:
+                    pass
+
+        # アンコール以外の発動要件を評価。
+        for position, timetable in enumerate(timetables):
+            match context.skills_list[position].trigger:
+                case SkillTriggerType.ENCORE:
+                    # 評価済み
+                    pass
+
+                case (
+                    SkillTriggerType.SUBSTRACTLIFE_06
+                    | SkillTriggerType.SUBSTRACTLIFE_09
+                    | SkillTriggerType.SUBSTRACTLIFE_11
+                    | SkillTriggerType.SUBSTRACTLIFE_15
+                    | SkillTriggerType.SUBSTRACTLIFE_18
+                    | SkillTriggerType.SUBSTRACTLIFE_25
+                    | SkillTriggerType.SUBSTRACTLIFE_28
+                ):
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            value = int(re_excluding_digits.sub("", context.skills_list[position].trigger.value))
+                            if status.life.update(-value):
+                                period.status = ActiveStatus.USED
+                                status.skill_activated[position] = note.timestamp
+                            else:
+                                period.status = ActiveStatus.NONE
+
+                case SkillTriggerType.REFRAIN:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[position] = note.timestamp
+
+                case SkillTriggerType.ALTERNATE:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[position] = note.timestamp
+
+                case SkillTriggerType.MUTUAL:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[position] = note.timestamp
+
+                case SkillTriggerType.MAGIC:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[position] = note.timestamp
+
+                case _:
+                    for period in timetable.periodes:
+                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                            period.status = ActiveStatus.USED
+                            status.skill_activated[position] = note.timestamp
+
+        debug_message: list[str] = [
+            f"{self.__class__.__name__}._substract_life_upon: ",
+            f"{note.timestamp * note.time_base:.2f} 秒 - ",
+            f"残ライフ値 {status.life.value}, ",
+            f"特技発動履歴 {status.skill_activated}",
+        ]
+        LibsStageLogger.debug("".join(debug_message))
 
     def _skillcategory_rates(
         self,
         note: Note,
         context: LiveContext,
         status: LiveStatus,
-        timetables: list[list[TimeTable]],
+        timetables: list[TimeTable],
     ) -> list[float]:
         """
         ノートの特技系統（参照：列挙クラス ``IndicesSkillCategory``）倍率を計算する。
@@ -1668,10 +2005,11 @@ class Simulator:
         ただし、センター効果・レゾナンスが有効な場合は、特技系統ごとに全メンバーの総和をユニットの特技効果量とする。
 
         :param Note note: ノート。
-        :param SkillContext context: 特技コンテキスト。
+        :param LiveContext context: ライブコンテキスト。
+        :param LiveStatus status: ライブステータス。
         :param list[list[TimeTable]] timetables: ゲストを除くユニットメンバーの特技発動時間割。
 
-        :return: 特技系統倍率リスト。
+        :return: 特技系統倍率（スコア系、コンボ系、オルタネイト、ミューチャル、ライフ回復）リスト。
         :rtype: list[float]
         """
 
@@ -1690,34 +2028,34 @@ class Simulator:
 
         bonus_boost = np.frompyfunc(bonus_boost_pyfunc, 2, 1)
 
-        effectvaluearray: np.ndarray = np.zeros(
-            (context.size, len(IndicesSkillCategory), context.size, len(IndicesSkillCategoryElement))
+        effectvalues: np.ndarray = skillcategory_menber_bonusboost_effectvalues(
+            note=note,
+            context=context,
+            status=status,
+            timetables=timetables,
         )
-        for position, skill in enumerate(context.list_skills):
-            effectvaluearray[position] = skill_effectvalue_array(
-                note=note,
-                position=position,
-                context=context,
-                timetables=timetables,
-            )
 
-        # メンバーごとに纏める。
-        effectvaluearray = abs_max.reduce(effectvaluearray, axis=0)
-        # ボーナス＆ブーストの効果量に変換する。
-        effectvaluearray = bonus_boost.reduce(effectvaluearray, axis=2)
+        # ボーナス効果量とブースト効果量の積の効果量に変換する（次元：特技系統、メンバー）。
+        effectvalues = bonus_boost.reduce(effectvalues, axis=2)
 
-        # 特技系統の特技効果量を最も大きい効果量とする。
+        # スコア系、コンボ系、オルタネイト系、ミューチャル系と、ライフ回復系を分離。
+        status.life.update(int(np.max(effectvalues[SkillCategoryIndices.RECOVERY])))
+        effectvalues = effectvalues[: SkillCategoryIndices.RECOVERY]
+
+        # 特技系統の特技効果量をメンバーで比較して最も大きい効果量とする（次元：特技系統）。
         # センター効果・レゾナンスが有効な場合は、特技系統ごとに特技効果量を全て加算する。
-        effectvaluearray = (
-            np.add.reduce(effectvaluearray, axis=1)
-            if context.on_resonance
-            else abs_max.reduce(effectvaluearray, axis=1)
+        effectvalues = (
+            np.add.reduce(effectvalues, axis=1) if context.on_resonance else abs_max.reduce(effectvalues, axis=1)
         )
 
-        LibsStageLogger.debug(f"{note.timestamp * note.time_base:.2f} 秒の特技系統効果量 - {effectvaluearray}")
+        debug_message: list[str] = [
+            f"{self.__class__.__name__}._skillcategory_rates: ",
+            f"{note.timestamp * note.time_base:.2f} 秒の特技系統効果量 - {effectvalues}",
+        ]
+        LibsStageLogger.debug("".join(debug_message))
 
         # 特技系統の特技効果量に1.0を加えて特技倍率に変換し、特技系統倍率リストとして返す。
-        return (effectvaluearray + 1.0).tolist()
+        return (effectvalues + 1.0).tolist()
 
 
 if __name__ == "__main__":
