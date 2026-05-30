@@ -89,7 +89,7 @@ from enum import IntEnum
 from deredata.libs.database.musics import FPS, Note, NoteType, SongType, Music
 from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
 from deredata.libs.database.episodes import Episode, Episodes
-from deredata.libs.database.skills import Skill, Skills, SkillPart, IconType, SkillTriggerType
+from deredata.libs.database.skills import Skill, Skills, SkillPart, IconType, SkillTriggerType, EffectType
 from deredata.libs.database.musiclevels import MusicLevels
 from deredata.libs.database.comborates import ComboRates
 from deredata.libs.database.motif import Motives
@@ -126,6 +126,36 @@ class SkillCategoryElementIndices(IntEnum):
 class SkillCategoryIndices(IntEnum):
     """
     特技系統の列挙クラス。特技効果量リストもしくは配列の添え字に相当する。
+
+    .. csv-table:: 特技系統と特技パーツ効果
+        :header-rows: 1
+        :stub-columns: 1
+
+        "特技系統", "添え字", "BONUS", "BOOST", "注釈"
+        "スコア系", "0", "スコアボーナス", "スコアブースト", "[#f1]_"
+        "コンボ系", "1", "COMBOボーナス", "COMBOブースト", "[#f1]_"
+        "オルタネイト", "2", "（スコアボーナス）", "スコアブーストコピー", "[#f1]_"
+        "ミューチャル", "3", "（COMBOボーナス）", "COMBOブーストコピー", "[#f1]_"
+        "ライフ回復", "4", "ライフ回復", "ライフ回復ブースト", "[#f2]_"
+        "ダメージガード", "5", "ダメージガード", "ライフ回復付与", "[#f2]_"
+        "PERFECTサポート", "─", "PERFECTサポート", "PERFECTサポートブースト", "[#f3]_"
+        "COMBOサポート", "─", "COMBOサポート", "COMBOサポートブースト", "[#f4]_"
+        "集中", "─", "集中", "─", "[#f3]_"
+        "ライフ減少量ダウン", "─", "ライフ減少量ダウン", "ライフ減少量ダウンブースト", "[#f5]_"
+        "LIVE開始時にライフ回復", "─", "LIVE開始時にライフ回復", "─", "[#f6]_"
+        "シンデレラマジック", "─", "", "", "[#f7]_"
+        "アンコール", "─", "", "", "[#f7]_"
+
+    .. rublic:: 注釈
+    .. [#f1] ノートのスコア計算で使う。
+    .. [#f2] ノートのスコア計算で、残ライフ評価に使う。
+    .. [#f3] PERFECT判定が前提なので、評価しない。
+    .. [#f4] フルコンボ前提なので、評価しない。
+    .. [#f5]
+        ライブ開始前に **ライフ減少量ダウン** を評価し、**ライフ減少量ダウンブースト** 発動時に評価する。
+        PERFECT判定前提なので、ノートのスコア計算では評価しない。
+    .. [#f6] ライブ開始前に評価する。
+    .. [#f7] 発動時に評価する。
 
     :param 0 SCORE: スコアアップ系（ミューチャル・スコアダウンも含む）。
     :param 1 COMBO: COMBOボーナス系（オルタネイト・COMBOダウンも含む）。
@@ -245,17 +275,17 @@ class LiveStatus:
         - 2: 右隣り
         - 3: 左端
         - 4: 右端
-    :param list[int] skill_activated:
-        Live中に発動した特技の発動タイミングのリスト（ゲストを除くユニットのアイドルの立ち位置順）。
-
-    :todo: 特技発動時間割
+    :param list[int] skill_logs:
+        特技の既発動タイムスタンプのリスト（ゲストを除くユニットのアイドルの立ち位置順）。
+        値が ZERO の場合、未発動である（特技・クリスタル・ヒールを除く）ことを示す。
+        特技・アンコール、リフレイン、オルタネイト、ミューチャルの参照先特技の判定に用いる。
     """
 
     life: Life = field(default_factory=Life)
     skill: Skill = field(default=Skill())
     skillpart: SkillPart = field(default=SkillPart())
     position: int = 0
-    skill_activated: list[int] = field(default_factory=list)
+    skill_logs: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -350,7 +380,7 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
         """
         特技パーツの特技効果量配列を返す。
 
-        適用メンバー（ブースト先）、適用アイコン、適用判定を調べ、効果量を返す。
+        適用メンバー（ブースト先）、適用アイコン、適用判定を調べ、配列に効果量を代入する。
 
         :param Note note:
             スコア計算対象のノート。
@@ -361,9 +391,9 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
         :param np.ndarray data:
             特技パーツの特技効果量配列。
 
-            - 0: 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系）
+            - 0: 特技系統（スコア系、COMBO系、オルタネイト系、ミューチャル系、ライフ回復系）
             - 1: メンバー
-            - 2: 効果量（ボーナス、ブースト）
+            - 2: ボーナス＆ブースト
 
         :return: 特技パーツの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
         :rtype: np.ndarray
@@ -1301,37 +1331,35 @@ def wrap_skill_restricted(func: Callable) -> Callable:
     """
 
     @wraps(func)
-    def wrapper(note: Note, position: int, context: LiveContext) -> bool:
+    def wrapper(skill: Skill, context: LiveContext) -> bool:
         """
-        特技の適用可否を返す。
+        特技の発動可能（**True**）・不発（**False**）を返す。
 
-        楽曲要件、編成要件を満たす場合などは、特技パーツを適用するように **True** を返す。
+        楽曲要件、編成要件を満たす場合などは、特技発動可能なことを示す **True** を返す。
 
-        :param Note note: スコア計算対象のノート。
-        :param int position: 特技を有するアイドルのライブ立ち位置。
+        :param Skill skill: 評価対象の特技。
         :param LiveContext context: ライブコンテキスト。
 
         :return:
-          **True** であれば、特技発動とする。
-          **False** であれば、特技不発とする。
+          **True** であれば、特技発動可能（AVAILABLE）とする。
+          **False** であれば、特技不発（NONE）とする。
         :rtype: bool
         """
 
-        LibsStageLogger.debug(f"stage.wrap_skill_restricted: 特技・{context.skills_list[position].skill}を処理。")
+        LibsStageLogger.debug(f"stage.wrap_skill_restricted: 特技・{skill.skill}を処理。")
 
-        return partial(func, note, position, context)()
+        return partial(func, skill, context)()
 
     return wrapper
 
 
 @wrap_skill_restricted
 def skill_restricted_na(
-    note: Note,
-    position: int,
+    skill: Skill,
     context: LiveContext,
 ) -> bool:
     """
-    特技の発動可否を評価する。
+    特技の発動可能（**True**）・不発（**False**）を返す。
 
     楽曲要件、編成要件のない特技。
         SCOREボーナス
@@ -1359,8 +1387,7 @@ def skill_restricted_na(
         PERFECTサポート
         COMBOサポート
 
-    :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
+    :param Skill skill: 評価対象の特技。
     :param LiveContext context: ライブコンテキスト。
 
     :return: 特技の発動の評価結果。
@@ -1372,12 +1399,11 @@ def skill_restricted_na(
 
 @wrap_skill_restricted
 def skill_restricted_unit(
-    note: Note,
-    position: int,
+    skill: Skill,
     context: LiveContext,
 ) -> bool:
     """
-    特技の発動可否を評価する。
+    特技の発動可能（**True**）・不発（**False**）を返す。
 
     編成要件のある特技。
         キュートフォーカス、クールフォーカス、パッションフォーカス
@@ -1387,15 +1413,13 @@ def skill_restricted_unit(
         トリコロール・シンフォニー
             3タイプ全てのアイドル編成時、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を特大アップ、他特技効果を大アップ
 
-    :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
+    :param Skill skill: 評価対象の特技。
     :param LiveContext context: ライブコンテキスト。
 
     :return: 特技の発動の評価結果。
     :rtype: bool
     """
 
-    skill: Skill = context.skills_list[position]
     match skill.formation:
         case UnitType.ONLY_CUTE if context.idoltypes_set == {IdolType.CUTE}:
             # キュートフォーカス
@@ -1419,26 +1443,23 @@ def skill_restricted_unit(
 
 @wrap_skill_restricted
 def skill_restricted_music(
-    note: Note,
-    position: int,
+    skill: Skill,
     context: LiveContext,
 ) -> bool:
     """
-    特技の発動可否を評価する。
+    特技の発動可能（**True**）・不発（**False**）を返す。
 
     楽曲要件のある特技。
         スターライト・アンサンブル
             全タイプ楽曲で、__秒毎、__確率で__間、他アイドルのスコアアップ/COMBOボーナス効果を極大アップ
 
-    :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
+    :param Skill skill: 評価対象の特技。
     :param LiveContext context: ライブコンテキスト。
 
     :return: 特技の発動の評価結果。
     :rtype: bool
     """
 
-    skill: Skill = context.skills_list[position]
     match skill.music:
         case MusicType.ALL if context.livesong_type == SongType.ALL:
             # スターライト・アンサンブル
@@ -1449,12 +1470,11 @@ def skill_restricted_music(
 
 @wrap_skill_restricted
 def skill_restricted_music_and_unit(
-    note: Note,
-    position: int,
+    skill: Skill,
     context: LiveContext,
 ) -> bool:
     """
-    特技の発動可否を評価する。
+    特技の発動可能（**True**）・不発（**False**）を返す。
 
     楽曲要件と編成要件のある特技。
         トリコロール・スパイク（ライフ消費有り）
@@ -1462,15 +1482,13 @@ def skill_restricted_music_and_unit(
         ドミナント・ハーモニー
             __楽曲で__と__のアイドルのみ編成時、__秒毎、__確率で__間、__アイドルのスコアアップ効果と、__アイドルのCOMBOボーナス効果をそれぞれの人数に応じてアップ
 
-    :param Note note: スコア計算対象のノート。
-    :param int position: 特技を有するアイドルのライブ立ち位置。
+    :param Skill skill: 評価対象の特技。
     :param LiveContext context: ライブコンテキスト。
 
     :return: 特技の発動の評価結果。
     :rtype: bool
     """
 
-    skill: Skill = context.skills_list[position]
     match [skill.music, skill.formation]:
         case [MusicType.ALL, UnitType.ALL] if context.livesong_type == SongType.ALL and context.idoltypes_set == {
             IdolType.CUTE,
@@ -1695,7 +1713,7 @@ class Simulator:
         timetables: list[TimeTable] = self._skill_timetables(live_context)
 
         live_status = LiveStatus(
-            life=Life(value=sum([life for life in unit[4]])), skill_activated=[0 for _ in range(UNIT_SIZE)]
+            life=Life(value=sum([life for life in unit[4]])), skill_logs=[0 for _ in range(UNIT_SIZE)]
         )
 
         debug_massage = f"{self.__class__.__name__}.run: "
@@ -1750,7 +1768,7 @@ class Simulator:
         match note.type:
             case NoteType.COUNT:
                 # 特技発動時間割を更新（ライフ消費などの際）。
-                self._substract_life_upon(note, context, status, timetables)
+                self._activate_skills(note, context, status, timetables)
                 return None
 
             case _:
@@ -1848,44 +1866,36 @@ class Simulator:
         # ユニットメンバーの特技時間割
         for position, skill in enumerate(context.skills_list):
             # 初回、特技は発動しない。
-            # :todo: クリスタル・ヒールの特技は、初回だけ発動（発動間隔 0）。
+            # :todo: 特技・非該当（発動間隔:0、発動確率:非該当、継続期間:非該当）
+            # :todo: 特技・クリスタル・ヒールは、初回だけ発動（発動間隔:0、発動確率:非該当、継続期間:非該当）。
             timetable: TimeTable = TimeTable()
-            timetable.periodes.append(
-                Period(
-                    start=0,
-                    end=int(context.durations_list[position]),
-                )
-            )
+            timetable.periodes.append(Period(start=0, end=int(context.durations_list[position])))
 
-            jcycle: int = 1
-            while skill.interval != 0 and (context.timelimit - 3 * FPS) > context.intervals_list[position] * jcycle:
-                # 特技発動間隔が 0 の場合（クリスタル・ヒールの特技）は、次回以降の特技時間割が不要。
+            nperiod: int = 1
+            while skill.interval != 0 and (context.timelimit - 3 * FPS) > context.intervals_list[position] * nperiod:
+                # 特技発動間隔が 0 の場合（特技・非該当、クリスタル・ヒール）は、次回以降の特技時間割が不要。
                 # 初回より後から、最後のノートの3秒前までの特技時間割を作成。
 
-                # True: 楽曲要件と編成要件を満たしてる。
-                pass_song_and_unit: bool = skill_restricted_funcname[skill.skill](
-                    note=Note(timestamp=context.intervals_list[position] * jcycle),
-                    position=position,
-                    context=context,
-                )
+                # 楽曲要件と編成要件を満たしてるか？。
+                pass_song_and_unit: bool = skill_restricted_funcname[skill.skill](skill=skill, context=context)
 
-                # True: 特技発動確率が乱数を超えている。
-                # 特技発動時間割のコマを作成。
+                # 特技発動確率が乱数を超えているか？。
+                # 特技発動時間割のコマ（period）を作成。
                 timetable.periodes.append(
                     Period(
                         status=ActiveStatus.AVAILABLE
                         if context.probabilities_list[position] > random() and pass_song_and_unit
                         else ActiveStatus.NONE,
-                        start=context.intervals_list[position] * jcycle,
-                        end=context.intervals_list[position] * jcycle + context.durations_list[position],
+                        start=context.intervals_list[position] * nperiod,
+                        end=context.intervals_list[position] * nperiod + context.durations_list[position],
                     )
                 )
-                jcycle += 1
+                nperiod += 1
             timetables.append(timetable)
 
         return timetables
 
-    def _substract_life_upon(
+    def _activate_skills(
         self,
         note: Note,
         context: LiveContext,
@@ -1893,11 +1903,17 @@ class Simulator:
         timetables: list[TimeTable],
     ) -> None:
         """
-        毎秒（カウンターノートを受け取った）、発動ステータス ``ActiveStatus.AVAILABLE`` の特技発動を確認する。
+        毎秒（カウンターノートを受け取った）、 発動可能状態の特技を発動する。
 
-        発動ステータス ``ActiveStatus.AVAILABLE`` の特技のみ処理し、以外はスルー。
-        発動時にライフ消費を必要とする特技は、残ライフ量で発動ステータスを ``USED`` ／ ``NONE`` を仕分ける。
-        これ以外の特技は、発動ステータスを ``USED`` にする。
+        発動ステータス ``AVAILABLE`` の特技を対象とする。
+
+        - 特技・アンコールの発動を評価（繰り返す特技効果の選定）する。
+        - 特技・シンデレラマジックの発動を評価（適用する特技効果の選定）する。
+        - 特技・リフレイン、オルタネイト、ミューチャルの発動を評価\
+            （適用するスコアボーナス効果、COMBOボーナス効果を選定）する。
+        - 発動時にライフ消費を必要とする特技は、残ライフ量で発動ステータス ``USED`` ／ ``NONE`` に分ける。
+        - 他の特技は、発動ステータスを ``USED`` にする。
+        
         シンデレラマジックの発動時、他のアイドルの特技を発動（コマを挿入）させる。
 
         :param Note note: カウンターノート。
@@ -1909,84 +1925,142 @@ class Simulator:
         :todo: 特技パーツ・ライフ消費量ダウン（特技・クリスタル・ヒール）の発動時は、減少したライフ消費量で評価する。
         """
 
-        # まず、発動要件・アンコールを評価。直前の発動が同時発動で上書きされるのを避けるため。
-        for poistion, timetable in enumerate(timetables):
-            match context.skills_list[poistion].trigger:
-                case SkillTriggerType.ENCORE:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            before_useds: list[int] = [
-                                i
-                                for i, timestamp in enumerate(status.skill_activated)
-                                if timestamp == max(status.skill_activated)
-                            ]
-                            LibsStageLogger.debug(f"{self.__class__.__name__}.: {before_useds}")
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[poistion] = note.timestamp
+        def checkout(timetable: TimeTable, timestamp: int, status: ActiveStatus) -> int:
+            """
+            発動が確定した特技の時間割をチェックアウト（状態を USED/NONE に）し、発動したタイムスタンプを返す。
 
-                case _:
-                    pass
+            :param TimeTable timetable: 特技の特技発動時間割。
+            :param int timestamp: タイムスタンプ。
+            :param ActiveStatus status: チェックアウトの状態。
+
+            :return: 最後に発動したタイムスタンプ（単位時間）。
+            :rtype: int
+            """
+
+            for period in timetable.periodes:
+                if period.start == timestamp:
+                    period.status = status
+
+            result: list[int] = [period.start for period in timetable.periodes if period.status == ActiveStatus.USED]
+            return result[-1] if result else 0
+
+        def effecttype_skillparts(skills: list[Skill], type: EffectType) -> set[SkillPart]:
+            """
+            指定の特技パーツ効果の特技パーツの集合を返す。
+
+            :param list[Skill] skills: 参照可能な特技のリスト。
+            :param EffectType type: 特技パーツ効果。
+
+            :return: 特技パーツの集合。
+            :rtype: set[SkillPart]
+            """
+
+            return {skillpart for skill in skills for skillpart in skill.skillparts if skillpart.effect == type}
+
+        func_name: str = f"{self.__class__.__name__}._activate_skills: "
+
+        # 特技・アンコールで参照する直前に発動した特技のリスト。ただし、ライブ開始時の発動は除く。無い場合は、空リスト。
+        used_before_skills: list[Skill] = [
+            context.skills_list[i]
+            for i, timestamp in enumerate(status.skill_logs)
+            if timestamp == max(status.skill_logs) and timestamp != 0
+        ]
+
+        # メンバーの特技が発動可能どうかのリスト（ライブの立ち位置順）。
+        available_skills: list[tuple[Skill, ActiveStatus]] = []
+        for skill, timetable in zip(context.skills_list, timetables):
+            for period in timetable.periodes:
+                if period.start == note.timestamp:
+                    available_skills.append((skill, period.status))
+                    break
+            else:
+                available_skills.append((skill, ActiveStatus.NONE))
+
+        # まず、発動要件・アンコール（直前に発動した他アイドルの特技効果を繰り返す）を評価。
+        # 直前の発動の特技効果が同時発動の特技で上書きされるのを避けるため。
+        # 特技・アンコールは、直前に発動したのが特技・アンコールでもコピーする。
+        for position, (skill, activestatus) in enumerate(available_skills):
+            if (
+                skill.trigger == SkillTriggerType.ENCORE
+                and activestatus == ActiveStatus.AVAILABLE
+                and used_before_skills
+            ):
+                skill.skillparts.clear()
+                for skillpart in used_before_skills[0].skillparts:
+                    skill.skillparts.add(skillpart)
+
+                activestatus = ActiveStatus.USED
+                LibsStageLogger.debug(func_name + f"アンコールが特技・{used_before_skills[0].skill}をコピーしました。")
+            else:
+                activestatus = ActiveStatus.NONE
 
         # アンコール以外の発動要件を評価。
-        for position, timetable in enumerate(timetables):
-            match context.skills_list[position].trigger:
-                case SkillTriggerType.ENCORE:
+        for position, (skill, activestatus) in enumerate(available_skills):
+            match [skill.trigger, activestatus]:
+                case SkillTriggerType.ENCORE, ActiveStatus.AVAILABLE:
                     # 評価済み
                     pass
 
-                case (
-                    SkillTriggerType.SUBSTRACTLIFE_06
-                    | SkillTriggerType.SUBSTRACTLIFE_09
-                    | SkillTriggerType.SUBSTRACTLIFE_11
-                    | SkillTriggerType.SUBSTRACTLIFE_15
-                    | SkillTriggerType.SUBSTRACTLIFE_18
-                    | SkillTriggerType.SUBSTRACTLIFE_25
-                    | SkillTriggerType.SUBSTRACTLIFE_28
-                ):
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            value = int(re_excluding_digits.sub("", context.skills_list[position].trigger.value))
-                            if status.life.update(-value):
-                                period.status = ActiveStatus.USED
-                                status.skill_activated[position] = note.timestamp
-                            else:
-                                period.status = ActiveStatus.NONE
+                case SkillTriggerType.REFRAIN, ActiveStatus.AVAILABLE:
+                    # LIVE中に発動した最も高いスコアアップ効果/COMBOボーナス効果を適用。
+                    skill.skillparts.clear()
+                    temps = [skill for skill, logs in zip(context.skills_list, status.skill_logs) if logs != 0]
+                    # スコアボーナス。
+                    skill.skillparts.update(effecttype_skillparts(skills=temps, type=EffectType.BONUS_SCORE))
+                    # COMBOボーナス。
+                    skill.skillparts.update(effecttype_skillparts(skills=temps, type=EffectType.BONUS_COMBO))
 
-                case SkillTriggerType.REFRAIN:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[position] = note.timestamp
+                    available_skills[position] = skill, ActiveStatus.USED
 
-                case SkillTriggerType.ALTERNATE:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[position] = note.timestamp
+                case SkillTriggerType.ALTERNATE, ActiveStatus.AVAILABLE:
+                    # LIVE中に発動した最も高いスコアアップ効果を極大アップして適用。
+                    # スコアボーナス。
+                    available_skills[position] = skill, ActiveStatus.USED
 
-                case SkillTriggerType.MUTUAL:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[position] = note.timestamp
+                case SkillTriggerType.MUTUAL, ActiveStatus.AVAILABLE:
+                    # LIVE中に発動した最も高いCOMBOボーナス効果を極大アップして適用。
+                    # COMBOボーナス。
+                    available_skills[position] = skill, ActiveStatus.USED
 
-                case SkillTriggerType.MAGIC:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[position] = note.timestamp
+                case SkillTriggerType.MAGIC, ActiveStatus.AVAILABLE:
+                    # ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用。
+                    # 発動に成功した特技のリスト
 
-                case _:
-                    for period in timetable.periodes:
-                        if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
-                            period.status = ActiveStatus.USED
-                            status.skill_activated[position] = note.timestamp
+                    # スコアボーナス。
+                    # COMBOボーナス。
+                    # スコアブースト。
+                    # COMBOブースト。
+                    # ライフ回復。
+                    # ライフ回復ブースト。
+                    # ダメージガード。
+                    # ライフ回復付与。
+                    # ライフ減少ダウンブースト。
+                    # 無視：非該当、集中、アンコール、シンデレラマジック。
+                    # 無視：LIVE開始時にライフ回復、スコア減少量ダウン
+                    # 無視：スコアボーナスコピー、スコアブーストコピー。
+                    # 無視：COMBOボーナスコピー、COMBOブーストコピー。
+                    available_skills[position] = skill, ActiveStatus.USED
+
+                case SkillTriggerType.NO_ENCORE_OR_MAGIC | SkillTriggerType.NA, ActiveStatus.AVAILABLE:
+                    # 発動要件の無い特技（クリスタル・ヒールなど）
+                    available_skills[position] = skill, ActiveStatus.USED
+
+                case _, ActiveStatus.AVAILABLE:
+                    # 発動にライフ消費が必須の特技
+                    # :todo: ダメージガード、クリスタル・ヒール（ライフ減少量ダウン）の発動時
+                    value = int(re_excluding_digits.sub("", skill.trigger.value))
+                    available_skills[position] = (
+                        (skill, ActiveStatus.USED) if status.life.update(-value) else (skill, ActiveStatus.NONE)
+                    )
+
+        for position, (skill, activestatus) in enumerate(available_skills):
+            status.skill_logs[position] = checkout(timetables[position], note.timestamp, activestatus)
 
         debug_message: list[str] = [
-            f"{self.__class__.__name__}._substract_life_upon: ",
+            func_name,
             f"{note.timestamp * note.time_base:.2f} 秒 - ",
             f"残ライフ値 {status.life.value}, ",
-            f"特技発動履歴 {status.skill_activated}",
+            f"特技発動履歴 {status.skill_logs}",
         ]
         LibsStageLogger.debug("".join(debug_message))
 
