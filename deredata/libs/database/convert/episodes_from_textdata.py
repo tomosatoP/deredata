@@ -17,14 +17,12 @@ from deredata.libs.database.flavors import Flavor, Flavors
 episodedatas = Episodes()
 flavordatas = Flavors()
 
-load_episodedatas = Episodes()
-load_flavordatas = Flavors()
-
 EPISODEFIXEDDATA: str = textdata_folder() + "episodes_fixed.txt"
 EPISODEDATA: str = textdata_folder() + "episodes.txt"
 
 
-if __name__ == "__main__":
+def main() -> None:
+
     with open(EPISODEFIXEDDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -104,6 +102,11 @@ if __name__ == "__main__":
 
     episodedatas.save()
     flavordatas.save()
+
+
+if __name__ == "__main__":
+    load_episodedatas = Episodes()
+    load_flavordatas = Flavors()
 
     load_episodedatas.load()
     load_flavordatas.load()

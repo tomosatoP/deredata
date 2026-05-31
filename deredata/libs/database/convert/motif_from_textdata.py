@@ -8,12 +8,12 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.motif import Motif, Motives
 
 motives: Motives = Motives()
-load_motives: Motives = Motives()
 
 MOTIFDATA: str = textdata_folder() + "appendix_motif.txt"
 MOTIFDATA_GRAND: str = textdata_folder() + "appendix_motif_grand.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
     with open(MOTIFDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -36,6 +36,9 @@ if __name__ == "__main__":
 
     motives.save()
 
+
+if __name__ == "__main__":
+    load_motives: Motives = Motives()
     load_motives.load()
 
     print(load_motives.value(45000))  # 0.23

@@ -9,13 +9,14 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.buffs import Buffs, Buff, BuffTriggerType, BuffPart, AppealType, BuffPartTriggerType
 
 buffdatas = Buffs()
-load_buffdatas = Buffs()
 parts: set[BuffPart] = set()
 
 BUFFDATA: str = textdata_folder() + "buffs.txt"
 BUFFPARTDATA: str = textdata_folder() + "buffparts.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
+
     with open(BUFFPARTDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -62,6 +63,9 @@ if __name__ == "__main__":
 
     buffdatas.save()
 
+
+if __name__ == "__main__":
+    load_buffdatas = Buffs()
     load_buffdatas.load()
 
     print(load_buffdatas.get("LIVEクリア時、獲得ファン数が30%アップ、キュートアイドルなら55%アップ"))

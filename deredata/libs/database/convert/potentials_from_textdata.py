@@ -9,13 +9,13 @@ from deredata.libs.database.enumerations import RareClass
 from deredata.libs.database.potentials import Appeal, Ability, Life, Potentials
 
 potentials: Potentials = Potentials()
-load_potentials: Potentials = Potentials()
 
 APPEALDATA: str = textdata_folder() + "appendix_appeals.txt"
 LIFEDATA: str = textdata_folder() + "appendix_lives.txt"
 ABILITYDATA: str = textdata_folder() + "appendix_abilities.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
     with open(APPEALDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -48,6 +48,9 @@ if __name__ == "__main__":
 
     potentials.save()
 
+
+if __name__ == "__main__":
+    load_potentials: Potentials = Potentials()
     load_potentials.load()
 
     print(load_potentials.value("ボーカル", RareClass.SSR, 10))  # 500

@@ -8,12 +8,11 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.comborates import Comborate, ComboRates
 
 comboratedatas: ComboRates = ComboRates()
-load_comboratedatas: ComboRates = ComboRates()
 
 COMBORATEDATA: str = textdata_folder() + "appendix_comborate.txt"
 
 
-if __name__ == "__main__":
+def main() -> None:
     with open(COMBORATEDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -26,6 +25,9 @@ if __name__ == "__main__":
 
     comboratedatas.save()
 
+
+if __name__ == "__main__":
+    load_comboratedatas: ComboRates = ComboRates()
     load_comboratedatas.load()
 
     print(f"{load_comboratedatas.rate(0.1)}")

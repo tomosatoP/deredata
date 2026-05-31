@@ -16,9 +16,6 @@ from deredata.libs.database.profiles import Profile, Profiles
 idoldatas = Idols()
 profiledatas = Profiles()
 
-load_idoldatas = Idols()
-load_profiledatas = Profiles()
-
 IDOLFIXEDDATA: str = textdata_folder() + "idols_fixed.txt"
 IDOLDATA: str = textdata_folder() + "idols.txt"
 
@@ -114,6 +111,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+    load_idoldatas = Idols()
+    load_profiledatas = Profiles()
 
     load_idoldatas.load()
     load_profiledatas.load()

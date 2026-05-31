@@ -68,6 +68,7 @@ cd derenotes
 
 . venv/bin/activate
 pip install -U git+https://github.com/tomosatoP/deredata.git
+init
 ~~~
 
 ## 使い方

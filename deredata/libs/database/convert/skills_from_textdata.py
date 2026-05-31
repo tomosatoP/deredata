@@ -20,8 +20,6 @@ from deredata.libs.database.skills import (
 )
 
 skilldatas = Skills()
-load_skilldatas = Skills()
-
 parts: set[SkillPart] = set()
 
 SKILLDATA: str = textdata_folder() + "skills.txt"
@@ -37,7 +35,7 @@ def isfloat(data: str) -> bool:
         return True
 
 
-if __name__ == "__main__":
+def main() -> None:
     with open(SKILLPARTDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -89,6 +87,9 @@ if __name__ == "__main__":
 
     skilldatas.save()
 
+
+if __name__ == "__main__":
+    load_skilldatas = Skills()
     load_skilldatas.load()
 
     print(

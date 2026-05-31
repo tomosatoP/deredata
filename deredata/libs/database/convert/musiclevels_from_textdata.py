@@ -8,11 +8,11 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.musiclevels import MusicLevel, MusicLevels
 
 musicleveldatas: MusicLevels = MusicLevels()
-load_musicleveldatas: MusicLevels = MusicLevels()
 
 MUSICLEVELDATA: str = textdata_folder() + "appendix_musiclevel.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
     with open(MUSICLEVELDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -25,6 +25,9 @@ if __name__ == "__main__":
 
     musicleveldatas.save()
 
+
+if __name__ == "__main__":
+    load_musicleveldatas: MusicLevels = MusicLevels()
     load_musicleveldatas.load()
 
     print(f"{load_musicleveldatas.rate(31)}")  # 2.3

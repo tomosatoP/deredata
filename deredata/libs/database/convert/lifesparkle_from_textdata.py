@@ -8,12 +8,12 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.lifesparkle import Lifesparkle, Lifesparkles
 
 lifesparkles: Lifesparkles = Lifesparkles()
-load_lifesparkles: Lifesparkles = Lifesparkles()
 
 SSRDATA: str = textdata_folder() + "appendix_lifesparkle_SSR.txt"
 SRDATA: str = textdata_folder() + "appendix_lifesparkle_SR.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
     with open(SSRDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -36,6 +36,9 @@ if __name__ == "__main__":
 
     lifesparkles.save()
 
+
+if __name__ == "__main__":
+    load_lifesparkles: Lifesparkles = Lifesparkles()
     load_lifesparkles.load()
 
     print(load_lifesparkles.value(1000))  # 0.29
