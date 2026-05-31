@@ -1,8 +1,12 @@
 """
 テキストデータから、アイドル＆プロフィールデータベース（JSONデータ）への変換を扱うモジュール。
+
+テキストデータを固定（idols_fixed.txt）と更新用（idols.txt）に分割。
+更新用（idols.txt）が無い場合、パラメーターを ZERO で埋め、作成。
 """
 
 import csv
+from pathlib import Path
 
 from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.enumerations import IdolType
@@ -15,10 +19,11 @@ profiledatas = Profiles()
 load_idoldatas = Idols()
 load_profiledatas = Profiles()
 
+IDOLFIXEDDATA: str = textdata_folder() + "idols_fixed.txt"
 IDOLDATA: str = textdata_folder() + "idols.txt"
 
 if __name__ == "__main__":
-    with open(IDOLDATA, "r", encoding="utf-8-sig") as f:
+    with open(IDOLFIXEDDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -26,11 +31,12 @@ if __name__ == "__main__":
                 ruby=data["ふりがな"],
                 name=data["名前"],
                 type=IdolType(data["アイドルタイプ"]),
-                life=int(data["ライフ"]),
-                vocal=int(data["ボーカル"]),
-                dance=int(data["ダンス"]),
-                visual=int(data["ビジュアル"]),
-                skill=int(data["特技"]),
+                life=0,
+                vocal=0,
+                dance=0,
+                visual=0,
+                skill=0,
+                over=0,
             )
             profile = Profile(
                 ruby=data["ふりがな"],
@@ -52,6 +58,53 @@ if __name__ == "__main__":
 
             idoldatas.add(idol)
             profiledatas.add(profile)
+
+    if Path(IDOLDATA).is_file():
+        with open(IDOLDATA, "r", encoding="utf-8-sig") as f:
+            datas = csv.DictReader(f)
+
+            for data in datas:
+                idol_fixed = idoldatas.get(data["ふりがな"])
+                idol = Idol(
+                    ruby=data["ふりがな"],
+                    name=idol_fixed.name,
+                    type=idol_fixed.type,
+                    life=int(data["ライフ"]),
+                    vocal=int(data["ボーカル"]),
+                    dance=int(data["ダンス"]),
+                    visual=int(data["ビジュアル"]),
+                    skill=int(data["特技"]),
+                    over=int(data["余り"]),
+                )
+                idoldatas.update(after=idol, before=idol_fixed)
+    else:
+        with open(IDOLDATA, "w", encoding="utf-8-sig", newline="") as f:
+            fieldnames: list[str] = [
+                "ふりがな",
+                "ライフ",
+                "ボーカル",
+                "ダンス",
+                "ビジュアル",
+                "特技",
+                "余り",
+                "合計",
+            ]
+            writer = csv.DictWriter(f=f, fieldnames=fieldnames)
+
+            writer.writeheader()
+            for idol in sorted(idoldatas.gets()):
+                writer.writerow(
+                    {
+                        "ふりがな": idol.ruby,
+                        "ライフ": str(idol.life),
+                        "ボーカル": str(idol.vocal),
+                        "ダンス": str(idol.dance),
+                        "ビジュアル": str(idol.visual),
+                        "特技": str(idol.skill),
+                        "余り": str(idol.over),
+                        "合計": str(idol.life + idol.vocal + idol.dance + idol.visual + idol.skill + idol.over),
+                    }
+                )
 
     idoldatas.save()
     profiledatas.save()

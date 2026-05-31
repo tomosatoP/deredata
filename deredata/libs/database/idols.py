@@ -41,6 +41,7 @@ class Idol:
     :param int dance: ダンスポテンシャルレベル
     :param int visual: ビジュアルポテンシャルレベル
     :param int skill: 特技ポテンシャルレベル
+    :param int over: 未配分のポテンシャル
     """
 
     ruby: str = "ふりがな"  # ふりがな
@@ -51,6 +52,7 @@ class Idol:
     dance: int = field(default=0, compare=False)  # ダンス
     visual: int = field(default=0, compare=False)  # ビジュアル
     skill: int = field(default=0, compare=False)  # 特技
+    over: int = field(default=0, compare=False)  # 余り
 
 
 class Idols:
@@ -151,6 +153,7 @@ class Idols:
                 dance=int(data["ダンス"]),
                 visual=int(data["ビジュアル"]),
                 skill=int(data["特技"]),
+                over=int(data["余り"]),
             )
             self._idols.add(idol)
 
@@ -176,6 +179,7 @@ class Idols:
                 "ダンス": int(idol.dance),
                 "ビジュアル": int(idol.visual),
                 "特技": int(idol.skill),
+                "余り": int(idol.over),
             }
             for idol in sorted(self.gets())
         ]
