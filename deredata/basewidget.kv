@@ -1,0 +1,91 @@
+#:kivy 2.3.0
+#:set set_font_size sp(13)
+#:set set_height sp(19)
+#:set set_padding [5, 2, 5, 2]
+
+### 入力（1行）枠付きウィジット
+<SingleLineFrameInput@TextInput>
+    canvas.before:
+        Color:
+            rgba: (1, 0, 0.5, 1) if self.focus else (1, 1, 1, 1)
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width - 1, self.height - 1
+
+    multiline: False
+    background_color: 0, 0.2, 0.2, 0.5
+    size_hint_y: None
+    font_size: set_font_size
+    height: set_height
+    padding: set_padding
+    unfocus_on_touch: False
+    write_tab: False
+
+<NumFrameInput@SingleLineFrameInput>
+    halign: "right"
+    input_filter: "int"
+
+<StrFrameInput@SingleLineFrameInput>
+    multiline: False
+
+### 表示（1行、短縮）ウィジット
+<StrView@Label>
+    size_hint_y: None
+    text_size: self.width, None
+    shorten: True
+    shorten_from: "right"
+    font_size: set_font_size
+    height: set_height
+    padding: set_padding
+
+### 表示（1行、短縮）枠付きウィジット
+<StrFrameView@StrView>
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+
+### スピナー（1行）枠付きウィジット
+<StrSpinner@Spinner>
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Line:
+            width: 1
+            rectangle: self.x, self.y, self.width, self.height
+
+    size_hint_y: None
+    text_size: self.width, None
+    shorten: True
+    shorten_from: "right"
+    font_size: set_font_size
+    height: set_height
+    padding: set_padding
+    dropdown_cls: "StrDropDownOption"  # width 調整
+    option_cls: "StrSpinnerOption"  # height 調整
+
+<StrDropDownOption@DropDown>
+    auto_width : False
+    size_hint_x: None
+    width: 350  # 子要素のテキストサイズに合わせる方法が不明
+
+<StrSpinnerOption@SpinnerOption>
+    font_size: set_font_size
+    size_hint_y: None
+    height: set_height
+
+### トグルボタン（1行）ウィジット
+<StrToggleButton@ToggleButton>
+    font_size: set_font_size
+    size_hint_y: None
+    height: set_height
+    text_size: self.width, None
+    shorten: True
+    shorten_from: "right"
+    padding: [5, 0, 5, 2]
+
+### RecycleView 用の選択機能付きレイアウト 
+<SelectableRecycleBoxLayout@LayoutSelectionBehavior+RecycleBoxLayout>:

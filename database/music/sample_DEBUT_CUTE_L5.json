@@ -1,0 +1,348 @@
+{
+    "video": "input/sample_DEBUT_ALL_L5.mp4",
+    "song": {
+        "name": "キュート楽曲のサンプル",
+        "level": 5,
+        "type": "CUTE",
+        "category": "WIDE:DEBUT"
+    },
+    "last_index": 2271,
+    "notes": [
+        {
+            "timestamp": 6486433,
+            "lane": 1,
+            "width": 1,
+            "type": "START",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 6729891,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 6977601,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 7223739,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 7717537,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:ON",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 7963868,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:OFF",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 8211511,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 8705518,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 9197948,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 9691725,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 9939503,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 10185773,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 10431936,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 10679700,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:ON",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 10925870,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:OFF",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 11173750,
+            "lane": 5,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 11419986,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 11665972,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 11790734,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 11913854,
+            "lane": 5,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12160080,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12284606,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12407671,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12653921,
+            "lane": 5,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12778451,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 12901769,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 13147842,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 13395556,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 13518612,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 13641805,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:ON",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 13887985,
+            "lane": 3,
+            "width": 1,
+            "type": "LONG:OFF",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 14135199,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 14629579,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 14876006,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15122031,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15369777,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15492884,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15617435,
+            "lane": 2,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15617435,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15863782,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 15863782,
+            "lane": 5,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16109879,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16357607,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16480699,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16603799,
+            "lane": 1,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16851545,
+            "lane": 4,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16959689,
+            "lane": 3,
+            "width": 1,
+            "type": "TAP",
+            "time_base": "1/90000"
+        },
+        {
+            "timestamp": 16961110,
+            "lane": 1,
+            "width": 1,
+            "type": "END",
+            "time_base": "1/90000"
+        }
+    ]
+}

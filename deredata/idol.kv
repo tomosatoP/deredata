@@ -1,0 +1,240 @@
+#:kivy 2.3.0
+#:include basewidget.kv
+
+
+<IdolDataLabel@BoxLayout>:
+    name: name
+    type: type
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrSpinner:
+        size_hint_x: 3
+        id: name
+
+    StrSpinner:
+        id: type
+
+    StrFrameView:
+        text: "合計"
+
+    StrFrameView:
+        text: "ボーカル"
+
+    StrFrameView:
+        text: "ダンス"
+
+    StrFrameView:
+        text: "ビジュアル"
+
+    StrFrameView:
+        text: "ライフ"
+
+    StrFrameView:
+        text: "特技"
+
+    StrFrameView:
+        text: "--"
+
+<IdolDataViewclass>:
+    name: name
+    type: type
+    sum: sum
+    vocal: vocal
+    dance: dance
+    visual: visual
+    life: life
+    skill: skill
+    overflow: overflow
+
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: name
+        size_hint_x: 3
+
+    StrFrameView:
+        id: type
+
+    StrFrameView:
+        id: sum
+
+    NumFrameInput:
+        id: vocal
+        readonly: True
+        focus_next: dance
+        on_focus: root.on_potential_changed() if not self.focus else None
+        on_text_validate: root.on_potential_changed() if not self.readonly else None
+
+    NumFrameInput:
+        id: dance
+        readonly: True
+        focus_next: visual
+        on_focus: root.on_potential_changed() if not self.focus else None
+        on_text_validate: root.on_potential_changed() if not self.readonly else None
+
+    NumFrameInput:
+        id: visual
+        readonly: True
+        focus_next: life
+        on_focus: root.on_potential_changed() if not self.focus else None
+        on_text_validate: root.on_potential_changed() if not self.readonly else None
+
+    NumFrameInput:
+        id: life
+        readonly: True
+        focus_next: skill
+        on_focus: root.on_potential_changed() if not self.focus else None
+        on_text_validate: root.on_potential_changed() if not self.readonly else None
+
+    NumFrameInput:
+        id: skill
+        readonly: True
+        focus_next: vocal
+        on_focus: root.on_potential_changed() if not self.focus else None
+        on_text_validate: root.on_potential_changed() if not self.readonly else None
+
+    NumFrameInput:
+        id: overflow
+        readonly: True
+
+<IdolProfileElementView>:
+    title: title
+    value: value
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrView:
+        id: title
+
+    StrView:
+        id: value
+        size_hint_x: 3
+
+<IdolProfileView>:
+    ruby: ruby
+    age: age
+    birthday: birthday
+    zodiac_sign: zodiac_sign
+    blood_type: blood_type
+    profileheight: profileheight
+    weight: weight
+    bust: bust
+    waist: waist
+    hip: hip
+    dominant_hand: dominant_hand
+    home: home
+    hobbies: hobbies
+    cv: cv
+    registration_date: registration_date
+
+    orientation: "vertical"
+    size_hint_y: None
+    height: set_height
+
+    IdolProfileElementView:
+        id: ruby
+
+    IdolProfileElementView:
+        id: age
+
+    IdolProfileElementView:
+        id: birthday
+
+    IdolProfileElementView:
+        id: zodiac_sign
+
+    IdolProfileElementView:
+        id: blood_type
+
+    IdolProfileElementView:
+        id: profileheight
+
+    IdolProfileElementView:
+        id: weight
+
+    IdolProfileElementView:
+        id: bust
+
+    IdolProfileElementView:
+        id: waist
+
+    IdolProfileElementView:
+        id: hip
+
+    IdolProfileElementView:
+        id: dominant_hand
+
+    IdolProfileElementView:
+        id: home
+
+    IdolProfileElementView:
+        id: hobbies
+
+    IdolProfileElementView:
+        id: cv
+
+    IdolProfileElementView:
+        id: registration_date
+
+<IdolView>:
+    idoldatalabel: idoldatalabel
+    idoldataviews: idoldataviews
+    idolprofileview: idolprofileview
+
+    orientation: "horizontal"
+
+    BoxLayout:
+        orientation: "vertical"
+        size_hint_x: 80
+
+        IdolDataLabel:
+            id: idoldatalabel
+
+        RecycleView:
+            id: idoldataviews
+            bar_width: set_height * 2
+            do_scroll_x: False
+            do_scroll_y: True
+
+            viewclass: "IdolDataViewclass"
+            SelectableRecycleBoxLayout:
+                default_size_hint: 1, None
+                default_size: None, set_height
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: "vertical"
+                multiselect: False
+                touch_multiselect: False
+                touch_deselect_last: True
+                key_selection: "idoldata"
+
+    Splitter:
+        size_hint_x: 20
+        strip_size: set_height
+        min_size: self.parent.width * 0.1
+        max_size: self.parent.width * 0.3
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: set_height * 2
+
+            IdolProfileView:
+                id: idolprofileview
+
+                size_hint_y: None
+                height: self.minimum_height

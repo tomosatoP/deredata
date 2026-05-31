@@ -1,0 +1,271 @@
+#:kivy 2.3.0
+#:include basewidget.kv
+
+<EpisodeInfoViewclass>:
+    strepisode: strepisode
+    buff: buff
+    skill: skill
+    vocal_potential: vocal_potential
+    dance_potential: dance_potential
+    visual_potential: visual_potential
+    life_potential: life_potential
+    skill_potential: skill_potential
+
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: strepisode
+        size_hint_x: 10
+
+    StrFrameView:
+        id: buff
+        size_hint_x: 5
+    
+    StrFrameView:
+        id: skill
+        size_hint_x: 5
+
+    StrFrameView:
+        id: vocal_potential
+
+    StrFrameView:
+        id: dance_potential
+
+    StrFrameView:
+        id: visual_potential
+    
+    StrFrameView:
+        id: life_potential
+
+    StrFrameView:
+        id: skill_potential
+
+<EpisodeSelector>:
+    framework: framework
+    buffselector: buffselector
+    skillselector: skillselector
+    episodeselector: episodeselector
+
+    orientation: "vertical"
+
+    BoxLayout:
+        orientation: "horizontal"
+        size_hint_y: None
+        height: set_height
+
+        StrFrameView:
+            size_hint_x: 2
+            text: ""
+
+        StrFrameView:
+            size_hint_x: 6
+            text: "センター効果"
+
+        StrFrameView:
+            size_hint_x: 8
+            text: "特技"
+
+        StrFrameView:
+            size_hint_x: 16 * 10 / 25
+            text: "エピソード"
+
+        StrFrameView:
+            size_hint_x: 16 * 5 / 25
+            text: "センター効果"
+
+        StrFrameView:
+            size_hint_x: 16 * 5 / 25
+            text: "特技"
+
+        StrFrameView:
+            size_hint_x: 16 * 1 / 25
+            text: "ボーカルポテンシャル"
+
+        StrFrameView:
+            size_hint_x: 16 * 1 / 25
+            text: "ダンスポテンシャル"
+
+        StrFrameView:
+            size_hint_x: 16 * 1 / 25
+            text: "ビジュアルポテンシャル"
+
+        StrFrameView:
+            size_hint_x: 16 * 1 / 25
+            text: "ライフポテンシャル"
+
+        StrFrameView:
+            size_hint_x: 16 * 1 / 25
+            text: "特技ポテンシャル"
+
+    BoxLayout:
+        orientation: "horizontal"
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: set_height * 2
+            size_hint_x: 2
+
+            BoxLayout:
+                id: framework
+
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: set_height * 2
+            size_hint_x: 6
+
+            BoxLayout:
+                id: buffselector
+    
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            bar_width: set_height * 2
+            size_hint_x: 8
+
+            BoxLayout:
+                id: skillselector
+
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+
+        RecycleView:
+            id: episodeselector
+            size_hint_x: 16
+            bar_width: set_height * 2
+            do_scroll_x: False
+            do_scroll_y: True
+
+            viewclass: "EpisodeInfoViewclass"
+            SelectableRecycleBoxLayout:
+                default_size_hint: 1, None
+                default_size: None, set_height
+                size_hint_y: None
+                height: self.minimum_height
+                orientation: "vertical"
+                multiselect: True
+                touch_multiselect: True
+                key_selection: "episodeinfo"
+
+<FiveMemberUnit>:
+    centerposition: centerposition
+    leftposition: leftposition
+    rightposition: rightposition
+    leftendposition: leftendposition
+    rightendposition: rightendposition
+
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 6
+    tab_height: set_height
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: centerposition
+        text: "センター"
+
+    TabbedPanelItem:
+        id: leftposition
+        text: "左隣り"
+
+    TabbedPanelItem:
+        id: rightposition
+        text: "右隣り"
+
+    TabbedPanelItem:
+        id: leftendposition
+        text: "左端"
+
+    TabbedPanelItem:
+        id: rightendposition
+        text: "右端"
+
+<SixMemberUnit>:
+    centerposition: centerposition
+    leftposition: leftposition
+    rightposition: rightposition
+    leftendposition: leftendposition
+    rightendposition: rightendposition
+    guestposition: guestposition
+
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 6
+    tab_height: set_height
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: centerposition
+        text: "センター"
+
+    TabbedPanelItem:
+        id: leftposition
+        text: "左隣り"
+
+    TabbedPanelItem:
+        id: rightposition
+        text: "右隣り"
+
+    TabbedPanelItem:
+        id: leftendposition
+        text: "左端"
+
+    TabbedPanelItem:
+        id: rightendposition
+        text: "右端"
+
+    TabbedPanelItem:
+        id: guestposition
+        text: "ゲスト"
+
+<BuffSKillView>
+    wideguest: wideguest
+    widenoguest: widenoguest
+    granda: granda
+    grandb: grandb
+    grandc: grandc
+
+    tab_pos: "top_left" # "bottom_left"
+    tab_width: self.width / 5
+    tab_height: set_height
+    do_default_tab: False
+
+    TabbedPanelItem:
+        id: wideguest
+        text: "Wide with Guest"
+
+    TabbedPanelItem:
+        id: widenoguest
+        text: "Wide"
+
+    TabbedPanelItem:
+        id: granda
+        text: "GrandLive A"
+
+    TabbedPanelItem:
+        id: grandb
+        text: "GrandLive B"
+
+    TabbedPanelItem:
+        id: grandc
+        text: "GrandLive C"

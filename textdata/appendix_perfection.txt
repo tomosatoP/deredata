@@ -1,0 +1,6 @@
+﻿判定,倍率
+PERFECT,1
+GREAT,0.7
+NICE,0.4
+BAD,0.1
+MISS,0
