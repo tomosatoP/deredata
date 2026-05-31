@@ -22,7 +22,9 @@ load_profiledatas = Profiles()
 IDOLFIXEDDATA: str = textdata_folder() + "idols_fixed.txt"
 IDOLDATA: str = textdata_folder() + "idols.txt"
 
-if __name__ == "__main__":
+
+def main() -> None:
+
     with open(IDOLFIXEDDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -108,6 +110,10 @@ if __name__ == "__main__":
 
     idoldatas.save()
     profiledatas.save()
+
+
+if __name__ == "__main__":
+    main()
 
     load_idoldatas.load()
     load_profiledatas.load()

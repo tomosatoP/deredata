@@ -1,7 +1,7 @@
 """
 インストール後のフォルダ作成などを行うモジュール。
 
-以下のファイル群をコピー（venv/lib/python#.##/site-packages/ -> インストールフォルダ）する。
+以下のファイル群をコピー（venv/lib/python3.12/site-packages/ -> インストールフォルダ）する。
 
 :設定ファイル: config/config.toml
 :テキストデータ: textdata/*.txt
@@ -10,8 +10,6 @@
 """
 
 from pathlib import Path
-
-# Python3.14からはpathlibにcopyが実装されるので、不要
 from shutil import copy
 
 # 設定ファイルのフォルダ
@@ -37,19 +35,31 @@ def setup_folders() -> None:
 
 def setup_files() -> None:
     """
-    ファイルをコピーする。
+    サイトパッケージフォルダからファイルをフォルダへコピーする。
     """
 
     site_packages_folder = Path(__file__).parents[1]
 
     for foldername in zip(
         ["*.toml", "*.txt", "*.json", "*.json"],
-        ["config", "textdata", "database", "database/music"],
+        [CONFIG_FOLDERNAME, TEXTDATA_FOLDERNAME, DATABASE_FOLDERNAME, MUSIC_FOLDERNAME],
     ):
         [
             copy(path, Path("./" + foldername[1]))
             for path in (site_packages_folder / Path(foldername[1])).glob(foldername[0])
         ]
+
+
+def setup_databeses() -> None:
+    """
+    テキストデータからデータベース（JSONファイル）を作成する。
+
+    idols_from_textdata.py などを実行。
+    """
+
+    from deredata.libs.database.convert import idols_from_textdata
+
+    idols_from_textdata.main()
 
 
 def main() -> None:
@@ -59,6 +69,7 @@ def main() -> None:
 
     setup_folders()
     setup_files()
+    setup_databeses()
 
 
 if __name__ == "__main__":
