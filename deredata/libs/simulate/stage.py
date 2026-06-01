@@ -98,8 +98,14 @@ from deredata.libs.database.lifesparkle import Lifesparkles
 
 from kivy.logger import Logger as LibsStageLogger
 
-UNIT_SIZE: int = 5  # とりあえず5人固定で実装
-re_excluding_digits = re.compile(r"\D")  # 数字以外に適用する正規表現
+# とりあえず5人固定で実装
+UNIT_SIZE: int = 5
+
+# 数字以外に適用する正規表現
+re_excluding_digits = re.compile(r"\D")
+
+# 絶対値で比較して大きい方を返すnumpy.ufunc定義
+abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
 
 class StageError(Exception):
@@ -398,10 +404,10 @@ def wrap_skillpart_effectvalues(func: Callable) -> Callable:
         :return: 特技パーツの特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
         :rtype: np.ndarray
         """
-
+        func_name = "stage.wrap_skillpart_effectvalues"
         result = partial(func, note, context, status, data)()
         LibsStageLogger.debug(
-            f"stage: 特技パーツ・{status.skillpart.name}の特技効果量配列 {','.join(str(result).splitlines())}"
+            f"{func_name}: 特技パーツ・{status.skillpart.name}の特技効果量配列 {','.join(str(result).splitlines())}"
         )
         return result
 
@@ -808,7 +814,22 @@ def skillpart_copy_bonus_score(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_copy_bonus_score: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -835,7 +856,22 @@ def skillpart_copy_bonus_combo(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_copy_bonus_combo: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -862,7 +898,23 @@ def skillpart_copy_boost_score(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_copy_boost_score: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    data[SkillCategoryIndices.ALTERNATE][status.position][SkillCategoryElementIndices.BOOST] = skillpart.value
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -889,7 +941,23 @@ def skillpart_copy_boost_combo(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_copy_boost_combo: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    data[SkillCategoryIndices.MUTUAL][status.position][SkillCategoryElementIndices.BOOST] = skillpart.value
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -917,7 +985,22 @@ def skillpart_encore(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_encore: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -945,7 +1028,22 @@ def skillpart_magic(
     :rtype: np.ndarray
     """
 
-    LibsStageLogger.error("skillpart_magic: 実装中。")
+    if not status.skillpart.copy:
+        return data
+
+    data_copies: np.ndarray = np.zeros(
+        (len(status.skillpart.copy), len(SkillCategoryIndices), context.size, len(SkillCategoryElementIndices))
+    )
+
+    dist_skillpart: SkillPart = status.skillpart
+    for i, skillpart in enumerate(dist_skillpart.copy):
+        status.skillpart = skillpart
+        if skillpart.effect.value in skillpart_effect_funcname:
+            data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
+    else:
+        data = abs_max.reduce(data_copies, axis=0)
+
+    status.skillpart = dist_skillpart
     return data
 
 
@@ -1263,9 +1361,6 @@ def skillcategory_menber_bonusboost_effectvalues(
     :return: 特技系統の特技効果量配列（特技系統、メンバー、ボーナス＆ブースト）。
     :rtype: np.ndarray
     """
-
-    # 絶対値で比較して大きい方を返すnumpy.ufunc定義
-    abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
     data = np.zeros(
         (
@@ -1925,13 +2020,13 @@ class Simulator:
         :todo: 特技パーツ・ライフ消費量ダウン（特技・クリスタル・ヒール）の発動時は、減少したライフ消費量で評価する。
         """
 
-        def checkout(timetable: TimeTable, timestamp: int, status: ActiveStatus) -> int:
+        def checkout(timetable: TimeTable, timestamp: int, activation: bool) -> int:
             """
             発動が確定した特技の時間割をチェックアウト（状態を USED/NONE に）し、発動したタイムスタンプを返す。
 
             :param TimeTable timetable: 特技の特技発動時間割。
             :param int timestamp: タイムスタンプ。
-            :param ActiveStatus status: チェックアウトの状態。
+            :param bool activation: チェックアウトの状態。True であれば、USED。False であれば、NONE。
 
             :return: 最後に発動したタイムスタンプ（単位時間）。
             :rtype: int
@@ -1939,7 +2034,8 @@ class Simulator:
 
             for period in timetable.periodes:
                 if period.start == timestamp:
-                    period.status = status
+                    period.status = ActiveStatus.USED if activation else ActiveStatus.NONE
+                    break
 
             result: list[int] = [period.start for period in timetable.periodes if period.status == ActiveStatus.USED]
             return result[-1] if result else 0
@@ -1966,95 +2062,117 @@ class Simulator:
             if timestamp == max(status.skill_logs) and timestamp != 0
         ]
 
-        # メンバーの特技が発動可能どうかのリスト（ライブの立ち位置順）。
-        available_skills: list[tuple[Skill, ActiveStatus]] = []
+        # LIVE中に発動した特技効果のリスト。
+        # :todo: 同時発動は含める、含めない？
+        used_skills: list[Skill] = [skill for skill, logs in zip(context.skills_list, status.skill_logs) if logs != 0]
+
+        # メンバーの特技が発動タイミングかどうかのリスト（ライブの立ち位置順）。
+        # 発動タイミングなら、後の処理で状態を **USED/NONE** に変更する。
+        available_skills: list[tuple[Skill, bool]] = []
         for skill, timetable in zip(context.skills_list, timetables):
             for period in timetable.periodes:
-                if period.start == note.timestamp:
-                    available_skills.append((skill, period.status))
+                if period.start == note.timestamp and period.status == ActiveStatus.AVAILABLE:
+                    available_skills.append((skill, True))
                     break
             else:
-                available_skills.append((skill, ActiveStatus.NONE))
+                available_skills.append((skill, False))
 
         # まず、発動要件・アンコール（直前に発動した他アイドルの特技効果を繰り返す）を評価。
         # 直前の発動の特技効果が同時発動の特技で上書きされるのを避けるため。
         # 特技・アンコールは、直前に発動したのが特技・アンコールでもコピーする。
-        for position, (skill, activestatus) in enumerate(available_skills):
-            if (
-                skill.trigger == SkillTriggerType.ENCORE
-                and activestatus == ActiveStatus.AVAILABLE
-                and used_before_skills
-            ):
-                skill.skillparts.clear()
-                for skillpart in used_before_skills[0].skillparts:
-                    skill.skillparts.add(skillpart)
+        for position, (skill, activation) in enumerate(available_skills):
+            if skill.trigger == SkillTriggerType.ENCORE and activation and used_before_skills:
+                for skillpart in skill.skillparts:
+                    # 特技・アンコールの特技パーツは、特パーツ・アンコールのみ。
+                    skillpart.copy.clear()
+                    skillpart.copy.update(used_before_skills[0].skillparts)
 
-                activestatus = ActiveStatus.USED
                 LibsStageLogger.debug(func_name + f"アンコールが特技・{used_before_skills[0].skill}をコピーしました。")
-            else:
-                activestatus = ActiveStatus.NONE
+            elif skill.trigger == SkillTriggerType.ENCORE and activation:
+                available_skills[position] = skill, False
 
         # アンコール以外の発動要件を評価。
-        for position, (skill, activestatus) in enumerate(available_skills):
-            match [skill.trigger, activestatus]:
-                case SkillTriggerType.ENCORE, ActiveStatus.AVAILABLE:
+        for position, (skill, activation) in enumerate(available_skills):
+            match [skill.trigger, activation]:
+                case SkillTriggerType.ENCORE, True:
                     # 評価済み
                     pass
 
-                case SkillTriggerType.REFRAIN, ActiveStatus.AVAILABLE:
-                    # LIVE中に発動した最も高いスコアアップ効果/COMBOボーナス効果を適用。
-                    skill.skillparts.clear()
-                    temps = [skill for skill, logs in zip(context.skills_list, status.skill_logs) if logs != 0]
-                    # スコアボーナス。
-                    skill.skillparts.update(effecttype_skillparts(skills=temps, type=EffectType.BONUS_SCORE))
-                    # COMBOボーナス。
-                    skill.skillparts.update(effecttype_skillparts(skills=temps, type=EffectType.BONUS_COMBO))
+                case SkillTriggerType.REFRAIN, True:
+                    for skillpart in skill.skillparts:
+                        match skillpart.effect:
+                            case EffectType.COPY_BONUS_SCORE:
+                                # LIVE中に発動した最も高いスコアアップ効果を適用（スコアボーナスをコピー）。
+                                skillpart.copy.update(effecttype_skillparts(used_skills, EffectType.BONUS_SCORE))
 
-                    available_skills[position] = skill, ActiveStatus.USED
+                            case EffectType.COPY_BONUS_COMBO:
+                                # LIVE中に発動した最も高いCOMBOボーナス効果を適用（COMBOボーナスをコピー）。
+                                skillpart.copy.update(effecttype_skillparts(used_skills, EffectType.BONUS_COMBO))
 
-                case SkillTriggerType.ALTERNATE, ActiveStatus.AVAILABLE:
+                    available_skills[position] = skill, True
+
+                case SkillTriggerType.ALTERNATE, True:
                     # LIVE中に発動した最も高いスコアアップ効果を極大アップして適用。
-                    # スコアボーナス。
-                    available_skills[position] = skill, ActiveStatus.USED
+                    for skillpart in skill.skillparts:
+                        if skillpart.effect == EffectType.COPY_BOOST_SCORE:
+                            # スコアボーナス。
+                            skillpart.copy.update(effecttype_skillparts(used_skills, EffectType.BONUS_SCORE))
 
-                case SkillTriggerType.MUTUAL, ActiveStatus.AVAILABLE:
+                    available_skills[position] = skill, True
+
+                case SkillTriggerType.MUTUAL, True:
                     # LIVE中に発動した最も高いCOMBOボーナス効果を極大アップして適用。
-                    # COMBOボーナス。
-                    available_skills[position] = skill, ActiveStatus.USED
+                    for skillpart in skill.skillparts:
+                        if skillpart.effect == EffectType.COPY_BOOST_COMBO:
+                            # COMBOボーナス。
+                            skillpart.copy.update(effecttype_skillparts(used_skills, EffectType.BONUS_COMBO))
 
-                case SkillTriggerType.MAGIC, ActiveStatus.AVAILABLE:
+                    available_skills[position] = skill, True
+
+                case SkillTriggerType.MAGIC, True:
                     # ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用。
                     # 発動に成功した特技のリスト
+                    skills: list[Skill] = [skill for i, skill in enumerate(context.skills_list) if i != position]
 
-                    # スコアボーナス。
-                    # COMBOボーナス。
-                    # スコアブースト。
-                    # COMBOブースト。
-                    # ライフ回復。
-                    # ライフ回復ブースト。
-                    # ダメージガード。
-                    # ライフ回復付与。
-                    # ライフ減少ダウンブースト。
-                    # 無視：非該当、集中、アンコール、シンデレラマジック。
-                    # 無視：LIVE開始時にライフ回復、スコア減少量ダウン
-                    # 無視：スコアボーナスコピー、スコアブーストコピー。
-                    # 無視：COMBOボーナスコピー、COMBOブーストコピー。
-                    available_skills[position] = skill, ActiveStatus.USED
+                    for skillpart in skill.skillparts:
+                        skillpart.copy.clear()
+                        # スコアボーナス。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BONUS_SCORE))
+                        # COMBOボーナス。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BONUS_COMBO))
+                        # スコアブースト。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_SCORE))
+                        # COMBOブースト。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_COMBO))
+                        # ライフ回復。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.RECOVERY))
+                        # ライフ回復ブースト。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_RECOVERY))
+                        # ダメージガード。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.NO_DAMAGE))
+                        # ライフ回復付与。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.ADD_RECOVERY))
+                        # ライフ減少ダウンブースト。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_DOWN_DAMAGE))
+                        # 無視：非該当、集中、アンコール、シンデレラマジック。
+                        # 無視：LIVE開始時にライフ回復、スコア減少量ダウン
+                        # 無視：スコアボーナスコピー、スコアブーストコピー。
+                        # 無視：COMBOボーナスコピー、COMBOブーストコピー。
 
-                case SkillTriggerType.NO_ENCORE_OR_MAGIC | SkillTriggerType.NA, ActiveStatus.AVAILABLE:
+                    available_skills[position] = skill, True
+
+                case SkillTriggerType.NO_ENCORE_OR_MAGIC | SkillTriggerType.NA, True:
                     # 発動要件の無い特技（クリスタル・ヒールなど）
-                    available_skills[position] = skill, ActiveStatus.USED
+                    available_skills[position] = skill, True
 
-                case _, ActiveStatus.AVAILABLE:
+                case _, True:
                     # 発動にライフ消費が必須の特技
                     # :todo: ダメージガード、クリスタル・ヒール（ライフ減少量ダウン）の発動時
                     value = int(re_excluding_digits.sub("", skill.trigger.value))
-                    available_skills[position] = (
-                        (skill, ActiveStatus.USED) if status.life.update(-value) else (skill, ActiveStatus.NONE)
-                    )
+                    available_skills[position] = (skill, True) if status.life.update(-value) else (skill, False)
 
-        for position, (skill, activestatus) in enumerate(available_skills):
-            status.skill_logs[position] = checkout(timetables[position], note.timestamp, activestatus)
+        for position, (skill, activation) in enumerate(available_skills):
+            status.skill_logs[position] = checkout(timetables[position], note.timestamp, activation)
 
         debug_message: list[str] = [
             func_name,
@@ -2086,9 +2204,6 @@ class Simulator:
         :return: 特技系統倍率（スコア系、コンボ系、オルタネイト、ミューチャル、ライフ回復）リスト。
         :rtype: list[float]
         """
-
-        # 絶対値で比較して大きい方を返すnumpy.ufunc定義
-        abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
 
         # 特技のボーナス＆ブーストの効果量（小数点第2位で切り上げ）を返すnumpy.ufunc定義
         # ただし、ボーナスが負の時は、ブーストは無視。

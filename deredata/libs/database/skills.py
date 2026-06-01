@@ -245,7 +245,9 @@ class SkillPart:
     :param IconType icon: 適用アイコン。
     :param PerfectionType perfection: 適用判定。
     :param EffectType effect: 特技パーツ効果。
-    :param str | float value: 効果量。
+    :param str | float value: 効果量、もしくは効果量タイプ説明。
+    :param set[SkillPart] copy:
+        適用（アンコール、リフレイン、オルタネイト、ミューチャル、シンデレラマジック）の特技パーツ集合。
     """
 
     name: str = "特技パーツ"
@@ -255,6 +257,7 @@ class SkillPart:
     perfection: PerfectionType = field(default=PerfectionType.NA, compare=False)
     effect: EffectType = field(default=EffectType.NA, compare=False)
     value: str | float = field(default=0.0, compare=False)
+    copy: set["SkillPart"] = field(default_factory=set, compare=False)
 
 
 @dataclass(order=True, frozen=True)
