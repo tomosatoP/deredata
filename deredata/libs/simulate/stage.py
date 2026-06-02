@@ -73,6 +73,15 @@
 
 :ミューチャル:
     :math:`コピーしたCOMBOボーナス効果量\\times(1.00+0.70)`
+    
+スコア計算の流れ（ライフ）
+    整数値に切り上げる。
+
+:ライフ回復系:    
+    :math:`ライフ回復効果量\\times(1.00+ライフ回復ブースト効果量)`
+
+:ダメージガード系:    
+    :math:`ライフ回復付与効果量`
 """
 
 import numpy as np
@@ -104,8 +113,9 @@ UNIT_SIZE: int = 5
 # 数字以外に適用する正規表現
 re_excluding_digits = re.compile(r"\D")
 
-# 絶対値で比較して大きい方を返すnumpy.ufunc定義
-abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
+
+# 大きい方（片方がZEROの時は、もう片方）を返すnumpy.ufunc定義
+abs_max = np.frompyfunc(lambda x, y: max(x, y) if max(x, y) != 0.0 else min(x, y), 2, 1)
 
 
 class StageError(Exception):
@@ -167,7 +177,8 @@ class SkillCategoryIndices(IntEnum):
     :param 1 COMBO: COMBOボーナス系（オルタネイト・COMBOダウンも含む）。
     :param 2 ALTERNATE: オルタネイト系。
     :param 3 MUTUAL: ミューチャル系。
-    :param 4 RECOVERY: ライフ回復系。
+    :param 4 RECOVERY: ライフ回復系（ライフ回復、ライフ回復ブースト）。
+    :param 5 GUARD: ダメージガード（ダメージガード、ライフ回復付与）系。
     """
 
     SCORE = 0
@@ -175,6 +186,7 @@ class SkillCategoryIndices(IntEnum):
     ALTERNATE = 2
     MUTUAL = 3
     RECOVERY = 4
+    GUARD = 5
 
 
 class ActiveStatus(IntEnum):
@@ -455,30 +467,30 @@ def skillpart_bonus_score(
     :rtype: np.ndarray
     """
 
-    score_bonus: float = data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS]
+    bonus: float = data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS]
 
     match [status.skillpart.icon, status.skillpart.value]:
         case [IconType.NA, float(value)] if value >= 0.0:
             # スライドアクト、フリックアクト、ロングアクトへの上書きを回避
-            score_bonus = value if value > score_bonus else score_bonus
+            bonus = value if value > bonus else bonus
 
         case [IconType.NA, float(value)] if value < 0.0:
             # ミューチャルのスコアボーナスダウン
-            score_bonus = value
+            bonus = value
 
         case [IconType.NA, str(MOTIF)]:
             match MOTIF:
                 case "ユニットのボーカルアピール値が多いほど":
                     # ボーカルモチーフ
-                    score_bonus = Simulator._motives.value(appeal=context.vocal_appeal, grand=False)
+                    bonus = Simulator._motives.value(appeal=context.vocal_appeal, grand=False)
 
                 case "ユニットのダンスアピール値が多いほど":
                     # ダンスモチーフ
-                    score_bonus = Simulator._motives.value(appeal=context.dance_appeal, grand=False)
+                    bonus = Simulator._motives.value(appeal=context.dance_appeal, grand=False)
 
                 case "ユニットのビジュアルアピール値が多いほど":
                     # ビジュアルモチーフ
-                    score_bonus = Simulator._motives.value(appeal=context.visual_appeal, grand=False)
+                    bonus = Simulator._motives.value(appeal=context.visual_appeal, grand=False)
 
                 case _:
                     LibsStageLogger.error(f"特技パーツ：モチーフの効果量不明。{status.skillpart.value}")
@@ -491,7 +503,7 @@ def skillpart_bonus_score(
             NoteType.SLIDE_FLICK_RIGHT,
         }:
             # スライドアクト
-            score_bonus = value
+            bonus = value
 
         case [IconType.FLICK, float(value)] if note.type in {
             NoteType.FLICK_LEFT,
@@ -502,7 +514,7 @@ def skillpart_bonus_score(
             NoteType.LONG_FLICK_RIGHT,
         }:
             # フリックアクト
-            score_bonus = value
+            bonus = value
 
         case [IconType.LONG, float(value)] if note.type in {
             NoteType.LONG_ON,
@@ -511,14 +523,14 @@ def skillpart_bonus_score(
             NoteType.LONG_FLICK_RIGHT,
         }:
             # ロングアクト
-            score_bonus = value
+            bonus = value
 
         case _:
             LibsStageLogger.error(
                 f"特技パーツ：スコアボーナスの条件不適合。{status.skillpart.icon}, {status.skillpart.value}"
             )
 
-    data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS] = score_bonus
+    data[SkillCategoryIndices.SCORE][status.position][SkillCategoryElementIndices.BONUS] = bonus
     return data
 
 
@@ -564,22 +576,22 @@ def skillpart_bonus_combo(
     :rtype: np.ndarray
     """
 
-    combo_bonus: float = data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS]
+    bonus: float = data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS]
 
     match status.skillpart.value:
         case float(value):
-            combo_bonus = value
+            bonus = value
 
         case str(LIFESPARKLE) if LIFESPARKLE == "ライフ値が多いほど":
             # ライフスパークル
             # :todo: 残ライフ値
             # :todo: 特技を発動したアイドルのレア度
-            combo_bonus = Simulator._lifesparkles.value(life=status.life.value, rare="SSR")
+            bonus = Simulator._lifesparkles.value(life=status.life.value, rare="SSR")
 
         case _:
             LibsStageLogger.error(f"特技パーツ：COMBOボーナスの条件不適合。{status.skillpart.value}")
 
-    data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS] = combo_bonus
+    data[SkillCategoryIndices.COMBO][status.position][SkillCategoryElementIndices.BONUS] = bonus
     return data
 
 
@@ -617,27 +629,27 @@ def skillpart_boost_score(
     """
 
     result: np.ndarray = data[SkillCategoryIndices.SCORE]
-    elem: int = SkillCategoryElementIndices.BOOST
+    boost: SkillCategoryElementIndices = SkillCategoryElementIndices.BOOST
 
     match status.skillpart.member:
         case IdolType.UNITS:
             # スキルブースト
             # トリコロール・シンフォニー
             # スターライトアンサンブル
-            for i in range(context.size):
-                result[i][elem] = status.skillpart.value
+            for position in range(context.size):
+                result[position][boost] = status.skillpart.value
 
         case IdolType.CUTE_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.CUTE:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.CUTE:
                     match status.skillpart.value:
                         case float(value):
                             # キュートアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "キュートアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[0], type=0, guest=True
                             )
 
@@ -645,16 +657,16 @@ def skillpart_boost_score(
                             LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.COOL_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.COOL:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.COOL:
                     match status.skillpart.value:
                         case float(value):
                             # クールアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "クールアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[1], type=0, guest=True
                             )
 
@@ -662,16 +674,16 @@ def skillpart_boost_score(
                             LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.PASSION_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.PASSION:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.PASSION:
                     match status.skillpart.value:
                         case float(value):
                             # パッションアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "パッションアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[2], type=0, guest=True
                             )
 
@@ -721,27 +733,27 @@ def skillpart_boost_combo(
     """
 
     result: np.ndarray = data[SkillCategoryIndices.COMBO]
-    elem: int = SkillCategoryElementIndices.BOOST
+    boost: SkillCategoryElementIndices = SkillCategoryElementIndices.BOOST
 
     match status.skillpart.member:
         case IdolType.UNITS:
             # スキルブースト
             # トリコロール・シンフォニー
             # スターライトアンサンブル
-            for i in range(context.size):
-                result[i][elem] = status.skillpart.value
+            for position in range(context.size):
+                result[position][boost] = status.skillpart.value
 
         case IdolType.CUTE_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.CUTE:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.CUTE:
                     match status.skillpart.value:
                         case float(value):
                             # キュートアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "キュートアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[0], type=1, guest=True
                             )
 
@@ -749,16 +761,16 @@ def skillpart_boost_combo(
                             LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.COOL_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.COOL:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.COOL:
                     match status.skillpart.value:
                         case float(value):
                             # クールアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "クールアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[1], type=1, guest=True
                             )
 
@@ -766,16 +778,16 @@ def skillpart_boost_combo(
                             LibsStageLogger.error(f"stage.skillpart_boost_score: {status.skillpart.name} 不明。")
 
         case IdolType.PASSION_OF_UNITS:
-            for i in range(context.size):
-                if context.idoltypes_list[i] == IdolType.PASSION:
+            for position in range(context.size):
+                if context.idoltypes_list[position] == IdolType.PASSION:
                     match status.skillpart.value:
                         case float(value):
                             # パッションアンサンブル
-                            result[i][elem] = value
+                            result[position][boost] = value
 
                         case str(HARMONY) if HARMONY == "パッションアイドルの人数に応じて":
                             # ドミナント・ハーモニー
-                            result[i][elem] = Simulator._dominants.value(
+                            result[position][boost] = Simulator._dominants.value(
                                 number=context.type_numbers_list[2], type=1, guest=True
                             )
 
@@ -911,8 +923,9 @@ def skillpart_copy_boost_score(
         if skillpart.effect.value in skillpart_effect_funcname:
             data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
     else:
-        data = abs_max.reduce(data_copies, axis=0)
+        bonus: float = abs_max.reduce(abs_max.reduce(abs_max.reduce(abs_max.reduce(data_copies))))
 
+    data[SkillCategoryIndices.ALTERNATE][status.position][SkillCategoryElementIndices.BONUS] = bonus
     data[SkillCategoryIndices.ALTERNATE][status.position][SkillCategoryElementIndices.BOOST] = skillpart.value
     status.skillpart = dist_skillpart
     return data
@@ -954,8 +967,9 @@ def skillpart_copy_boost_combo(
         if skillpart.effect.value in skillpart_effect_funcname:
             data_copies[i] = skillpart_effect_funcname[skillpart.effect](note, context, status, data_copies[i])
     else:
-        data = abs_max.reduce(data_copies, axis=0)
+        bonus: float = abs_max.reduce(abs_max.reduce(abs_max.reduce(abs_max.reduce(data_copies))))
 
+    data[SkillCategoryIndices.MUTUAL][status.position][SkillCategoryElementIndices.BONUS] = bonus
     data[SkillCategoryIndices.MUTUAL][status.position][SkillCategoryElementIndices.BOOST] = skillpart.value
     status.skillpart = dist_skillpart
     return data
@@ -1104,9 +1118,8 @@ def skillpart_no_damage(
     :rtype: np.ndarray
     """
 
-    # :todo: 特技発動要件のライフ消費
-    # :todo: ブーストでライフ回付付与
-    LibsStageLogger.error("skillpart_no_damage: 実装中。")
+    # 効果量は ZERO だが、ダメージガード有効を示すボーナス 1.0 を付与する。
+    data[SkillCategoryIndices.GUARD][status.position][SkillCategoryElementIndices.BONUS] = 1.0
     return data
 
 
@@ -1135,8 +1148,7 @@ def skillpart_boost_recovery(
     :rtype: np.ndarray
     """
 
-    # :todo: ライフ回復の配列（ボーナス、ブースト）
-    LibsStageLogger.error("skillpart_boost_recovery: 実装中。")
+    data[SkillCategoryIndices.RECOVERY][status.position][SkillCategoryElementIndices.BOOST] = status.skillpart.value
     return data
 
 
@@ -1165,9 +1177,7 @@ def skillpart_add_recovery(
     :rtype: np.ndarray
     """
 
-    # :todo: ライフ回復の配列（ボーナス、ブースト）
-    # :todo: ダメージガードの発動を確認する方法を決める。
-    LibsStageLogger.error("skillpart_add_recovery: 実装中。")
+    data[SkillCategoryIndices.GUARD][status.position][SkillCategoryElementIndices.BOOST] = status.skillpart.value
     return data
 
 
@@ -1336,7 +1346,7 @@ def skillpart_na(
     return data
 
 
-def skillcategory_menber_bonusboost_effectvalues(
+def skillcategory_member_bonusboost_effectvalues(
     note: Note,
     context: LiveContext,
     status: LiveStatus,
@@ -1384,7 +1394,7 @@ def skillcategory_menber_bonusboost_effectvalues(
             ]
         ):
             LibsStageLogger.debug(
-                f"stage.skillcategory_menber_bonusboost_effectvalues: 特技・{status.skill.skill}を処理。"
+                f"stage.skillcategory_member_bonusboost_effectvalues: 特技・{status.skill.skill}を処理。"
             )
 
             for i, skillpart in enumerate(status.skill.skillparts):
@@ -1868,7 +1878,6 @@ class Simulator:
 
             case _:
                 # ノートのスコアを計算。
-
                 self.combo += 1  # コンボ継続
                 return self._note_score(self.combo, note, context, status, timetables)
 
@@ -2132,18 +2141,27 @@ class Simulator:
                 case SkillTriggerType.MAGIC, True:
                     # ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用。
                     # 発動に成功した特技のリスト
+                    # :todo: 発動確認（ライフ消費、楽曲要件、編成要件を評価）
                     skills: list[Skill] = [skill for i, skill in enumerate(context.skills_list) if i != position]
 
                     for skillpart in skill.skillparts:
                         skillpart.copy.clear()
                         # スコアボーナス。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.BONUS_SCORE))
-                        # COMBOボーナス。
-                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BONUS_COMBO))
                         # スコアブースト。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_SCORE))
+                        # スコアボーナスコピー
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.COPY_BONUS_SCORE))
+                        # スコアブーストコピー
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.COPY_BOOST_SCORE))
+                        # COMBOボーナス。
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.BONUS_COMBO))
                         # COMBOブースト。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_COMBO))
+                        # COMBOボーナスコピー
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.COPY_BONUS_COMBO))
+                        # COMBOブーストコピー
+                        skillpart.copy.update(effecttype_skillparts(skills, EffectType.COPY_BOOST_COMBO))
                         # ライフ回復。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.RECOVERY))
                         # ライフ回復ブースト。
@@ -2152,12 +2170,12 @@ class Simulator:
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.NO_DAMAGE))
                         # ライフ回復付与。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.ADD_RECOVERY))
-                        # ライフ減少ダウンブースト。
+                        # ライフ減少量ダウンブースト。
                         skillpart.copy.update(effecttype_skillparts(skills, EffectType.BOOST_DOWN_DAMAGE))
-                        # 無視：非該当、集中、アンコール、シンデレラマジック。
-                        # 無視：LIVE開始時にライフ回復、スコア減少量ダウン
-                        # 無視：スコアボーナスコピー、スコアブーストコピー。
-                        # 無視：COMBOボーナスコピー、COMBOブーストコピー。
+                        # 評価しない特技パーツ：非該当、集中、アンコール、シンデレラマジック。
+                        # 評価しない特技パーツ：PERFECTサポート、PERFECTサポートブースト。
+                        # 評価しない特技パーツ：COMBOサポート、COMBOサポートブースト。
+                        # コピーできない特技パーツ：LIVE開始時にライフ回復、ライフ減少量ダウン。
 
                     available_skills[position] = skill, True
 
@@ -2201,41 +2219,43 @@ class Simulator:
         :param LiveStatus status: ライブステータス。
         :param list[list[TimeTable]] timetables: ゲストを除くユニットメンバーの特技発動時間割。
 
-        :return: 特技系統倍率（スコア系、コンボ系、オルタネイト、ミューチャル、ライフ回復）リスト。
+        :return: 特技系統倍率リスト。
         :rtype: list[float]
         """
 
-        # 特技のボーナス＆ブーストの効果量（小数点第2位で切り上げ）を返すnumpy.ufunc定義
-        # ただし、ボーナスが負の時は、ブーストは無視。
-        def bonus_boost_pyfunc(bonus: float, boost: float) -> Any:
-            result: float = 0.0
-            if bonus >= 0:
-                result = bonus * (1.0 + boost)
-            else:
-                result = bonus
-            return ceil(100.0 * result) / 100.0
+        def fceil(x: float, digit: int) -> float:
+            """切り上げ関数"""
+            return ceil(x * (10**digit)) / (10**digit)
 
-        bonus_boost = np.frompyfunc(bonus_boost_pyfunc, 2, 1)
+        def bonus_boost_pyfunc(bonus: float, boost: float, digit: int) -> float:
+            """ボーナス✕ブースト関数（小数点以下digit桁で切り上げ）。"""
 
-        effectvalues: np.ndarray = skillcategory_menber_bonusboost_effectvalues(
+            return fceil(bonus * (1.0 + boost) if bonus >= 0.0 else bonus, digit)
+
+        # 特技系統の特技効果量配列を評価。
+        effectvalues: np.ndarray = skillcategory_member_bonusboost_effectvalues(
             note=note,
             context=context,
             status=status,
             timetables=timetables,
         )
 
-        # ボーナス効果量とブースト効果量の積の効果量に変換する（次元：特技系統、メンバー）。
-        effectvalues = bonus_boost.reduce(effectvalues, axis=2)
-
-        # スコア系、コンボ系、オルタネイト系、ミューチャル系と、ライフ回復系を分離。
-        status.life.update(int(np.max(effectvalues[SkillCategoryIndices.RECOVERY])))
-        effectvalues = effectvalues[: SkillCategoryIndices.RECOVERY]
-
-        # 特技系統の特技効果量をメンバーで比較して最も大きい効果量とする（次元：特技系統）。
         # センター効果・レゾナンスが有効な場合は、特技系統ごとに特技効果量を全て加算する。
-        effectvalues = (
-            np.add.reduce(effectvalues, axis=1) if context.on_resonance else abs_max.reduce(effectvalues, axis=1)
-        )
+
+        # ライフ回復の評価
+        bonus_boost_0 = np.frompyfunc(lambda bonus, boost: bonus_boost_pyfunc(bonus, boost, 0), 2, 1)
+        recovery_effectvalue: np.ndarray = bonus_boost_0.reduce(effectvalues[SkillCategoryIndices.RECOVERY], axis=1)
+        status.life.update(int(np.sum(recovery_effectvalue) if context.on_resonance else np.max(recovery_effectvalue)))
+
+        # ダメージガードの評価
+        bonus_boost_1 = np.frompyfunc(lambda bonus, boost: 1 if bonus * boost != 0 else 0, 2, 1)
+        guard_effectvalue: np.ndarray = bonus_boost_1.reduce(effectvalues[SkillCategoryIndices.GUARD], axis=1)
+        status.life.update(int(np.sum(guard_effectvalue) if context.on_resonance else np.max(guard_effectvalue)))
+
+        # スコア系、COMBO系、オルタネイト系、ミューチャル系の評価
+        bonus_boost_2 = np.frompyfunc(lambda bonus, boost: bonus_boost_pyfunc(bonus, boost, 2), 2, 1)
+        effectvalues = bonus_boost_2.reduce(effectvalues[: SkillCategoryIndices.RECOVERY], axis=2)
+        effectvalues = np.sum(effectvalues, axis=1) if context.on_resonance else abs_max.reduce(effectvalues, axis=1)
 
         debug_message: list[str] = [
             f"{self.__class__.__name__}._skillcategory_rates: ",
