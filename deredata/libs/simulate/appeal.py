@@ -370,7 +370,7 @@ def buffpart_all(context: BuffPartContext) -> list[AppealIndices]:
             pass
 
         case _:
-            LibsAppealLogger.error(f"appeal.buffpart_all: {context.buffpart.name} 対象外の楽曲。")
+            LibsAppealLogger.error(f"appeal.buffpart_all: この楽曲では、{context.buffpart.name} を適用できない。")
             return []
 
     return [AppealIndices.VOCAL, AppealIndices.DANCE, AppealIndices.VISUAL]
@@ -403,7 +403,7 @@ def buffpart_dance(context: BuffPartContext) -> list[AppealIndices]:
     :todo: ワールドオープン（ヘレン）
     """
 
-    LibsAppealLogger.error("appeal.buffpart_dance: 特技・ワールドオープン対応を未実装。")
+    LibsAppealLogger.error("appeal.buffpart_dance: 特技・ワールドオープン対応は、未実装です。")
     return [AppealIndices.DANCE]
 
 
@@ -493,7 +493,7 @@ def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarr
         if context.buffpart.appeal in appeal_funcname:
             array_bonus_expanded[i] = appeal_funcname[context.buffpart.appeal](context)
         else:
-            LibsAppealLogger.error(f"appeal.breakdown2buffparts: {context.buffpart.appeal}は、未実装")
+            LibsAppealLogger.error(f"appeal.breakdown2buffparts: {context.buffpart.appeal}は、未実装です。")
 
     return array_bonus_expanded
 
@@ -535,7 +535,9 @@ def buffwrap(func: Callable) -> Callable:
         """
 
         # 絶対値で比較して大きい方を返すnumpy.ufunc定義
-        abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
+        # abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
+        # 大きい方（片方がZEROの時は、もう片方）を返すnumpy.ufunc定義
+        abs_max = np.frompyfunc(lambda x, y: max(x, y) if max(x, y) != 0.0 else min(x, y), 2, 1)
 
         LibsAppealLogger.debug(f"appeal.buffwrap: センター効果・{context.buff.buff}を処理。")
 
@@ -595,14 +597,16 @@ def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray
                         )
 
                     else:
-                        LibsAppealLogger.debug(f"appeal.buff_cinderella_bless: {episode.buff_class}は、未実装です。")
+                        LibsAppealLogger.error(f"appeal.buff_cinderella_bless: {episode.buff_class}は、未実装です。")
                         temp[member] = np.zeros((len(AppealIndices), len(context.episodes_list)))
 
             array_bonus_expanded[0] = temp.max(axis=0)
 
         case _:
             # 以外（効果がセンターもしくはゲストと重複するだけなので、何もしない）。
-            LibsAppealLogger.debug("appeal.buff_cinderella_bless: シンデレラブレス - センター、ゲスト以外なので無効。")
+            LibsAppealLogger.debug(
+                "appeal.buff_cinderella_bless: センター、ゲストではないため、シンデレラブレスは無効です。"
+            )
 
     return array_bonus_expanded
 
@@ -654,7 +658,7 @@ def buff_multi_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) ->
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_multi_appeal: 対象外の編成")
+            LibsAppealLogger.error("appeal.buff_multi_appeal: 編成要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -702,7 +706,7 @@ def buff_single_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_single_appeal: 対象外の編成")
+            LibsAppealLogger.error("appeal.buff_single_appeal: 編成要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -747,7 +751,7 @@ def buff_life(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_life: 対象外の編成")
+            LibsAppealLogger.error("appeal.buff_life: 編成要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -783,7 +787,7 @@ def buff_probability(context: BuffContext, array_bonus_expanded: np.ndarray) -> 
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_probability: 対象外の編成")
+            LibsAppealLogger.error("appeal.buff_probability: 編成要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -808,7 +812,7 @@ def buff_resonance(context: BuffContext, array_bonus_expanded: np.ndarray) -> np
         context.on_resonance = True  # 全ての特技効果が重複時に加算
 
     else:
-        LibsAppealLogger.error("appeal.buff_resonance: 対象外の編成")
+        LibsAppealLogger.error("appeal.buff_resonance: 特技が5種類未満のため、レゾナンスは発動しない。")
         return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -861,7 +865,7 @@ def buff_cross(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.nda
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_cross: 対象外の編成")
+            LibsAppealLogger.error("appeal.buff_cross: 編成要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -914,7 +918,7 @@ def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_duet: 対象外の編成、楽曲")
+            LibsAppealLogger.error("appeal.buff_duet: 編成要件もしくは楽曲要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -949,7 +953,7 @@ def buff_dominant_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -
             pass
 
         case _:
-            LibsAppealLogger.error("appeal.buff_dominant_duet: 対象外の楽曲。")
+            LibsAppealLogger.error("appeal.buff_dominant_duet: 楽曲要件を満たしていない。")
             return array_bonus_expanded
 
     return breakdown2buffparts(context, array_bonus_expanded)
@@ -1132,6 +1136,39 @@ class Calculator:
             np.ceil(self._support[AppealIndices.VISUAL]).tolist(),
         ]
 
+    def _log(self) -> None:
+        """
+        アピール値計算の結果をログに簡易出力する。
+        """
+
+        function_name = f"appeal.{self.__class__.__name__}._log: "
+
+        LibsAppealLogger.info(f"{function_name}メンバー {self.unit[0]}")
+        LibsAppealLogger.info(
+            f"{function_name}アイドルタイプ {[Calculator._episodes.get(episode).type.name for episode in self.unit[0]]}"
+        )
+        LibsAppealLogger.info(
+            f"{function_name}ドミナントアイドルタイプ {[Calculator._episodes.get(episode).dominant.name for episode in self.unit[0]]}"
+        )
+        LibsAppealLogger.info(
+            f"{function_name}センター効果 {[Calculator._episodes.get(episode).buff_class for episode in self.unit[0]]}"
+        )
+        LibsAppealLogger.info(
+            f"{function_name}特技 {[Calculator._episodes.get(episode).skill_class for episode in self.unit[0]]}"
+        )
+        LibsAppealLogger.info(f"{function_name}サポメン {self.supports[0]}")
+        LibsAppealLogger.info(
+            f"{function_name}合計アピール {sum([sum(s) for s in self.unit[1:4]]) + sum([sum(s) for s in self.supports[1:4]])}"
+        )
+        LibsAppealLogger.info(f"{function_name}ユニットアピール {sum([sum(s) for s in self.unit[1:4]])}")
+        LibsAppealLogger.info(f"{function_name}サポメンアピール {sum([sum(s) for s in self.supports[1:4]])}")
+        # LibsAppealLogger.info(f"{function_name}総ボーナス {self.unit}")
+        # LibsAppealLogger.info(f"{function_name}タイプボーナス {self.unit}")
+        LibsAppealLogger.info(f"{function_name}ボーカル {sum(self.unit[1]) + sum(self.supports[1])}")
+        LibsAppealLogger.info(f"{function_name}ダンス {sum(self.unit[2]) + sum(self.supports[2])}")
+        LibsAppealLogger.info(f"{function_name}ビジュアル {sum(self.unit[3]) + sum(self.supports[3])}")
+        LibsAppealLogger.info(f"{function_name}ライフ {sum(self.unit[4])}")
+
     def run(self, unit: Unit) -> None:
         """
         アピール値計算を実行する。
@@ -1169,6 +1206,7 @@ class Calculator:
 
         self._support = 0.5 * appeal_formula(support_factors)
 
+        self._log()
         LibsAppealLogger.info(f"{self.__class__.__name__}.run: アピール値計算完了。")
 
     def _select_supports(self, unit: Unit) -> list[Episode]:
