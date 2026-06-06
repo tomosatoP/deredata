@@ -85,7 +85,9 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsSkillsLogger
 
+# 特技データベースのファイルパス
 SKILLSDB: str = database_folder() + "skills.json"
+# マイスタイルアイドルの特技データベースのファイルパス
 SKILLSDB_MYSTYLE: str = database_folder() + "skills_mystyle.json"
 
 
@@ -139,58 +141,96 @@ class SkillTriggerType(StrEnum):
 class ProbabilityType(StrEnum):
     """
     特技発動確率
+
+    :param str NA: "非該当"
+    :param str LOW: "低確率" - 30%
+    :param str MIDDLE: "中確率" - 35%
+    :param str HIGH: "高確率" - 40%
     """
 
     NA = "非該当"
-    LOW = "低確率"  # 30%
-    MIDDLE = "中確率"  # 35%
-    HIGH = "高確率"  # 40%
+    LOW = "低確率"
+    MIDDLE = "中確率"
+    HIGH = "高確率"
 
 
 class DurationType(StrEnum):
     """
     特技継続時間
+
+    :param str NA: "非該当"
+    :param str TWO: "一瞬の間" - 2秒
+    :param str THREE: "わずかな間" - 3秒
+    :param str FOUR: "少しの間" - 4秒
+    :param str FIVE: "しばらくの間" - 5秒
+    :param str SIX: "かなりの間" - 6秒
     """
 
     ZERO = "非該当"
-    TWO = "一瞬の間"  # 2秒
-    THREE = "わずかな間"  # 3秒
-    FOUR = "少しの間"  # 4秒
-    FIVE = "しばらくの間"  # 5秒
-    SIX = "かなりの間"  # 6秒
+    TWO = "一瞬の間"
+    THREE = "わずかな間"
+    FOUR = "少しの間"
+    FIVE = "しばらくの間"
+    SIX = "かなりの間"
 
 
 class PartType(StrEnum):
     """
     特技パーツ効果分類
+
+    :param str NA: "非該当"
+    :param str COMBO_SUPPORT: "COMBOサポート" - __でもCOMBO継続
+    :param str PERFECT_SUPPORT: "PERFECTサポート" - __をPERFECTにする
+    :param str LIFE_SUPPORT: "ライフサポート" - ライフを__回復
+    :param str COMBO_BONUS: "COMBOボーナス" - COMBOボーナスアップ
+    :param str SCORE_UP: "スコアアップ" - スコアアップ
+    :param str SKILL_BOOST: "スキルブースト" - COMBOボーナス効果アップ、SOCOREアップ効果アップ
+    :param str COPY: "適用" - アンコール、ミューチャル、リフレイン、オルタネイト
+    :param str MAGIC: "シンデレラマジック" - シンデレラマジック
     """
 
     NA = "非該当"
-    COMBO_SUPPORT = "COMBOサポート"  # **でもCOMBO継続
-    PERFECT_SUPPORT = "PERFECTサポート"  # **をPERFECTにする
-    LIFE_SUPPORT = "ライフサポート"  # ライフを**回復
-    COMBO_BONUS = "COMBOボーナス"  # COMBOボーナスアップ
-    SCORE_UP = "スコアアップ"  # スコアアップ
-    SKILL_BOOST = "スキルブースト"  # COMBOボーナス効果アップ、SOCOREアップ効果アップ
-    COPY = "適用"  # アンコール、ミューチャル、リフレイン、オルタネイト
-    MAGIC = "シンデレラマジック"  # シンデレラマジック
+    COMBO_SUPPORT = "COMBOサポート"
+    PERFECT_SUPPORT = "PERFECTサポート"
+    LIFE_SUPPORT = "ライフサポート"
+    COMBO_BONUS = "COMBOボーナス"
+    SCORE_UP = "スコアアップ"
+    SKILL_BOOST = "スキルブースト"
+    COPY = "適用"
+    MAGIC = "シンデレラマジック"
 
 
 class IconType(StrEnum):
     """
     適用アイコン
+
+    :param str NA: "非該当"
+    :param str ALL: "全アイコン"
+    :param str SLIDE: "スライドアイコン"
+    :param str FLICK: "フリックアイコン"
+    :param str LONG: "ロングアイコン"
     """
 
     NA = "非該当"
-    ALL = "全アイコン"  #
-    SLIDE = "スライドアイコン"  #
-    FLICK = "フリックアイコン"  #
-    LONG = "ロングアイコン"  #
+    ALL = "全アイコン"
+    SLIDE = "スライドアイコン"
+    FLICK = "フリックアイコン"
+    LONG = "ロングアイコン"
 
 
 class PerfectionType(StrEnum):
     """
     適用判定
+
+    :param str NA: "非該当"
+    :param str NICE_BAD: "NICE/BAD判定"
+    :param str NICE: "NICE判定"
+    :param str ONLY_PERFECT: "PERFECT判定のみ"
+    :param str GREAT_NICE_BAD: "GREAT/NICE/BAD判定"
+    :param str GREAT_NICE: "GREAT/NICE判定"
+    :param str GREAT: "GREAT判定"
+    :param str PERFECT: "PERFECT判定"
+    :param str PERFECT_GREAT: "PERFECT/GREAT判定"
     """
 
     NA = "非該当"
@@ -207,31 +247,56 @@ class PerfectionType(StrEnum):
 class EffectType(StrEnum):
     """
     特技パーツ効果
+
+    :param str NA: "非該当"
+    :param str CONCENTRATION: "集中" - PERFECT判定される時間が短くなる
+    :param str BOOST_DOWN_DAMAGE: "ライフ減少量ダウンブースト" - ライフ減少量ダウン効果アップ｜ライフ計算
+    :param str DOWN_DAMAGE: "ライフ減少量ダウン" - クリスタル・ヒール｜ライフ計算
+    :param str ADD_RECOVERY: "ライフ回復付与" - ダメージガードにライフ回復を付与｜ライフ計算
+    :param str BOOST_RECOVERY: "ライフ回復ブースト" - ライフ回復量アップ｜ライフ計算
+    :param str RECOVERY: "ライフ回復" - **でライフを**回復｜ライフ計算
+    :param str NO_DAMAGE: "ダメージガード" - ライフが減少しなくなる｜ライフ計算
+    :param str COPY_BONUS_SCORE: "スコアボーナスコピー" - リフレイン
+    :param str BONUS_SCORE: "スコアボーナス" - ｜特技倍率（スコア系）、アピール値、ライフ計算
+    :param str COPY_BOOST_SCORE: "スコアブーストコピー" - ｜特技倍率（スコア系オルタネイト）
+    :param str BOOST_SCORE: "スコアブースト" - ｜特技倍率（スコア系）、アイドル人数
+    :param str MAGIC: "シンデレラマジック" - ユニット編成アイドル全員の特技効果を発動、最も高い効果を適用
+    :param str ENCORE: "アンコール" - コピー
+    :param str BOOST_SUPPORT_PERFECT: "PERFECTサポートブースト" - PERFECTサポート効果アップ
+    :param str SUPPORT_PERFECT: "PERFECTサポート" - **をPERFECTにする
+    :param str RECOVERY_AT_START: "LIVE開始時にライフ回復" - クリスタル・ヒール｜ライフ計算
+    :param str COPY_BONUS_COMBO: "COMBOボーナスコピー" - リフレイン
+    :param str BONUS_COMBO: "COMBOボーナス" - ｜特技倍率（COMBO系）、ライフ計算
+    :param str COPY_BOOST_COMBO: "COMBOブーストコピー" - ｜特技倍率（COMBO系ミューチャル）
+    :param str BOOST_COMBO: "COMBOブースト" - ｜特技倍率（COMBO系）、アイドル人数
+    :param str BOOST_SUPPORT_COMBO: "COMBOサポートブースト" - COMBOサポート効果アップ
+    :param str SUPPORT_COMBO: "COMBOサポート" - COMBO継続｜ライフ計算
+
     """
 
     NA = "非該当"
-    CONCENTRATION = "集中"  # PERFECT判定される時間が短くなる
-    BOOST_DOWN_DAMAGE = "ライフ減少量ダウンブースト"  # ライフ減少量ダウン効果アップ｜ライフ計算
-    DOWN_DAMAGE = "ライフ減少量ダウン"  # クリスタル・ヒール｜ライフ計算
-    ADD_RECOVERY = "ライフ回復付与"  # ダメージガードにライフ回復を付与｜ライフ計算
-    BOOST_RECOVERY = "ライフ回復ブースト"  # ライフ回復量アップ｜ライフ計算
-    RECOVERY = "ライフ回復"  # **でライフを**回復｜ライフ計算
-    NO_DAMAGE = "ダメージガード"  # ライフが減少しなくなる｜ライフ計算
-    COPY_BONUS_SCORE = "スコアボーナスコピー"  # リフレイン
-    BONUS_SCORE = "スコアボーナス"  # ｜特技倍率（スコア系）、アピール値、ライフ計算
-    COPY_BOOST_SCORE = "スコアブーストコピー"  # ｜特技倍率（スコア系オルタネイト）
-    BOOST_SCORE = "スコアブースト"  # ｜特技倍率（スコア系）、アイドル人数
-    MAGIC = "シンデレラマジック"  # ユニット編成アイドル全員の特技効果を発動し、最も高い効果を適用｜
-    ENCORE = "アンコール"  # コピー
-    BOOST_SUPPORT_PERFECT = "PERFECTサポートブースト"  # PERFECTサポート効果アップ
-    SUPPORT_PERFECT = "PERFECTサポート"  # **をPERFECTにする
-    RECOVERY_AT_START = "LIVE開始時にライフ回復"  # クリスタル・ヒール｜ライフ計算
-    COPY_BONUS_COMBO = "COMBOボーナスコピー"  # リフレイン
-    BONUS_COMBO = "COMBOボーナス"  # ｜特技倍率（COMBO系）、ライフ計算
-    COPY_BOOST_COMBO = "COMBOブーストコピー"  # ｜特技倍率（COMBO系ミューチャル）
-    BOOST_COMBO = "COMBOブースト"  # ｜特技倍率（COMBO系）、アイドル人数
-    BOOST_SUPPORT_COMBO = "COMBOサポートブースト"  # COMBOサポート効果アップ
-    SUPPORT_COMBO = "COMBOサポート"  # COMBO継続｜ライフ計算
+    CONCENTRATION = "集中"
+    BOOST_DOWN_DAMAGE = "ライフ減少量ダウンブースト"
+    DOWN_DAMAGE = "ライフ減少量ダウン"
+    ADD_RECOVERY = "ライフ回復付与"
+    BOOST_RECOVERY = "ライフ回復ブースト"
+    RECOVERY = "ライフ回復"
+    NO_DAMAGE = "ダメージガード"
+    COPY_BONUS_SCORE = "スコアボーナスコピー"
+    BONUS_SCORE = "スコアボーナス"
+    COPY_BOOST_SCORE = "スコアブーストコピー"
+    BOOST_SCORE = "スコアブースト"
+    MAGIC = "シンデレラマジック"
+    ENCORE = "アンコール"
+    BOOST_SUPPORT_PERFECT = "PERFECTサポートブースト"
+    SUPPORT_PERFECT = "PERFECTサポート"
+    RECOVERY_AT_START = "LIVE開始時にライフ回復"
+    COPY_BONUS_COMBO = "COMBOボーナスコピー"
+    BONUS_COMBO = "COMBOボーナス"
+    COPY_BOOST_COMBO = "COMBOブーストコピー"
+    BOOST_COMBO = "COMBOブースト"
+    BOOST_SUPPORT_COMBO = "COMBOサポートブースト"
+    SUPPORT_COMBO = "COMBOサポート"
 
 
 @dataclass(order=True, frozen=True)
@@ -277,16 +342,16 @@ class Skill:
     :param set[SkillPart] skillparts: 特技パーツの集合。
     """
 
-    name: str = "特技説明"  # 特技説明
-    skill: str = field(default="特技", compare=False)  # 特技
-    category: str = field(default="特技分類", compare=False)  # 特技分類
-    trigger: SkillTriggerType = field(default=SkillTriggerType.NA, compare=False)  # 発動要件
-    music: MusicType = field(default=MusicType.NA, compare=False)  # 楽曲要件
-    formation: UnitType = field(default=UnitType.NA, compare=False)  # 編成要件
-    interval: int = field(default=0, compare=False)  # 発動間隔
-    probability: ProbabilityType = field(default=ProbabilityType.NA, compare=False)  # 発動確率
-    duration: DurationType = field(default=DurationType.ZERO, compare=False)  # 継続期間
-    skillparts: set[SkillPart] = field(default_factory=set, compare=False)  # 特技パーツ
+    name: str = "特技説明"
+    skill: str = field(default="特技", compare=False)
+    category: str = field(default="特技分類", compare=False)
+    trigger: SkillTriggerType = field(default=SkillTriggerType.NA, compare=False)
+    music: MusicType = field(default=MusicType.NA, compare=False)
+    formation: UnitType = field(default=UnitType.NA, compare=False)
+    interval: int = field(default=0, compare=False)
+    probability: ProbabilityType = field(default=ProbabilityType.NA, compare=False)
+    duration: DurationType = field(default=DurationType.ZERO, compare=False)
+    skillparts: set[SkillPart] = field(default_factory=set, compare=False)
 
 
 def duration_value(duration: DurationType) -> int:
@@ -336,29 +401,19 @@ class Skills:
     特技データベース。
     """
 
-    def __init__(self) -> None:
-        self._skills: set[Skill] = set()
-        self._path: Path = Path(SKILLSDB)
-
-    @property
-    def filename(self) -> str:
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _skills: set[Skill] = set()
 
     @property
     def categories(self) -> set[str]:
 
-        return {skill.category for skill in self._skills}
+        return {skill.category for skill in Skills._skills}
 
     @property
     def skill_groupby_categories(self) -> dict[str, set[str]]:
 
         result: dict[str, set[str]] = dict()
         for category in self.categories:
-            result |= {category: {skill.skill for skill in self._skills if skill.category == category}}
+            result |= {category: {skill.skill for skill in Skills._skills if skill.category == category}}
 
         return result
 
@@ -367,28 +422,29 @@ class Skills:
         特技分類から特技を取り出す。
         """
 
-        return {skill.skill for skill in self._skills if skill.category == category}
+        return {skill.skill for skill in Skills._skills if skill.category == category}
 
     def get(self, name: str) -> Skill:
         """
         特技説明から特技の基本情報を取得する。
 
         :param str name: 特技説明
+
         :return: 特技の基本情報
         :rtype: Skill
         """
 
-        result: set[Skill] = {skill for skill in self._skills if skill.name == name}
+        result: set[Skill] = {skill for skill in Skills._skills if skill.name == name}
         return result.pop() if result else Skill()
 
     def gets(self) -> set[Skill]:
-        return self._skills
+        return Skills._skills
 
     def add(self, skill: Skill) -> None:
-        self._skills.add(skill)
+        Skills._skills.add(skill)
 
     def remove(self, skill: Skill) -> None:
-        self._skills.remove(skill)
+        Skills._skills.remove(skill)
 
     def update(self, after: Skill, before: Skill) -> None:
         """
@@ -403,15 +459,17 @@ class Skills:
         self.remove(before)
         self.add(after)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = SKILLSDB) -> None:
         """
         センター効果データベースの読み込みを行う。
         """
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise SkillsError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise SkillsError(f"{cls.__name__}.load: ")
 
-        with self._path.open() as f:
+        with path.open() as f:
             datas = json.load(f)
 
         for data in datas:
@@ -440,17 +498,19 @@ class Skills:
                 duration=DurationType(data["継続期間"]),
                 skillparts=skillparts,
             )
-            self._skills.add(skill)
+            cls._skills.add(skill)
 
-        LibsSkillsLogger.info(f"{self.__class__.__name__}.load: {len(self._skills)}件の特技を読み込みました。")
+        LibsSkillsLogger.info(f"{cls.__name__}.load: {len(cls._skills)}件の特技を読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = SKILLSDB) -> None:
         """
         センター効果データベースの保存を行う。
         """
 
-        if not isinstance(self._path, Path):
-            raise SkillsError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise SkillsError(f"{cls.__name__}.save: ")
 
         datas = [
             {
@@ -476,13 +536,13 @@ class Skills:
                     for skillpart in sorted(skill.skillparts)
                 ],
             }
-            for skill in sorted(self._skills)
+            for skill in sorted(cls._skills)
         ]
 
-        with self._path.open(mode="w") as f:
+        with path.open(mode="w") as f:
             json.dump(datas, f, ensure_ascii=False, indent=4)
 
-        LibsSkillsLogger.info(f"{self.__class__.__name__}: 特技データベースを保存しました。")
+        LibsSkillsLogger.info(f"{cls.__name__}: {len(cls._skills)}件の特技データベースを保存しました。")
 
 
 class SkillsMystyle(Skills):
@@ -490,9 +550,13 @@ class SkillsMystyle(Skills):
     マイスタイルアイドル用の特技集。
     """
 
-    def __init__(self) -> None:
-        self._skills: set[Skill] = set()
-        self._path: Path = Path(SKILLSDB_MYSTYLE)
+    @classmethod
+    def load(cls, filename: str = SKILLSDB_MYSTYLE) -> None:
+        super().load(filename)
+
+    @classmethod
+    def save(cls, filename: str = SKILLSDB_MYSTYLE) -> None:
+        super().load(filename)
 
 
 if __name__ == "__main__":

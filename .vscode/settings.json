@@ -1,4 +1,15 @@
 {
     "python.terminal.useEnvFile": true,
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "tests",
+        "-p",
+        "test_*.py",
+        "-t",
+        "tests"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
     // "python.envFile": "${workspaceFolder}/.env"
 }

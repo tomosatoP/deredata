@@ -20,9 +20,31 @@ IDOLFIXEDDATA: str = textdata_folder() + "idols_fixed.txt"
 IDOLDATA: str = textdata_folder() + "idols.txt"
 
 
-def main() -> None:
+def convert(
+    idols_txtfilename: str = IDOLDATA,
+    idols_fixed_txtfilename: str = IDOLFIXEDDATA,
+    idols_jsonfilename: str | None = None,
+    profiles_jsonfilename: str | None = None,
+) -> None:
+    """
+    アイドル情報のテキストデータをデータベース（JSON形式）に変換する。
 
-    with open(IDOLFIXEDDATA, "r", encoding="utf-8-sig") as f:
+    :param str idols_txtfilename:
+        アイドルのポテンシャルデータのファイル名。
+        無い場合は、ポテンシャル値を ZERO にセットする。
+        未指定の場合は、既定のファイル名。
+    :param str idols_fixed_txtfilename:
+        アイドルのポテンシャルデータ以外の固定データのファイル名。
+        未指定の場合は、既定のファイル名。
+    :param str idols_jsonfilename:
+        アイドルの基礎情報データベースのファイル名。
+        未指定の場合は、既定のファイル名。
+    :param str profiles_jsonfilename:
+        アイドルのプロフィール情報データベースのファイル名。
+        未指定の場合は、既定のファイル名。
+    """
+
+    with open(idols_fixed_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -58,8 +80,8 @@ def main() -> None:
             idoldatas.add(idol)
             profiledatas.add(profile)
 
-    if Path(IDOLDATA).is_file():
-        with open(IDOLDATA, "r", encoding="utf-8-sig") as f:
+    if Path(idols_txtfilename).is_file():
+        with open(idols_txtfilename, "r", encoding="utf-8-sig") as f:
             datas = csv.DictReader(f)
 
             for data in datas:
@@ -77,7 +99,7 @@ def main() -> None:
                 )
                 idoldatas.update(after=idol, before=idol_fixed)
     else:
-        with open(IDOLDATA, "w", encoding="utf-8-sig", newline="") as f:
+        with open(idols_txtfilename, "w", encoding="utf-8-sig", newline="") as f:
             fieldnames: list[str] = [
                 "ふりがな",
                 "ライフ",
@@ -105,18 +127,9 @@ def main() -> None:
                     }
                 )
 
-    idoldatas.save()
-    profiledatas.save()
+    idoldatas.save(idols_jsonfilename) if idols_jsonfilename else idoldatas.save()
+    profiledatas.save(profiles_jsonfilename) if profiles_jsonfilename else profiledatas.save()
 
 
 if __name__ == "__main__":
-    main()
-
-    load_idoldatas = Idols()
-    load_profiledatas = Profiles()
-
-    load_idoldatas.load()
-    load_profiledatas.load()
-
-    print(load_idoldatas.get(ruby="しまむらうづき"))
-    print(load_profiledatas.get(ruby="しまむらうづき"))
+    print(__file__)

@@ -21,6 +21,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsUnitsLogger
 
+# ユニット情報データベースのファイルパス
 UNITSDB: str = database_folder() + "units.json"
 
 
@@ -129,21 +130,7 @@ class Units:
     ユニット情報データベース。
     """
 
-    def __init__(self) -> None:
-        self._units: set[Unit | GrandliveUnit] = set()
-        self._path: Path = Path(UNITSDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        ユニット情報データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _units: set[Unit | GrandliveUnit] = set()
 
     def get(self, name: str) -> Unit | GrandliveUnit:
         """
@@ -152,15 +139,18 @@ class Units:
         :param str name: 抽出条件のユニット名。
         """
 
-        result: set[Unit | GrandliveUnit] = {unit for unit in self._units if unit.name == name}
+        result: set[Unit | GrandliveUnit] = {unit for unit in Units._units if unit.name == name}
         return result.pop() if result else Unit()
 
     def gets(self) -> set[Unit | GrandliveUnit]:
         """
         gets
+
+        :return: 全ユニットの集合
+        :rtype: set[Unit]
         """
 
-        return self._units
+        return Units._units
 
     def add(self, unit: Unit | GrandliveUnit) -> None:
         """
@@ -169,7 +159,7 @@ class Units:
         :param Unit | GrandliveUnit unit: 追加する通常ライブもしくはグランドライブのユニット。
         """
 
-        self._units.add(unit)
+        Units._units.add(unit)
 
     def remove(self, unit: Unit | GrandliveUnit) -> None:
         """
@@ -178,7 +168,7 @@ class Units:
         :param Unit | GrandliveUnit unit: 削除する通常ライブもしくはグランドライブのユニット。
         """
 
-        self._units.remove(unit)
+        Units._units.remove(unit)
 
     def update(self, after: Unit | GrandliveUnit, before: Unit | GrandliveUnit) -> None:
         """
@@ -193,14 +183,19 @@ class Units:
         self.remove(before)
         self.add(after)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = UNITSDB) -> None:
         """
         ユニット情報データベースの読み込みを行う。
-        """
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise UnitsError(f"{self.__class__.__name__}.load: ")
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        :param str filename: 初期値は、既定のファイル名。
+        """
+
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise UnitsError(f"{cls.__name__}.load: {filename} を読み込めませんでした。")
+
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
         for data in datas:
@@ -217,26 +212,31 @@ class Units:
                     name=data["名前"],
                     positions=members,
                 )
-                self._units.add(unit)
+                cls._units.add(unit)
 
             elif data["タイプ"] == "グランドライブユニット":
                 grandliveunit = GrandliveUnit()
-                self._units.add(grandliveunit)
+                cls._units.add(grandliveunit)
             else:
-                raise UnitsError(f"{self.__class__.__name__}.load: ")
+                raise UnitsError(f"{cls.__name__}.load: {data['名前']} を読み込めませんでした。")
 
-        LibsUnitsLogger.info(f"{self.__class__.__name__}.load: {len(self._units)}件のユニット情報を読み込みました。")
+        LibsUnitsLogger.info(f"{cls.__name__}.load: {len(cls._units)}件のユニット情報を読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = UNITSDB) -> None:
         """
         ユニット情報データベースを保存する。
+
+        :param str filename: 初期値は、既定のファイル名。
         """
 
         units: list[dict[str, Any]] = list()
-        if not isinstance(self._path, Path):
-            raise UnitsError(f"{self.__class__.__name__}.save: ")
 
-        for unit in sorted(self.gets()):
+        path = Path(filename)
+        if not isinstance(path, Path):
+            raise UnitsError(f"{cls.__name__}.save: {filename} を保存できません。")
+
+        for unit in sorted(cls._units):
             if isinstance(unit, Unit):
                 units.append(
                     {
@@ -257,12 +257,12 @@ class Units:
             elif isinstance(unit, GrandliveUnit):
                 pass
             else:
-                raise UnitsError(f"{self.__class__.__name__}.save: ")
+                raise UnitsError(f"{cls.__name__}.save: {unit.name} を保存できません。")
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(units, f, indent=4, ensure_ascii=False)
 
-        LibsUnitsLogger.info(f"{self.__class__.__name__}.save: ユニット情報データベースを保存しました。")
+        LibsUnitsLogger.info(f"{cls.__name__}.save: ユニット情報データベースを保存しました。")
 
 
 if __name__ == "__main__":

@@ -70,12 +70,12 @@ def setup_databeses() -> None:
     from deredata.libs.database.convert import musiclevels_from_textdata
     from deredata.libs.database.convert import potentials_from_textdata
 
-    idols_from_textdata.main()
-    episodes_from_textdata.main()
+    idols_from_textdata.convert()
+    episodes_from_textdata.convert()
     buffs_from_textdata.main()
     buffs_from_textdata_mystyle.main()
-    skills_from_textdata.main()
-    skills_from_textdata_mystyle.main()
+    skills_from_textdata.convert()
+    skills_from_textdata_mystyle.convert()
     comborates_from_textdata.main()
     dominant_from_textdata.main()
     lifesparkle_from_textdata.main()

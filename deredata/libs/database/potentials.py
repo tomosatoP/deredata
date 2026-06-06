@@ -18,6 +18,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsPotentialsLogger
 
+# ポテンシャルの基礎情報データベースのファイルパス。
 POTENTIALSDB: str = database_folder() + "potentials.json"
 
 
@@ -82,23 +83,12 @@ class Potentials:
     ポテンシャルの基礎情報データベース。
     """
 
-    def __init__(self) -> None:
+    def __init__(self, filename: str = POTENTIALSDB) -> None:
         self._appeals: list[Appeal] = []
         self._abilities: list[Ability] = []
         self._lives: list[Life] = []
-        self._path = Path(POTENTIALSDB)
 
-    @property
-    def filename(self) -> str:
-        """
-        ポテンシャルデータベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+        self._path = Path(filename)
 
     def value(self, type: str, rare: RareClass, level: int) -> float | int:
         """

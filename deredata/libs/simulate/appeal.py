@@ -1,7 +1,7 @@
 """
 デレステの ``アピール値計算`` を扱うモジュール。
 
-ライブのスコア計算前に、アピール値（ボーカル・ダンス・ビジュアル・ライフ・特技発動率・継続期間）を確定する。
+ライブのスコア計算前に、アピール（ボーカル・ダンス・ビジュアル・ライフ・特技発動率・継続期間）値を確定する。
 
 まずは、通常のゲストメンバー有りの ``WIDEライブ`` のみ対応する。
 ``GrandLive`` や ``LiveCarnival（Booth効果）`` にも対応したい。
@@ -60,6 +60,12 @@
         - 1: サポートメンバーのボーカルアピール値リスト
         - 2: サポートメンバーのダンスアピール値リスト
         - 3: サポートメンバーのビジュアルアピール値リスト
+
+:todo:
+    - BOOTH効果の実装。
+    - 関数 breakdown2buffparts と buffwrap の統合。
+    - センター効果・ワールドレべルの実装。
+    - 楽曲タイプ一致の実装修正：シンデレラブレスから他のセンター効果を呼び出し時の対応。
 """
 
 import numpy as np
@@ -92,7 +98,7 @@ class AppealError(Exception):
 
 class AppealIndices(IntEnum):
     """
-    アピール値（エピソード名を除く）タイプの列挙クラス。
+    エピソード名を除くアピールタイプの列挙クラス。ボーナス配列の添え字に相当する。
 
     :VOCAL: 0: ボーカル
     :DANCE: 1: ダンス
@@ -108,6 +114,46 @@ class AppealIndices(IntEnum):
     LIFE = 3
     PROBABILITY = 4
     DURATION = 5
+
+
+class BoothIndices(IntEnum):
+    """
+    BOOTH効果の列挙クラス。ブース効果の添え字に相当する。
+
+    :CUTE: 0: キュートタイプ楽曲のみ選択可能、キュートタイプアイドルのアピール値アップ。
+    :COOL: 1: クールタイプ楽曲のみ選択可能、クールタイプアイドルのアピール値アップ。
+    :PASSION: 2: パッションタイプ楽曲のみ選択可能、パッションタイプアイドルのアピール値アップ。
+    :ALL_IDOLS: 3: 全てのアイドルのアピール値アップ。
+    :VOCAL: 4: ボーカルアピール値がアップ。
+    :DANCE: 5: ダンスアピール値がアップ。
+    :VISUAL: 6: ビジュアルアピール値がアップ。
+    :VOCAL_ONLY: 7: ボーカルアピール値のみアップ、ダンス、ビジュアルアピール値は ZERO。
+    :DANCE_ONLY: 8: ダンスアピール値のみアップ、ボーカル、ビジュアルアピール値は ZERO。
+    :VISUAL_ONLY: 9: ビジュアルアピール値のみアップ、ボーカル、ダンスアピール値は ZERO。
+    :UNIT_LIFE: 10: ユニットのライフに応じてアピール値がアップ。
+    :IDOL_STAR_RANK: 11: アイドルのスターランクに応じてアピール値がアップ。
+    :PRODUCE_PT: 12: アイドルの開放されているプロデュースptに応じてアピール値がアップ。
+    :EVENT_IDOL: 13: イベント指定アイドルのアピール値アップ。
+    :SONG_TYPE: 14: アピール値アップ。
+    :SKILL_TYPE: 15: 対象の特技を持つアイドルのみアピール値アップ。
+    """
+
+    CUTE = 0
+    COOL = 1
+    PASSION = 2
+    ALL_IDOLS = 3
+    VOCAL = 4
+    DANCE = 5
+    VISUAL = 6
+    VOCAL_ONLY = 7
+    DANCE_ONLY = 8
+    VISUAL_ONLY = 9
+    UNIT_LIFE = 10
+    IDOL_STAR_RANK = 11
+    PRODUCE_PT = 12
+    EVENT_IDOL = 13
+    SONG_TYPE = 14
+    SKILL_TYPE = 15
 
 
 @dataclass
@@ -177,12 +223,12 @@ class BuffContext:
 
 def appeal_formula(bonuses: list[np.ndarray]) -> np.ndarray:
     """
-    ボーナス（基礎値、様々な効果など）NUMPY配列からアピール値、ライフ、特技発動確率、特技継続期間を計算する。
+    要素がボーナス（基礎値、様々な効果など）値のNUMPY配列から、メンバーもしくはサポメンのアピール値を計算する。
 
         計算式: :math:`(bonuses[0]+bonuses[1])\\times(1.00+\\displaystyle \\sum{bonuses[2:]})`
 
-    アピール値
-        ボーカル・ダンス・ビジュアル、小数点以下切り上げ
+    ボーカル・ダンス・ビジュアル
+        小数点以下切り上げ
 
             ゲストを含むユニットメンバーの場合
                 - bonuses[0]: 基礎値
@@ -289,13 +335,15 @@ def buffpartwrap(func: Callable) -> Callable:
     """
     センター効果パーツのボーナス配列を返すラッパー関数。
 
-    ボーナス配列
-        ボーナスを要素とする二次元（軸0: アピールタイプ, 軸1: ユニットメンバーの立ち位置）NUMPY配列。
-    前処理
+    :ボーナス配列:
+        ボーナスを要素とする二次元NUMPY配列。
+            - 軸0: アピールタイプ
+            - 軸1: ユニットメンバーの立ち位置
+    :前処理:
         デバッグ用ログを出力する。
-    後処理
-        ボーナス配列を初期化する。
-        AppealIndicesリストで指定されたアピールタイプのボーナス配列を更新する。
+    :後処理:
+        | ボーナス配列を初期化する。
+        | ボーナス配列に対して、指定（戻り値）のアピールタイプのボーナスを更新する。
 
     :param Callable func: センター効果パーツのAppealIndicesリストを返す関数。
 
@@ -306,11 +354,12 @@ def buffpartwrap(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(context: BuffPartContext) -> np.ndarray:
         """
-        センター効果パーツのAppealIndicesリストを返す。
+        センター効果パーツのアピールタイプのリストを返す。
+        ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
         :param BuffPartContext context: センター効果パーツのコンテキスト。
 
-        :return: AppealIndicesリスト。
+        :return: アピールタイプのリスト。
         :rtype: list[AppealIndices]
         """
 
@@ -325,17 +374,17 @@ def buffpartwrap(func: Callable) -> Callable:
         idoltypes: list[IdolType] = context.idoltypes_list
         dominanttypes: list[DominantType] = context.dominanttypes_list
 
-        array_bonus: np.ndarray = np.zeros((len(AppealIndices), len(context.idoltypes_list)))
+        bonus_array: np.ndarray = np.zeros((len(AppealIndices), len(context.idoltypes_list)))
         for id in appealidices:
             if not dominanttypes:
-                array_bonus[id] = np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes])
+                bonus_array[id] = np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes])
             else:
-                array_bonus[id] = np.maximum(
+                bonus_array[id] = np.maximum(
                     np.array([bonus if ismatch(member, type) else 0.0 for type in idoltypes]),
                     np.array([bonus if ismatch(member, type) else 0.0 for type in dominanttypes]),
                 )
 
-        return array_bonus
+        return bonus_array
 
     return wrapper
 
@@ -343,11 +392,13 @@ def buffpartwrap(func: Callable) -> Callable:
 @buffpartwrap
 def buffpart_all(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・全アピール（ボーカル、ダンス、ビジュアル）のAppealIndicesリストを返す。
+    センター効果パーツ・全アピール（ボーカル、ダンス、ビジュアル）タイプのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・全アピールのコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
     """
 
@@ -379,11 +430,13 @@ def buffpart_all(context: BuffPartContext) -> list[AppealIndices]:
 @buffpartwrap
 def buffpart_vocal(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ボーカルのAppealIndicesリストを返す。
+    センター効果パーツ・ボーカルタイプのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・ボーカルのコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
     """
 
@@ -393,28 +446,33 @@ def buffpart_vocal(context: BuffPartContext) -> list[AppealIndices]:
 @buffpartwrap
 def buffpart_dance(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ダンスのAppealIndicesリストを返す。
+    センター効果パーツ・ダンスタイプのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・ダンスのコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
 
-    :todo: ワールドオープン（ヘレン）
+    :todo: ワールドレベル（自分のダンスアピール値100%アップ、フェイスオープンしたら全員のダンスアピール値130%アップ）
     """
 
-    LibsAppealLogger.error("appeal.buffpart_dance: 特技・ワールドオープン対応は、未実装です。")
+    LibsAppealLogger.error("appeal.buffpart_dance: センター効果・ワールドレベルのヘレン対応は、実装中です。")
+    LibsAppealLogger.error("appeal.buffpart_dance: センター効果・ワールドレベルのフェイスオープン対応は、未実装です。")
     return [AppealIndices.DANCE]
 
 
 @buffpartwrap
 def buffpart_visual(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ビジュアルのAppealIndicesリストを返す。
+    センター効果パーツ・ビジュアルタイプのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・ビジュアルのコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
     """
 
@@ -424,11 +482,13 @@ def buffpart_visual(context: BuffPartContext) -> list[AppealIndices]:
 @buffpartwrap
 def buffpart_life(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・ライフのAppealIndicesリストを返す。
+    センター効果パーツ・ライフアピールのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・ライフのコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
     """
 
@@ -438,23 +498,28 @@ def buffpart_life(context: BuffPartContext) -> list[AppealIndices]:
 @buffpartwrap
 def buffpart_probability(context: BuffPartContext) -> list[AppealIndices]:
     """
-    センター効果パーツ・特技発動確率のAppealIndicesリストを返す。
+    センター効果パーツ・特技発動確率アピールのリストを返す。
+
+    ラッパー関数により、センター効果パーツのボーナス配列に変換される。
 
     :param BuffPartContext context: センター効果パーツ・特技発動確率のコンテキスト。
 
-    :return: AppealIndicesリスト。
+    :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
     """
 
     return [AppealIndices.PROBABILITY]
 
 
-def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def breakdown2buffparts(buffcontext: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
-    センター効果パーツに展開しておいてセンター効果で、``拡大ボーナス配列`` を適用する。
+    ``拡大ボーナス配列`` を更新する。
+    
+    センター効果（buffcontext.buff）のセンター効果パーツに対応するセンター効果パーツ関数を呼び出し、\
+    戻り値の ``ボーナス配列`` で ``拡大ボーナス配列`` を更新する。
 
-    :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の ``拡大ボーナス配列`` 。
+    :param BuffContext buffcontext: センター効果コンテキスト。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の ``拡大ボーナス配列`` 。
 
     :return: センター効果の ``拡大ボーナス配列`` 。
     :rtype: np.ndarray
@@ -491,29 +556,30 @@ def breakdown2buffparts(buffcontext: BuffContext, array_bonus_expanded: np.ndarr
 
     for i, context in enumerate(contexts):
         if context.buffpart.appeal in appeal_funcname:
-            array_bonus_expanded[i] = appeal_funcname[context.buffpart.appeal](context)
+            bonus_array_ext[i] = appeal_funcname[context.buffpart.appeal](context)
         else:
             LibsAppealLogger.error(f"appeal.breakdown2buffparts: {context.buffpart.appeal}は、未実装です。")
 
-    return array_bonus_expanded
+    return bonus_array_ext
 
 
 def buffwrap(func: Callable) -> Callable:
     """
     センター効果のボーナス配列を返すラッパー関数。
 
-    ボーナス配列
-        ボーナスを要素とする二次元（軸0: アピールタイプ, 軸1: ユニットメンバーの立ち位置）NUMPY配列。
-
-    拡大ボーナス配列
-        ボーナスを要素とする三次元\
-            （軸0: センター効果パーツ, 軸1: アピールタイプ, 軸2: ユニットメンバー立ち位置）NUMPY配列。
-
-    前処理
-        デバッグ用ログを出力する。
-        拡大ボーナス配列を初期化する。
-
-    後処理
+    :ボーナス配列:
+        ボーナスを要素とする二次元NUMPY配列。
+            - 軸0: アピールタイプ
+            - 軸1: ユニットメンバーの立ち位置
+    :拡大ボーナス配列:
+        ボーナスを要素とする三次元NUMPY配列。
+            - 軸0: センター効果パーツ
+            - 軸1: アピールタイプ
+            - 軸2: ユニットメンバー立ち位置
+    :前処理:
+        | デバッグ用ログを出力する。
+        | 拡大ボーナス配列を初期化する。
+    :後処理:
         拡大ボーナス配列からボーナス配列に変換する。
 
     :param Callable func: センター効果のボーナス配列を返す関数。
@@ -525,40 +591,44 @@ def buffwrap(func: Callable) -> Callable:
     @wraps(func)
     def wrapper(context: BuffContext) -> np.ndarray:
         """
-        センター効果のボーナス配列を返す。
+        センター効果の拡大ボーナス配列を返す。
+
+        ラッパー関数により、センター効果のボーナス配列に変換される。
 
         :param BuffContext context: コンテキスト。
-        :param np.ndarray array_bonus_expanded: 初期化済みの拡大ボーナス配列。
+        :param np.ndarray bonus_array_ext: 初期化済みの拡大ボーナス配列。
 
-        :return: センター効果__のボーナス配列。
+        :return: センター効果の拡大ボーナス配列。
         :rtype: np.ndarray
         """
 
-        # 絶対値で比較して大きい方を返すnumpy.ufunc定義
-        # abs_max = np.frompyfunc(lambda x, y: x if abs(x) >= abs(y) else y, 2, 1)
         # 大きい方（片方がZEROの時は、もう片方）を返すnumpy.ufunc定義
         abs_max = np.frompyfunc(lambda x, y: max(x, y) if max(x, y) != 0.0 else min(x, y), 2, 1)
 
+        # 前処理
         LibsAppealLogger.debug(f"appeal.buffwrap: センター効果・{context.buff.buff}を処理。")
+        bonus_array_ext = np.zeros((len(context.buff.buffparts), len(AppealIndices), len(context.episodes_list)))
 
-        array_bonus_expanded = np.zeros((len(context.buff.buffparts), len(AppealIndices), len(context.episodes_list)))
-        result = partial(func, context, array_bonus_expanded)
+        result = partial(func, context, bonus_array_ext)()
 
-        return abs_max.reduce(result()[:])
+        return abs_max.reduce(result[:], axis=0).astype(float)
 
     return wrapper
 
 
 @buffwrap
-def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_cinderella_bless(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     シンデレラブレス系センター効果の拡大ボーナス配列を返す。
 
-    シンデレラブレス。
-        ゲストを含むユニット編成アイドル全員のセンター効果を発揮し、最も高い効果を適用。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
+
+    対象センター効果
+        シンデレラブレス。
+            ゲストを含むユニット編成アイドル全員のセンター効果を発揮し、最も高い効果を適用。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列
     :rtype: np.ndarray
@@ -600,7 +670,7 @@ def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray
                         LibsAppealLogger.error(f"appeal.buff_cinderella_bless: {episode.buff_class}は、未実装です。")
                         temp[member] = np.zeros((len(AppealIndices), len(context.episodes_list)))
 
-            array_bonus_expanded[0] = temp.max(axis=0)
+            bonus_array_ext[0] = temp.max(axis=0)
 
         case _:
             # 以外（効果がセンターもしくはゲストと重複するだけなので、何もしない）。
@@ -608,28 +678,31 @@ def buff_cinderella_bless(context: BuffContext, array_bonus_expanded: np.ndarray
                 "appeal.buff_cinderella_bless: センター、ゲストではないため、シンデレラブレスは無効です。"
             )
 
-    return array_bonus_expanded
+    return bonus_array_ext
 
 
 @buffwrap
-def buff_multi_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_multi_appeal(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     全アピール系センター効果の拡大ボーナス配列を返す。
 
-    キュートブリリアンス、クールブリリアンス、パッションブリリアンス。
-        __アイドルの全アピール値__%アップ。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-    キュートユニゾン、クールユニゾン、パッションユニゾン。
-        __アイドルの全アピール値__%アップ、__楽曲なら__%アップ。
+    対象センター効果
+        キュートブリリアンス、クールブリリアンス、パッションブリリアンス。
+            __アイドルの全アピール値__%アップ。
 
-    キュートプリンセス、クールプリンセス、パッションプリンセス。
-        __アイドルのみ編成時、全員の全アピール値__%アップ
+        キュートユニゾン、クールユニゾン、パッションユニゾン。
+            __アイドルの全アピール値__%アップ、__楽曲なら__%アップ。
 
-    トリコロール・ユニゾン。
-        3タイプ全てのアイドル編成時、全員の全アピール値__%アップ、全タイプ楽曲なら__%アップ。
+        キュートプリンセス、クールプリンセス、パッションプリンセス。
+            __アイドルのみ編成時、全員の全アピール値__%アップ
+
+        トリコロール・ユニゾン。
+            3タイプ全てのアイドル編成時、全員の全アピール値__%アップ、全タイプ楽曲なら__%アップ。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列
     :rtype: np.ndarray
@@ -659,33 +732,36 @@ def buff_multi_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) ->
 
         case _:
             LibsAppealLogger.error("appeal.buff_multi_appeal: 編成要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_single_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_single_appeal(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     ボイス、ダンス、ビジュアル系センター効果の拡大ボーナス配列を返す。
 
-    キュートボイス、キュートステップ、キュートメイク。
-        キュートアイドルの__アピール値__%アップ。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-    クールボイス、クールステップ、クールメイク。
-        クールアイドルの__アピール値__%アップ。
+    対象センター効果
+        キュートボイス、キュートステップ、キュートメイク。
+            キュートアイドルの__アピール値__%アップ。
 
-    パッションボイス、パッションステップ、パッションメイク。
-        パッションアイドルの__アピール値__%アップ。
+        クールボイス、クールステップ、クールメイク。
+            クールアイドルの__アピール値__%アップ。
 
-    シャイニーボイス、シャイニー・ステップ。
-        全員の__アピール値__%アップ。
+        パッションボイス、パッションステップ、パッションメイク。
+            パッションアイドルの__アピール値__%アップ。
 
-    トリコロール・ボイス、トリコロール・ステップ、トリコロール・メイク。
-        3タイプ全てのアイドル編成時、全員の__アピール値__%アップ。
+        シャイニーボイス、シャイニー・ステップ。
+            全員の__アピール値__%アップ。
+
+        トリコロール・ボイス、トリコロール・ステップ、トリコロール・メイク。
+            3タイプ全てのアイドル編成時、全員の__アピール値__%アップ。
 
     :param BuffContext context: センター効果コンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -707,24 +783,27 @@ def buff_single_appeal(context: BuffContext, array_bonus_expanded: np.ndarray) -
 
         case _:
             LibsAppealLogger.error("appeal.buff_single_appeal: 編成要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_life(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_life(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     ライフ値系センター効果の拡大ボーナス配列を返す。
 
-    キュートエナジー、クールエナジー、パッションエナジー。
-        __アイドルのライフ__%アップ
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-    キュートチアー、クールチアー、パッションチアー。
-        __アイドルのみ編成時、全員のライフ__%アップ
+    対象センター効果
+        キュートエナジー、クールエナジー、パッションエナジー。
+            __アイドルのライフ__%アップ
+
+        キュートチアー、クールチアー、パッションチアー。
+            __アイドルのみ編成時、全員のライフ__%アップ
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -752,24 +831,27 @@ def buff_life(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
 
         case _:
             LibsAppealLogger.error("appeal.buff_life: 編成要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_probability(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_probability(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     特技発動確率系センター効果の拡大ボーナス配列を返す。
 
-    キュートアビリティ、クールアビリティ、パッションアビリティ。
-        __アイドルの特技発動確率__%アップ。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-    トリコロール・アビリティ。
-        3タイプ全てのアイドル編成時、全員の特技発動確率__%アップ。
+    対象センター効果
+        キュートアビリティ、クールアビリティ、パッションアビリティ。
+            __アイドルの特技発動確率__%アップ。
+
+        トリコロール・アビリティ。
+            3タイプ全てのアイドル編成時、全員の特技発動確率__%アップ。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -788,21 +870,24 @@ def buff_probability(context: BuffContext, array_bonus_expanded: np.ndarray) -> 
 
         case _:
             LibsAppealLogger.error("appeal.buff_probability: 編成要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_resonance(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_resonance(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     レゾナンス系センター効果の拡大ボーナス配列を返す。
 
-    レゾナンス・ボイス、レゾナンス・ステップ、レゾナンス・メイク。
-        5種類の特技編成時、__以外のアピール値を100%ダウンし、全ての特技効果が重複時に加算。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
+
+    対象センター効果
+        レゾナンス・ボイス、レゾナンス・ステップ、レゾナンス・メイク。
+            5種類の特技編成時、__以外のアピール値を100%ダウンし、全ての特技効果が重複時に加算。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -813,33 +898,36 @@ def buff_resonance(context: BuffContext, array_bonus_expanded: np.ndarray) -> np
 
     else:
         LibsAppealLogger.error("appeal.buff_resonance: 特技が5種類未満のため、レゾナンスは発動しない。")
-        return array_bonus_expanded
+        return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_cross(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_cross(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     クロス系センター効果の拡大ボーナス配列を返す。
 
-    キュート・クロス・クール。
-        キュートとクールのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
-    キュート・クロス・パッション。
-        キュートとパッションのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-    クール・クロス・キュート。
-        クールとキュートのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
-    クール・クロス・パッション。
-        クールとパッションのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
+    対象センター効果
+        キュート・クロス・クール。
+            キュートとクールのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
+        キュート・クロス・パッション。
+            キュートとパッションのアイドル編成時、全員の全アピール値__%アップ、獲得ファン数が__%アップ。
 
-    パッション・クロス・キュート。
-        パッションとキュートのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
-    パッション・クロス・クール。
-        パッションとクールのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
+        クール・クロス・キュート。
+            クールとキュートのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
+        クール・クロス・パッション。
+            クールとパッションのアイドル編成時、全員の全アピール値__%アップ、全員の特技発動率__%アップ。
+
+        パッション・クロス・キュート。
+            パッションとキュートのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
+        パッション・クロス・クール。
+            パッションとクールのアイドル編成時、全員の全アピール値__%アップ、全員のライフ__%アップ。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -866,36 +954,39 @@ def buff_cross(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.nda
 
         case _:
             LibsAppealLogger.error("appeal.buff_cross: 編成要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_duet(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     デュエット系センター効果。
 
-    | キュート・デュエット（ボイス＆ステップ）。
-    | クール・デュエット（ボイス＆ステップ）。
-    | パッション・デュエット（ボイス＆ステップ）。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-        __アイドルのみ編成時、__楽曲で全員のダンス＆ビジュアルアピール値__%アップ。
+    対象センター効果
+        | キュート・デュエット（ボイス＆ステップ）。
+        | クール・デュエット（ボイス＆ステップ）。
+        | パッション・デュエット（ボイス＆ステップ）。
 
-    | キュート・デュエット（ステップ＆メイク）。
-    | クール・デュエット（ステップ＆メイク）。
-    | パッション・デュエット（ステップ＆メイク）。
+            __アイドルのみ編成時、__楽曲で全員のダンス＆ビジュアルアピール値__%アップ。
 
-        __アイドルのみ編成時、__楽曲で全員のビジュアル＆ボーカルアピール値__%アップ。
+        | キュート・デュエット（ステップ＆メイク）。
+        | クール・デュエット（ステップ＆メイク）。
+        | パッション・デュエット（ステップ＆メイク）。
 
-    | キュート・デュエット（メイク＆ボイス）。
-    | クール・デュエット（メイク＆ボイス）。
-    | パッション・デュエット（メイク＆ボイス）。
+            __アイドルのみ編成時、__楽曲で全員のビジュアル＆ボーカルアピール値__%アップ。
 
-        __アイドルのみ編成時、__楽曲で全員のボーカル＆ダンスアピール値__%アップ。
+        | キュート・デュエット（メイク＆ボイス）。
+        | クール・デュエット（メイク＆ボイス）。
+        | パッション・デュエット（メイク＆ボイス）。
+
+            __アイドルのみ編成時、__楽曲で全員のボーカル＆ダンスアピール値__%アップ。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -919,24 +1010,27 @@ def buff_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndar
 
         case _:
             LibsAppealLogger.error("appeal.buff_duet: 編成要件もしくは楽曲要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 @buffwrap
-def buff_dominant_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -> np.ndarray:
+def buff_dominant_duet(context: BuffContext, bonus_array_ext: np.ndarray) -> np.ndarray:
     """
     ドミナント・デュエット系センター効果の拡大ボーナス配列を返す。
 
-    | ドミナント・デュエット（ボイス＆ステップ）。
-    | ドミナント・デュエット（ステップ＆メイク）。
-    | ドミナント・デュエット（メイク＆ボイス）。
+    ラッパー関数により、センター効果のボーナス配列に変換される。
 
-        __楽曲で__アイドルにタイプボーナスが発生し__アピール値150%アップ、__アイドルの__アピール値160%アップ。
+    対象センター効果
+        | ドミナント・デュエット（ボイス＆ステップ）。
+        | ドミナント・デュエット（ステップ＆メイク）。
+        | ドミナント・デュエット（メイク＆ボイス）。
+
+            __楽曲で__アイドルにタイプボーナスが発生し__アピール値150%アップ、__アイドルの__アピール値160%アップ。
 
     :param BuffContext context: センター効果のコンテキスト。
-    :param np.ndarray array_bonus_expanded: 初期化済みのセンター効果の拡大ボーナス配列。
+    :param np.ndarray bonus_array_ext: 初期化済みのセンター効果の拡大ボーナス配列。
 
     :return: センター効果の拡大ボーナス配列。
     :rtype: np.ndarray
@@ -954,9 +1048,9 @@ def buff_dominant_duet(context: BuffContext, array_bonus_expanded: np.ndarray) -
 
         case _:
             LibsAppealLogger.error("appeal.buff_dominant_duet: 楽曲要件を満たしていない。")
-            return array_bonus_expanded
+            return bonus_array_ext
 
-    return breakdown2buffparts(context, array_bonus_expanded)
+    return breakdown2buffparts(context, bonus_array_ext)
 
 
 appeal_funcname = {
@@ -1148,7 +1242,9 @@ class Calculator:
             f"{function_name}アイドルタイプ {[Calculator._episodes.get(episode).type.name for episode in self.unit[0]]}"
         )
         LibsAppealLogger.info(
-            f"{function_name}ドミナントアイドルタイプ {[Calculator._episodes.get(episode).dominant.name for episode in self.unit[0]]}"
+            f"{function_name}ドミナントアイドルタイプ {
+                [Calculator._episodes.get(episode).dominant.name for episode in self.unit[0]]
+            }"
         )
         LibsAppealLogger.info(
             f"{function_name}センター効果 {[Calculator._episodes.get(episode).buff_class for episode in self.unit[0]]}"
@@ -1158,12 +1254,14 @@ class Calculator:
         )
         LibsAppealLogger.info(f"{function_name}サポメン {self.supports[0]}")
         LibsAppealLogger.info(
-            f"{function_name}合計アピール {sum([sum(s) for s in self.unit[1:4]]) + sum([sum(s) for s in self.supports[1:4]])}"
+            f"{function_name}合計アピール {
+                sum([sum(s) for s in self.unit[1:4]]) + sum([sum(s) for s in self.supports[1:4]])
+            }"
         )
         LibsAppealLogger.info(f"{function_name}ユニットアピール {sum([sum(s) for s in self.unit[1:4]])}")
         LibsAppealLogger.info(f"{function_name}サポメンアピール {sum([sum(s) for s in self.supports[1:4]])}")
-        # LibsAppealLogger.info(f"{function_name}総ボーナス {self.unit}")
-        # LibsAppealLogger.info(f"{function_name}タイプボーナス {self.unit}")
+        # LibsAppealLogger.info(f"{function_name}総ボーナス {self.unit}")  # センター効果（センター、ゲスト）？
+        # LibsAppealLogger.info(f"{function_name}タイプボーナス {self.unit}")  # 楽曲タイプ一致、ルーム効果？
         LibsAppealLogger.info(f"{function_name}ボーカル {sum(self.unit[1]) + sum(self.supports[1])}")
         LibsAppealLogger.info(f"{function_name}ダンス {sum(self.unit[2]) + sum(self.supports[2])}")
         LibsAppealLogger.info(f"{function_name}ビジュアル {sum(self.unit[3]) + sum(self.supports[3])}")
@@ -1256,6 +1354,7 @@ class Calculator:
         特技発動率・特技継続期間は、データベースから取り出した値に特技レベル補正を適用した。
 
         :param list[Episode] episodes: エピソードリスト
+
         :return: 基礎値
         :rtype: np.ndarray
         """
@@ -1324,23 +1423,33 @@ class Calculator:
         """
         ルーム効果。
 
-        ルーム効果対象は、ボーカル・ダンス・ビジュアル。
+        ボーカル・ダンス・ビジュアルアピールにボーナスが加算される。
         キュート・クール・パッションのいづれかに必ず該当するので、一律に10%を付加する。
-        ライフ、特技発動率、特技継続期間は、対象外。
 
         :param list[Episode] episodes: エピソードリスト
+
         :return: ルーム効果
         :rtype: np.ndarray
         """
 
         return np.array(
-            [[0.1 for _ in episodes] for _ in [AppealIndices.VOCAL, AppealIndices.DANCE, AppealIndices.VISUAL]]
-            + [[0.0 for _ in episodes] for _ in [AppealIndices.LIFE, AppealIndices.PROBABILITY, AppealIndices.DURATION]]
+            [
+                [0.1 for _ in episodes],
+                [0.1 for _ in episodes],
+                [0.1 for _ in episodes],
+                [0.0 for _ in episodes],
+                [0.0 for _ in episodes],
+                [0.0 for _ in episodes],
+            ]
         )
 
     def _musicbuff(self, episodes: list[Episode]) -> np.ndarray:
         """
-        楽曲タイプ一致効果（ボーカル・ダンス・ビジュアル・特技発動確率）。
+        楽曲タイプ一致効果。
+
+        ボーカル・ダンス・ビジュアルアピールおよび特技発動確率にボーナスが加算される。
+        楽曲タイプとアイドルタイプが一致する場合に、30%のボーナスが加算される。
+
 
         :param list[Episode] episodes: エピソードリスト
 

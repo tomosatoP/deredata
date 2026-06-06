@@ -2,10 +2,10 @@
 デレステ譜面ファイルを扱うモジュール。
 """
 
+import glob
 from typing import Any
 from fractions import Fraction
 from math import ceil
-from pathlib import Path
 
 from deredata.libs.derenotes.song import Note, Song, SongCategory, SongType, NoteType, Chart
 from deredata.libs.database.configurations import database_folder
@@ -13,7 +13,8 @@ from deredata.libs.database.configurations import database_folder
 from kivy.logger import Logger as MusicsLogger
 
 FPS = 60
-MUSICDBFOLDER: str = database_folder() + "music"
+# glob形式のデレステ譜面ファイル名
+MUSICFILENAMES: str = database_folder() + "music/*.json"
 
 
 #### musics API用のエラーハンドラ
@@ -129,10 +130,10 @@ class Music(Chart):
 
     def save(self) -> None:
         """
-        デレステ譜面ファイルは保存できない（Errorを送出）。
+        デレステ譜面ファイルへの上書き禁止。
         """
 
-        raise MusicsError("デレステ譜面ファイルは保存できません。")
+        raise MusicsError("デレステ譜面ファイルは読み込み専用です。")
 
 
 class Musics:
@@ -140,51 +141,49 @@ class Musics:
     デレステ譜面ファイルのデータベース。
     """
 
-    def __init__(self) -> None:
-
-        self._musics: set[Music] = set()
-        self._path: Path = Path(MUSICDBFOLDER)
+    _musics: set[Music] = set()
 
     def get(self, filename: str) -> Music:
         """
-        ファイル名で、デレステ譜面ファイルを取得する。
+        デレステ譜面ファイル名で、デレステ譜面データを取得する。
 
-        :param str filename: デレステ譜面ファイルのファイル名。
-        :return: デレステ譜面ファイル。
-        :rtype: ChartFixedFPS
+        :param str filename: デレステ譜面ファイル名。
+
+        :return: デレステ譜面データ。
+        :rtype: Music
         """
 
-        result: set[Music] = {music for music in self._musics if music.filename == filename}
+        result: set[Music] = {music for music in Musics._musics if music.filename == filename}
 
         return result.pop() if result else Music()
 
     def gets(self) -> set[Music]:
         """
-        すぺてのデレステ譜面ファイルリスト。
+        すぺてのデレステ譜面データリスト。
 
-        :return: すぺてのデレステ譜面ファイルリスト。
-        :rtype: list[ChartFixedFPS]
+        :return: すぺてのデレステ譜面データリスト。
+        :rtype: list[Music]
         """
 
-        return self._musics
+        return Musics._musics
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filenames: str = MUSICFILENAMES) -> None:
         """
-        デレステ譜面ファイルデータベースを読み込む。
+        デレステ譜面ファイルを読み込み、データベースに取り込む。
+
+        :param str filenames: 初期値は、既定のglob形式のファイル名。
         """
 
-        temp: Music
+        data: Music
 
-        filenames: set[str] = {"/".join([MUSICDBFOLDER, path.name]) for path in self._path.glob("*.json")}
-        for filename in sorted(filenames):
-            temp = Music()
-            temp.filename = filename
-            temp.load()
-            self._musics.add(temp)
+        for filename in sorted(glob.glob(filenames)):
+            data = Music()
+            data.filename = filename
+            data.load()
+            cls._musics.add(data)
 
-        MusicsLogger.info(
-            f"{self.__class__.__name__}.load: {len(self._musics)}件のデレステ譜面ファイルを読み込みました。"
-        )
+        MusicsLogger.info(f"{cls.__name__}.load: {len(cls._musics)}件のデレステ譜面ファイルを読み込みました。")
 
 
 if __name__ == "__main__":

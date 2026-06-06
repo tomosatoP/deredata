@@ -35,9 +35,13 @@ def isfloat(data: str) -> bool:
         return True
 
 
-def main() -> None:
+def convert(
+    skills_txtfilename: str = SKILLDATA,
+    skillparts_txtfilename: str = SKILLPARTDATA,
+    skills_jsonfilename: str | None = None,
+) -> None:
 
-    with open(SKILLPARTDATA, "r", encoding="utf-8-sig") as f:
+    with open(skillparts_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -52,7 +56,7 @@ def main() -> None:
             )
             parts.add(part)
 
-    with open(SKILLDATA, "r", encoding="utf-8-sig") as f:
+    with open(skills_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -86,15 +90,9 @@ def main() -> None:
             )
             skilldatas.update(after=new_skill, before=skill)
 
-    skilldatas.save()
+    skilldatas.save(skills_jsonfilename) if skills_jsonfilename else skilldatas.save()
 
 
 if __name__ == "__main__":
-    load_skilldatas = SkillsMystyle()
-    load_skilldatas.load()
-
-    print(
-        load_skilldatas.get(
-            "9秒毎、中確率でライフを15消費し、しばらくの間PERFECT/GREATのスコア18%アップ、NICE/BADでもCOMBO継続"
-        )
-    )
+    print(__file__)
+    # convert()

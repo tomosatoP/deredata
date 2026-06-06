@@ -60,21 +60,7 @@ class Idols:
     アイドル（``Idol``）の基本情報データベース。
     """
 
-    def __init__(self) -> None:
-        self._idols: set[Idol] = set()
-        self._path: Path = Path(IDOLSDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        アイドルの基本情報データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _idols: set[Idol] = set()
 
     def get(self, ruby: str) -> Idol:
         """
@@ -86,7 +72,7 @@ class Idols:
         :rtype: Idol
         """
 
-        result: set[Idol] = {idol for idol in self._idols if idol.ruby == ruby}
+        result: set[Idol] = {idol for idol in Idols._idols if idol.ruby == ruby}
 
         return result.pop() if result else Idol()
 
@@ -98,7 +84,7 @@ class Idols:
         :rytpe: set[Idol]
         """
 
-        return self._idols
+        return Idols._idols
 
     def add(self, idol: Idol) -> None:
         """
@@ -107,7 +93,7 @@ class Idols:
         :param Idol idol: 追加するアイドルの基本情報。
         """
 
-        self._idols.add(idol)
+        Idols._idols.add(idol)
 
     def remove(self, idol: Idol) -> None:
         """
@@ -116,7 +102,7 @@ class Idols:
         :param Idol idol: 削除するアイドルの基本情報。
         """
 
-        self._idols.remove(idol)
+        Idols._idols.remove(idol)
 
     def update(self, after: Idol, before: Idol) -> None:
         """
@@ -125,22 +111,32 @@ class Idols:
         :param Idol after: 更新後のアイドルの基本情報。
         :param Idol before: 更新前のアイドルの基本情報。
 
-        :raise IdolsError: **before** が、アイドルの基本情報データベースに存在しない。
+        :raise IdolsError: **after** と **before** で、アイドルのふりがなが一致しなかった。
         """
         if after.ruby != before.ruby:
-            raise IdolsError(f"{self.__class__.__name__}.updata: ")
+            raise IdolsError(f"{self.__class__.__name__}.updata: 更新できませんでした。")
 
         self.remove(before)
         self.add(after)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = IDOLSDB) -> None:
         """
         アイドル基本情報データベースの読み込みを行う。
-        """
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise IdolsError(f"{self.__class__.__name__}.load: ")
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise IdolsError: アイドル基本情報データベースを読み込めなかった。
+        """
+
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise IdolsError(f"{cls.__name__}.load: アイドル基本情報データベースを読み込めませんでした。")
+
+        if not len(cls._idols):
+            cls._idols.clear()
+
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
         for data in datas:
@@ -155,19 +151,25 @@ class Idols:
                 skill=int(data["特技"]),
                 over=int(data["余り"]),
             )
-            self._idols.add(idol)
+            cls._idols.add(idol)
 
         LibsIdolsLogger.info(
-            f"{self.__class__.__name__}.load: {len(self._idols)}件のアイドル基本情報を読み込みました。"
+            f"{cls.__name__}.load: {len(cls._idols)}件のアイドル基本情報データベースを読み込みました。"
         )
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = IDOLSDB) -> None:
         """
         アイドル達の基本情報を保存する。
+
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise IdolsError: アイドル基本情報データベースを保存できなかった。
         """
 
-        if not isinstance(self._path, Path):
-            raise IdolsError(f"{self.__class__.__name__}.save: ")
+        path = Path(filename)
+        if not isinstance(path, Path):
+            raise IdolsError(f"{cls.__name__}.save: アイドル基本情報データベースを保存できませんでした。")
 
         idols = [
             {
@@ -181,13 +183,13 @@ class Idols:
                 "特技": int(idol.skill),
                 "余り": int(idol.over),
             }
-            for idol in sorted(self.gets())
+            for idol in sorted(cls._idols)
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(idols, f, indent=4, ensure_ascii=False)
 
-        LibsIdolsLogger.info(f"{self.__class__.__name__}.save: アイドル基本情報データベースを保存しました。")
+        LibsIdolsLogger.info(f"{cls.__name__}.save: {len(cls._idols)}件のアイドル基本情報データベースを保存しました。")
 
 
 if __name__ == "__main__":

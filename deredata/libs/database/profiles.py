@@ -13,6 +13,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsProfilesLogger
 
+# アイドルのプロフィール情報データベースファイルパス
 PROFILESDB: str = database_folder() + "profiles.json"
 
 
@@ -68,20 +69,10 @@ class Profile:
 
 class Profiles:
     """
-    アイドル達のプロフィール。
+    アイドル達のプロフィール情報データベース。
     """
 
-    def __init__(self) -> None:
-        self._profiles: set[Profile] = set()
-        self._path: Path = Path(PROFILESDB)
-
-    @property
-    def filename(self) -> str:
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _profiles: set[Profile] = set()
 
     def get(self, ruby: str) -> Profile:
         result: set[Profile] = {profile for profile in self._profiles if profile.ruby == ruby}
@@ -96,11 +87,21 @@ class Profiles:
     def remove(self, profile: Profile) -> None:
         self._profiles.remove(profile)
 
-    def load(self) -> None:
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise ProfilesError(f"{self.__class__.__name__}.load: ")
+    @classmethod
+    def load(cls, filename: str = PROFILESDB) -> None:
+        """
+        アイドルのプロフィール情報データベースを保存する。
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise ProfilesError: アイドルプロフィール情報データベースを読み込めなかった。
+        """
+
+        path = Path(filename)
+        if not isinstance(path, Path) or not path.exists() or not path.is_file():
+            raise ProfilesError(f"{cls.__name__}.load: プロフィール情報データベースを読み込めませんでした。")
+
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
         for data in datas:
@@ -121,15 +122,25 @@ class Profiles:
                 cv=data["声優"],
                 registration_date=data["登録日"],
             )
-            self._profiles.add(profile)
+            cls._profiles.add(profile)
 
         LibsProfilesLogger.info(
-            f"{self.__class__.__name__}.load: {len(self._profiles)}件のアイドルプロフィール情報を読み込みました。"
+            f"{cls.__name__}.load: {len(cls._profiles)}件のアイドルプロフィール情報データベースを読み込みました。"
         )
 
-    def save(self) -> None:
-        if not isinstance(self._path, Path):
-            raise ProfilesError(f"{self.__class__.__name__}.save: ")
+    @classmethod
+    def save(cls, filename: str = PROFILESDB) -> None:
+        """
+        アイドルのプロフィール情報データベースを保存する。
+
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise ProfilesError: アイドルプロフィール情報データベースを保存できなかった。
+        """
+
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise ProfilesError(f"{cls.__name__}.save: アイドルプロフィール情報を保存できませんでした。")
 
         profiles = [
             {
@@ -149,13 +160,15 @@ class Profiles:
                 "声優": profile.cv,
                 "登録日": profile.registration_date,
             }
-            for profile in sorted(self.gets())
+            for profile in sorted(cls._profiles)
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(profiles, f, indent=4, ensure_ascii=False)
 
-        LibsProfilesLogger.info(f"{self.__class__.__name__}: アイドルプロフィールデータベースを保存しました。")
+        LibsProfilesLogger.info(
+            f"{cls.__name__}.save: {len(cls._profiles)}件のアイドルのプロフィール情報データベースを保存しました。"
+        )
 
 
 if __name__ == "__main__":

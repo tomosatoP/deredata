@@ -15,6 +15,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsFlavorsLogger
 
+# アイドルのフレーバーのデータベースファイル名
 FLAVORSDB: str = database_folder() + "flavors.json"
 
 
@@ -51,21 +52,7 @@ class Flavors:
     エピソードのフレーバのデータベース。
     """
 
-    def __init__(self) -> None:
-        self._flavors: set[Flavor] = set()
-        self._path: Path = Path(FLAVORSDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        エピソードのフレーバのデータベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _flavors: set[Flavor] = set()
 
     def get(self, episode: str) -> Flavor:
         """
@@ -77,7 +64,7 @@ class Flavors:
         :rtype: Falvor
         """
 
-        return {flavor for flavor in self._flavors if flavor.episode == episode}.pop()
+        return {flavor for flavor in Flavors._flavors if flavor.episode == episode}.pop()
 
     def gets(self) -> set[Flavor]:
         """
@@ -87,7 +74,7 @@ class Flavors:
         :rtype: set[Flavor]
         """
 
-        return self._flavors
+        return Flavors._flavors
 
     def add(self, flavor: Flavor) -> None:
         """
@@ -96,7 +83,7 @@ class Flavors:
         :param Flavor flavor: 追加するエピソードのフレーバー
         """
 
-        self._flavors.add(flavor)
+        Flavors._flavors.add(flavor)
 
     def remove(self, flavor: Flavor) -> None:
         """
@@ -105,17 +92,19 @@ class Flavors:
         :param Flavor flavor: 削除するエピソードのフレーバー。
         """
 
-        self._flavors.remove(flavor)
+        Flavors._flavors.remove(flavor)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = FLAVORSDB) -> None:
         """
         エピソードのフレーバのデータベースを読み込む。
         """
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise FlavorsError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise FlavorsError(f"{cls.__name__}.load: ")
 
-        with self._path.open(encoding="utf-8") as f:
+        with path.open(encoding="utf-8") as f:
             datas = json.load(f)
 
         for data in datas:
@@ -126,19 +115,21 @@ class Flavors:
                 gacha=GachaType(data["入手枠"]),
                 registration_date=data["登録日"],
             )
-            self._flavors.add(flavor)
+            Flavors._flavors.add(flavor)
 
         LibsFlavorsLogger.info(
-            f"{self.__class__.__name__}.load:  {len(self._flavors)}件のエピソードフレーバー情報を読み込みました。"
+            f"{cls.__name__}.load: {len(cls._flavors)}件のエピソードフレーバー情報データベースを読み込みました。"
         )
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = FLAVORSDB) -> None:
         """
         エピソードのフレーバのデータベースを保存する。
         """
 
-        if not isinstance(self._path, Path):
-            raise FlavorsError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise FlavorsError(f"{cls.__name__}.save: ")
 
         datas = [
             {
@@ -148,11 +139,15 @@ class Flavors:
                 "入手枠": GachaType(flavor.gacha),
                 "登録日": flavor.registration_date,
             }
-            for flavor in sorted(self.gets())
+            for flavor in sorted(cls._flavors)
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(datas, f, ensure_ascii=False, indent=4)
+
+        LibsFlavorsLogger.info(
+            f"{cls.__name__}.save:  {len(cls._flavors)}件のエピソードフレーバー情報データベースを保存しました。"
+        )
 
 
 if __name__ == "__main__":

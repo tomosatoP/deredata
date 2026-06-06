@@ -21,9 +21,14 @@ EPISODEFIXEDDATA: str = textdata_folder() + "episodes_fixed.txt"
 EPISODEDATA: str = textdata_folder() + "episodes.txt"
 
 
-def main() -> None:
+def convert(
+    episodes_txtfilename: str = EPISODEDATA,
+    episode_fixed_txtfilename: str = EPISODEFIXEDDATA,
+    episodes_jsonfilename: str | None = None,
+    flavors_jsonfilename: str | None = None,
+) -> None:
 
-    with open(EPISODEFIXEDDATA, "r", encoding="utf-8-sig") as f:
+    with open(episode_fixed_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -58,8 +63,8 @@ def main() -> None:
             episodedatas.add(episode)
             flavordatas.add(flavor)
 
-    if Path(EPISODEDATA).is_file():
-        with open(EPISODEDATA, "r", encoding="utf-8-sig") as f:
+    if Path(episodes_txtfilename).is_file():
+        with open(episodes_txtfilename, "r", encoding="utf-8-sig") as f:
             datas = csv.DictReader(f)
 
             for data in datas:
@@ -87,7 +92,7 @@ def main() -> None:
                 episodedatas.update(after=episode, before=episode_fixed)
 
     else:
-        with open(EPISODEDATA, "w", encoding="utf-8-sig", newline="") as f:
+        with open(episodes_txtfilename, "w", encoding="utf-8-sig", newline="") as f:
             fieldnames: list[str] = ["エピソード", "スターランク"]
             writer = csv.DictWriter(f=f, fieldnames=fieldnames)
 
@@ -100,16 +105,9 @@ def main() -> None:
                     }
                 )
 
-    episodedatas.save()
-    flavordatas.save()
+    episodedatas.save(episodes_jsonfilename) if episodes_jsonfilename else episodedatas.save()
+    flavordatas.save(flavors_jsonfilename) if flavors_jsonfilename else flavordatas.save()
 
 
 if __name__ == "__main__":
-    load_episodedatas = Episodes()
-    load_flavordatas = Flavors()
-
-    load_episodedatas.load()
-    load_flavordatas.load()
-
-    print(load_episodedatas.get("［キャッチミー・オールタイム］島村卯月＋"))
-    print(load_flavordatas.get("［キャッチミー・オールタイム］島村卯月＋"))
+    print(__file__)

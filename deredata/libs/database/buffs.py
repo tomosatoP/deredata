@@ -23,6 +23,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsBuffsLogger
 
+# センター効果情報データベースのファイル名
 BUFFSDB: str = database_folder() + "buffs.json"
 BUFFSDB_MYSTYLE: str = database_folder() + "buffs_mystyle.json"
 

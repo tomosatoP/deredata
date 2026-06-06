@@ -17,6 +17,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsEpisodesLogger
 
+# エピソード基本情報データベースのファイル名。
 EPISODESDB: str = database_folder() + "episodes.json"
 
 
@@ -79,21 +80,7 @@ class Episodes:
     エピソード（``Episode``）の基本情報データベース。
     """
 
-    def __init__(self) -> None:
-        self._episodes: set[Episode] = set()
-        self._path: Path = Path(EPISODESDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        エピソードの基本情報データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _episodes: set[Episode] = set()
 
     def get(self, episode: str) -> Episode:
         """
@@ -105,7 +92,7 @@ class Episodes:
         :rtype: Episode
         """
 
-        result: set[Episode] = {epi for epi in self._episodes if epi.episode == episode}
+        result: set[Episode] = {epi for epi in Episodes._episodes if epi.episode == episode}
         return result.pop() if result else Episode()
 
     def gets(self) -> set[Episode]:
@@ -113,7 +100,7 @@ class Episodes:
         get
         """
 
-        return self._episodes
+        return Episodes._episodes
 
     def add(self, idol: Episode) -> None:
         """
@@ -122,7 +109,7 @@ class Episodes:
         :param Episode idol: 追加するエピソードの基本情報。
         """
 
-        self._episodes.add(idol)
+        Episodes._episodes.add(idol)
 
     def remove(self, idol: Episode) -> None:
         """
@@ -131,7 +118,7 @@ class Episodes:
         :param Episode idol: 削除するエピソードの基本情報。
         """
 
-        self._episodes.remove(idol)
+        Episodes._episodes.remove(idol)
 
     def update(self, after: Episode, before: Episode) -> None:
         """
@@ -140,23 +127,29 @@ class Episodes:
         :param Episode after: 更新後のエピソードの基本情報。
         :param Episode before: 更新前のエピソードの基本情報。
 
-        :raise EpisodesError: **before** がエピソードの基本情報データベースに存在しない。
+        :raise EpisodesError: **after** と **before** で、エピソード名が一致しなかった。
         """
         if after.episode != before.episode:
-            raise EpisodesError(f"{self.__class__.__name__}.updata: ")
+            raise EpisodesError(f"{self.__class__.__name__}.updata: 更新できませんでした。")
 
         self.remove(before)
         self.add(after)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = EPISODESDB) -> None:
         """
         エピソードの基本情報データベースを読み込む。
+
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise EpisodesError: エピソードの基本情報データベースを読み込めなかった。
         """
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise EpisodesError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise EpisodesError(f"{cls.__name__}.load: エピソードの基本情報データベースを読み込めませんでした。")
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
         for data in datas:
@@ -180,19 +173,25 @@ class Episodes:
                 skill_class=data["特技"],
                 skill=data["特技説明"],
             )
-            self._episodes.add(episode)
+            cls._episodes.add(episode)
 
         LibsEpisodesLogger.info(
-            f"{self.__class__.__name__}.load: {len(self._episodes)}件のエピソード基本情報を読み込みました。"
+            f"{cls.__name__}.load: {len(cls._episodes)}件のエピソード基本情報データベースを読み込みました。"
         )
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = EPISODESDB) -> None:
         """
         エピソードの基本情報データベースを保存する。
+
+        :param str filename: 初期値は、既定のファイル名。
+
+        :raise EpisodesError: エピソードの基本情報データベースを保存できなかった。
         """
 
-        if not isinstance(self._path, Path):
-            raise EpisodesError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise EpisodesError(f"{cls.__name__}.save: エピソードの基本情報データベースを保存できませんでした")
 
         episodes = [
             {
@@ -215,13 +214,15 @@ class Episodes:
                 "特技": episode.skill_class,
                 "特技説明": episode.skill,
             }
-            for episode in sorted(self.gets())
+            for episode in sorted(cls._episodes)
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(episodes, f, indent=4, ensure_ascii=False)
 
-        LibsEpisodesLogger.info(f"{self.__class__.__name__}.save: エピソード基本情報データベースを保存しました。")
+        LibsEpisodesLogger.info(
+            f"{cls.__name__}.save: {len(cls._episodes)}件のエピソード基本情報データベースを保存しました。"
+        )
 
 
 if __name__ == "__main__":
