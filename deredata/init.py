@@ -72,16 +72,16 @@ def setup_databeses() -> None:
 
     idols_from_textdata.convert()
     episodes_from_textdata.convert()
-    buffs_from_textdata.main()
-    buffs_from_textdata_mystyle.main()
+    buffs_from_textdata.convert()
+    buffs_from_textdata_mystyle.convert()
     skills_from_textdata.convert()
     skills_from_textdata_mystyle.convert()
     comborates_from_textdata.main()
     dominant_from_textdata.main()
     lifesparkle_from_textdata.main()
     motif_from_textdata.main()
-    musiclevels_from_textdata.main()
-    potentials_from_textdata.main()
+    musiclevels_from_textdata.convert()
+    potentials_from_textdata.convert()
 
 
 def main() -> None:

@@ -16,7 +16,9 @@ class TestUnits(unittest.TestCase):
         unit = self.units.get("test_sample0")
         if isinstance(unit, Unit):
             self.assertIsInstance(unit.positions, Positions6)
-            self.assertEqual(unit.positions.centerposition, "［乙女のおいしいピクニック］小日向美穂＋")
+            self.assertEqual(
+                unit.positions.centerposition, "［ＳＳレア＋::シンデレラブレス::シンデレラマジック］クール＋"
+            )
 
         # 存在しないユニット名を指定すると、初期値が得られる。
         unit = self.units.get("test")

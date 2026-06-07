@@ -15,6 +15,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsMusiclevelsLogger
 
+# 曲係数データベースのファイル名。
 MUSICLEVELSDB: str = database_folder() + "musiclevels.json"
 
 
@@ -36,62 +37,58 @@ class MusicLevel:
 
 
 class MusicLevels:
-    def __init__(self) -> None:
-        self._levels: list[MusicLevel] = list()
-        self._path: Path = Path(MUSICLEVELSDB)
-
-    @property
-    def filename(self) -> str:
-        """曲係数データベースのファイル名。"""
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _levels: list[MusicLevel] = list()
 
     def rate(self, level: int) -> float:
-        return [musiclevel.rate for musiclevel in self._levels if musiclevel.level == level][0]
+        return [musiclevel.rate for musiclevel in self.__class__._levels if musiclevel.level == level][0]
 
     def add(self, musiclevel: MusicLevel) -> None:
-        self._levels.append(musiclevel)
+        self.__class__._levels.append(musiclevel)
 
-    def load(self) -> None:
-        self._levels.clear()
+    @classmethod
+    def _clear(cls) -> None:
+        cls._levels.clear()
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise MusiclevelsError(f"{self.__class__.__name__}.load: ")
+    @classmethod
+    def load(cls, filename: str = MUSICLEVELSDB) -> None:
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise MusiclevelsError(f"{cls.__name__}.load: ")
+
+        cls._clear()
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
             for data in datas:
-                self._levels.append(
+                cls._levels.append(
                     MusicLevel(
                         level=int(data["楽曲Lv"]),
                         rate=float(data["曲係数"]),
                     )
                 )
 
-        LibsMusiclevelsLogger.info(
-            f"{self.__class__.__name__}.load: {len(self._levels)}件の曲係数データを読み込みました。"
-        )
+        LibsMusiclevelsLogger.info(f"{cls.__name__}.load: {len(cls._levels)}件の曲係数データを読み込みました。")
 
-    def save(self) -> None:
-        if not isinstance(self._path, Path):
-            raise MusiclevelsError(f"{self.__class__.__name__}.save: ")
+    @classmethod
+    def save(cls, filename: str = MUSICLEVELSDB) -> None:
+
+        path = Path(filename)
+        if not isinstance(path, Path):
+            raise MusiclevelsError(f"{cls.__name__}.save: ")
 
         musiclevels = [
             {
                 "楽曲Lv": musiclevel.level,
                 "曲係数": musiclevel.rate,
             }
-            for musiclevel in self._levels
+            for musiclevel in cls._levels
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(musiclevels, f, indent=4, ensure_ascii=False)
 
-        LibsMusiclevelsLogger.info(f"{self.__class__.__name__}.save: 曲係数データベースを保存しました。")
+        LibsMusiclevelsLogger.info(f"{cls.__name__}.save:  {len(cls._levels)}件の曲係数データベースを保存しました。")
 
 
 if __name__ == "__main__":

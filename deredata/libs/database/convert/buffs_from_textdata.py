@@ -8,16 +8,20 @@ from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
 from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.buffs import Buffs, Buff, BuffTriggerType, BuffPart, AppealType, BuffPartTriggerType
 
-buffdatas = Buffs()
+buffdatas: Buffs = Buffs()
 parts: set[BuffPart] = set()
 
 BUFFDATA: str = textdata_folder() + "buffs.txt"
 BUFFPARTDATA: str = textdata_folder() + "buffparts.txt"
 
 
-def main() -> None:
+def convert(
+    buffs_txtfilename: str = BUFFDATA,
+    buffparts_txtfilename: str = BUFFPARTDATA,
+    buffs_jsonfilename: str | None = None,
+) -> None:
 
-    with open(BUFFPARTDATA, "r", encoding="utf-8-sig") as f:
+    with open(buffparts_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -31,7 +35,7 @@ def main() -> None:
             )
             parts.add(part)
 
-    with open(BUFFDATA, "r", encoding="utf-8-sig") as f:
+    with open(buffs_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -61,13 +65,9 @@ def main() -> None:
             )
             buffdatas.update(after=new_buff, before=buff)
 
-    buffdatas.save()
+    Buffs.save(buffs_jsonfilename) if buffs_jsonfilename else Buffs.save()
 
 
 if __name__ == "__main__":
-    load_buffdatas = Buffs()
-    load_buffdatas.load()
-
-    print(load_buffdatas.get("LIVEクリア時、獲得ファン数が30%アップ、キュートアイドルなら55%アップ"))
-    print(load_buffdatas.categorynames)
-    print(load_buffdatas.buff_groupby_categorynames)
+    print(__file__)
+    convert()

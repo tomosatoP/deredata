@@ -19,7 +19,7 @@ from deredata.libs.database.skills import (
     EffectType,
 )
 
-skilldatas = SkillsMystyle()
+skilldatas: SkillsMystyle = SkillsMystyle()
 parts: set[SkillPart] = set()
 
 SKILLDATA: str = textdata_folder() + "mystyle_skills.txt"
@@ -90,9 +90,9 @@ def convert(
             )
             skilldatas.update(after=new_skill, before=skill)
 
-    skilldatas.save(skills_jsonfilename) if skills_jsonfilename else skilldatas.save()
+    SkillsMystyle.save(skills_jsonfilename) if skills_jsonfilename else SkillsMystyle.save()
 
 
 if __name__ == "__main__":
     print(__file__)
-    # convert()
+    convert()

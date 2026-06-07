@@ -1153,23 +1153,6 @@ class Calculator:
 
         LibsAppealLogger.info(f"{self.__class__.__name__}.init: 初期化完了。")
 
-    @classmethod
-    def load(cls) -> None:
-        """
-        データベースを読み込む。
-
-        | アイドル、エピソード、センター効果、特技、ポテンシャルのデータベースを読み込む。
-        | :strong:`データベースに変更があれば、再実行する。`
-        """
-
-        cls._idols.load()
-        cls._episodes.load()
-        cls._buffs.load()
-        cls._skills.load()
-        cls._potentials.load()
-
-        LibsAppealLogger.info(f"{cls.__name__}.load: データベース読み込み完了。")
-
     @property
     def isresonance(self) -> bool:
         """

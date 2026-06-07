@@ -75,17 +75,17 @@ class Profiles:
     _profiles: set[Profile] = set()
 
     def get(self, ruby: str) -> Profile:
-        result: set[Profile] = {profile for profile in self._profiles if profile.ruby == ruby}
+        result: set[Profile] = {profile for profile in self.__class__._profiles if profile.ruby == ruby}
         return result.pop() if result else Profile()
 
     def gets(self) -> set[Profile]:
-        return self._profiles
+        return self.__class__._profiles
 
     def add(self, profile: Profile) -> None:
-        self._profiles.add(profile)
+        self.__class__._profiles.add(profile)
 
     def remove(self, profile: Profile) -> None:
-        self._profiles.remove(profile)
+        self.__class__._profiles.remove(profile)
 
     @classmethod
     def load(cls, filename: str = PROFILESDB) -> None:

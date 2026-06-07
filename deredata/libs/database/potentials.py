@@ -83,12 +83,9 @@ class Potentials:
     ポテンシャルの基礎情報データベース。
     """
 
-    def __init__(self, filename: str = POTENTIALSDB) -> None:
-        self._appeals: list[Appeal] = []
-        self._abilities: list[Ability] = []
-        self._lives: list[Life] = []
-
-        self._path = Path(filename)
+    _appeals: list[Appeal] = []
+    _abilities: list[Ability] = []
+    _lives: list[Life] = []
 
     def value(self, type: str, rare: RareClass, level: int) -> float | int:
         """
@@ -100,35 +97,58 @@ class Potentials:
 
         :return: ポテンシャル補正値。
         :type: float | int
+
+        :todo: レア度、ポテンシャルレベルの入力値検査。
         """
 
         match type:
             case "ボーカル" | "ダンス" | "ビジュアル":
-                return list(filter(lambda appeal: appeal.rare == rare, self._appeals))[level].potential
+                return list(filter(lambda appeal: appeal.rare == rare, self.__class__._appeals))[level].potential
             case "特技発動率":
-                return list(filter(lambda ability: ability.rare == rare, self._abilities))[level].potential
+                return list(filter(lambda ability: ability.rare == rare, self.__class__._abilities))[level].potential
             case "ライフ":
-                return list(filter(lambda life: life.rare == rare, self._lives))[level].potential
+                return list(filter(lambda life: life.rare == rare, self.__class__._lives))[level].potential
             case _:
                 raise PotentialsError(f"{self.__class__.__name__}.value: Invalid type '{type}'")
 
-    def load(self) -> None:
+    def add_appeal(self, appeal: Appeal) -> None:
+        self.__class__._appeals.append(appeal)
+
+    def add_ability(self, ability: Ability) -> None:
+        self.__class__._abilities.append(ability)
+
+    def add_life(self, life: Life) -> None:
+        self.__class__._lives.append(life)
+
+    def remove(self) -> None:
+        LibsPotentialsLogger.error(f"{self.__class__.__name__}.remove: 未実装。")
+
+    @classmethod
+    def _clear(cls) -> None:
+        """
+        ポテンシャルの基本情報データベースを初期化する。
+        """
+
+        cls._appeals.clear()
+        cls._abilities.clear()
+        cls._lives.clear()
+
+    @classmethod
+    def load(cls, filename: str = POTENTIALSDB) -> None:
         """
         ポテンシャルの基本情報データベースを読み込む。
         """
 
-        self._appeals.clear()
-        self._abilities.clear()
-        self._lives.clear()
+        path = Path(filename)
+        if not isinstance(path, Path) or not path.exists() or not path.is_file():
+            raise PotentialsError(f"{cls.__name__}.load: ")
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise PotentialsError(f"{self.__class__.__name__}.load: ")
-
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        cls._clear()
+        with path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
 
             for appeal in data["アピール値"]:
-                self._appeals.append(
+                cls._appeals.append(
                     Appeal(
                         rare=RareClass(appeal["rare"]),
                         level=appeal["level"],
@@ -136,7 +156,7 @@ class Potentials:
                     )
                 )
             for ability in data["特技発動率"]:
-                self._abilities.append(
+                cls._abilities.append(
                     Ability(
                         rare=RareClass(ability["rare"]),
                         level=ability["level"],
@@ -144,7 +164,7 @@ class Potentials:
                     )
                 )
             for life in data["ライフ"]:
-                self._lives.append(
+                cls._lives.append(
                     Life(
                         rare=RareClass(life["rare"]),
                         level=life["level"],
@@ -152,19 +172,18 @@ class Potentials:
                     )
                 )
 
-        LibsPotentialsLogger.info(
-            f"{self.__class__.__name__}.load: {
-                (len(self._appeals) + len(self._abilities) + len(self._lives))
-            }件のポテンシャルデータを読み込みました。"
-        )
+        number: int = len(cls._appeals) + len(cls._abilities) + len(cls._lives)
+        LibsPotentialsLogger.info(f"{cls.__name__}.load: {number}件のポテンシャルデータを読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, fileanem: str = POTENTIALSDB) -> None:
         """
         ポテンシャルの基本情報データベースを保存する。
         """
 
-        if not isinstance(self._path, Path):
-            raise PotentialsError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(fileanem)
+        if not isinstance(path, Path):
+            raise PotentialsError(f"{cls.__name__}.save: ")
 
         datas = {
             "アピール値": [
@@ -173,7 +192,7 @@ class Potentials:
                     "level": appeal.level,
                     "potential": appeal.potential,
                 }
-                for appeal in self._appeals
+                for appeal in cls._appeals
             ],
             "特技発動率": [
                 {
@@ -181,7 +200,7 @@ class Potentials:
                     "level": ability.level,
                     "potential": ability.potential,
                 }
-                for ability in self._abilities
+                for ability in cls._abilities
             ],
             "ライフ": [
                 {
@@ -189,12 +208,15 @@ class Potentials:
                     "level": life.level,
                     "potential": life.potential,
                 }
-                for life in self._lives
+                for life in cls._lives
             ],
         }
 
-        with self._path.open(mode="w") as f:
+        with path.open(mode="w") as f:
             json.dump(datas, f, ensure_ascii=False, indent=4)
+
+        number: int = len(cls._appeals) + len(cls._abilities) + len(cls._lives)
+        LibsPotentialsLogger.info(f"{cls.__name__}.save: {number}件のポテンシャルデータを保存しました。")
 
 
 if __name__ == "__main__":

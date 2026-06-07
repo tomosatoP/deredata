@@ -153,7 +153,7 @@ class Musics:
         :rtype: Music
         """
 
-        result: set[Music] = {music for music in Musics._musics if music.filename == filename}
+        result: set[Music] = {music for music in self.__class__._musics if music.filename == filename}
 
         return result.pop() if result else Music()
 
@@ -165,7 +165,7 @@ class Musics:
         :rtype: list[Music]
         """
 
-        return Musics._musics
+        return self.__class__._musics
 
     @classmethod
     def load(cls, filenames: str = MUSICFILENAMES) -> None:

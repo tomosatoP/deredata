@@ -12,7 +12,12 @@ musicleveldatas: MusicLevels = MusicLevels()
 MUSICLEVELDATA: str = textdata_folder() + "appendix_musiclevel.txt"
 
 
-def main() -> None:
+def convert(
+    musiclevels_txtfilename: str = MUSICLEVELDATA,
+    musiclevels_jsonfilename: str | None = None,
+) -> None:
+
+    MusicLevels._clear()
     with open(MUSICLEVELDATA, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
@@ -23,11 +28,9 @@ def main() -> None:
             )
             musicleveldatas.add(musiclevel)
 
-    musicleveldatas.save()
+    MusicLevels.save(musiclevels_jsonfilename) if musiclevels_jsonfilename else MusicLevels.save()
 
 
 if __name__ == "__main__":
-    load_musicleveldatas: MusicLevels = MusicLevels()
-    load_musicleveldatas.load()
-
-    print(f"{load_musicleveldatas.rate(31)}")  # 2.3
+    print(__file__)
+    convert()

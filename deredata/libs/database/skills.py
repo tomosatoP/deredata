@@ -406,14 +406,14 @@ class Skills:
     @property
     def categories(self) -> set[str]:
 
-        return {skill.category for skill in Skills._skills}
+        return {skill.category for skill in self.__class__._skills}
 
     @property
     def skill_groupby_categories(self) -> dict[str, set[str]]:
 
         result: dict[str, set[str]] = dict()
         for category in self.categories:
-            result |= {category: {skill.skill for skill in Skills._skills if skill.category == category}}
+            result |= {category: {skill.skill for skill in self.__class__._skills if skill.category == category}}
 
         return result
 
@@ -422,7 +422,7 @@ class Skills:
         特技分類から特技を取り出す。
         """
 
-        return {skill.skill for skill in Skills._skills if skill.category == category}
+        return {skill.skill for skill in self.__class__._skills if skill.category == category}
 
     def get(self, name: str) -> Skill:
         """
@@ -434,17 +434,17 @@ class Skills:
         :rtype: Skill
         """
 
-        result: set[Skill] = {skill for skill in Skills._skills if skill.name == name}
+        result: set[Skill] = {skill for skill in self.__class__._skills if skill.name == name}
         return result.pop() if result else Skill()
 
     def gets(self) -> set[Skill]:
-        return Skills._skills
+        return self.__class__._skills
 
     def add(self, skill: Skill) -> None:
-        Skills._skills.add(skill)
+        self.__class__._skills.add(skill)
 
     def remove(self, skill: Skill) -> None:
-        Skills._skills.remove(skill)
+        self.__class__._skills.remove(skill)
 
     def update(self, after: Skill, before: Skill) -> None:
         """
@@ -550,13 +550,15 @@ class SkillsMystyle(Skills):
     マイスタイルアイドル用の特技集。
     """
 
+    _skills: set[Skill] = set()
+
     @classmethod
     def load(cls, filename: str = SKILLSDB_MYSTYLE) -> None:
         super().load(filename)
 
     @classmethod
     def save(cls, filename: str = SKILLSDB_MYSTYLE) -> None:
-        super().load(filename)
+        super().save(filename)
 
 
 if __name__ == "__main__":

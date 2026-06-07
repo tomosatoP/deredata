@@ -15,44 +15,53 @@ LIFEDATA: str = textdata_folder() + "appendix_lives.txt"
 ABILITYDATA: str = textdata_folder() + "appendix_abilities.txt"
 
 
-def main() -> None:
-    with open(APPEALDATA, "r", encoding="utf-8-sig") as f:
+def convert(
+    apeals_txtfilanem: str = APPEALDATA,
+    lives_txtfilename: str = LIFEDATA,
+    abilities_txtfilename: str = ABILITYDATA,
+    potentials_jsonfilename: str | None = None,
+) -> None:
+
+    with open(apeals_txtfilanem, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
-        potentials._appeals = [
+        Potentials._clear()
+        appeals = [
             Appeal(rare=RareClass(data["レア度"]), level=int(column), potential=int(data[column]))
             for data in datas
             for column in data
             if column.isdecimal()
         ]
+        for appeal in appeals:
+            potentials.add_appeal(appeal)
 
-    with open(ABILITYDATA, "r", encoding="utf-8-sig") as f:
+    with open(abilities_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
-        potentials._abilities = [
+        abilities = [
             Ability(rare=RareClass(data["レア度"]), level=int(column), potential=float(data[column]))
             for data in datas
             for column in data
             if column.isdecimal()
         ]
+        for ability in abilities:
+            potentials.add_ability(ability)
 
-    with open(LIFEDATA, "r", encoding="utf-8-sig") as f:
+    with open(lives_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
-        potentials._lives = [
+        lives = [
             Life(rare=RareClass(data["レア度"]), level=int(column), potential=int(data[column]))
             for data in datas
             for column in data
             if column.isdecimal()
         ]
+        for life in lives:
+            potentials.add_life(life)
 
-    potentials.save()
+    Potentials.save(potentials_jsonfilename) if potentials_jsonfilename else Potentials.save()
 
 
 if __name__ == "__main__":
-    load_potentials: Potentials = Potentials()
-    load_potentials.load()
-
-    print(load_potentials.value("ボーカル", RareClass.SSR, 10))  # 500
-    print(load_potentials.value("特技発動率", RareClass.SSR, 10))  # 0.2
-    print(load_potentials.value("ライフ", RareClass.SSR, 10))  # 22
+    print(__file__)
+    convert()

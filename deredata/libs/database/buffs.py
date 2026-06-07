@@ -158,21 +158,7 @@ class Buffs:
     センター効果データベース。
     """
 
-    def __init__(self) -> None:
-        self._buffs: set[Buff] = set()
-        self._path: Path = Path(BUFFSDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        センター効果データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _buffs: set[Buff] = set()
 
     @property
     def categories(self) -> set[str]:
@@ -180,7 +166,7 @@ class Buffs:
         センター効果分類の集合。
         """
 
-        return {buff.category for buff in self._buffs}
+        return {buff.category for buff in self.__class__._buffs}
 
     @property
     def categorynames(self) -> set[str]:
@@ -188,7 +174,7 @@ class Buffs:
         センター効果分類説明の集合。
         """
 
-        return {buff.categoryname for buff in self._buffs}
+        return {buff.categoryname for buff in self.__class__._buffs}
 
     @property
     def buff_groupby_categorynames(self) -> dict[str, set[str]]:
@@ -198,7 +184,7 @@ class Buffs:
 
         result: dict[str, set[str]] = dict()
         for categoryname in sorted(self.categorynames):
-            result |= {categoryname: {buff.buff for buff in self._buffs if buff.categoryname == categoryname}}
+            result |= {categoryname: {buff.buff for buff in self.__class__._buffs if buff.categoryname == categoryname}}
 
         return result
 
@@ -212,7 +198,7 @@ class Buffs:
         :rtype: set[str]
         """
 
-        return {buff.buff for buff in self._buffs if buff.categoryname == categoryname}
+        return {buff.buff for buff in self.__class__._buffs if buff.categoryname == categoryname}
 
     def get(self, name: str) -> Buff:
         """
@@ -224,7 +210,7 @@ class Buffs:
         :rtype: Buff
         """
 
-        result = {buff for buff in self._buffs if buff.name == name}
+        result = {buff for buff in self.__class__._buffs if buff.name == name}
         return result.pop() if result else Buff()
 
     def gets(self) -> set[Buff]:
@@ -235,7 +221,7 @@ class Buffs:
         :rtype: set[Buff]
         """
 
-        return self._buffs
+        return self.__class__._buffs
 
     def add(self, buff: Buff) -> None:
         """
@@ -244,7 +230,7 @@ class Buffs:
         :param Buff buff: 追加するセンター効果の基本情報。
         """
 
-        self._buffs.add(buff)
+        self.__class__._buffs.add(buff)
 
     def remove(self, buff: Buff) -> None:
         """
@@ -253,7 +239,7 @@ class Buffs:
         :param Buff buff: 削除するセンター効果の基本情報。
         """
 
-        self._buffs.remove(buff)
+        self.__class__._buffs.remove(buff)
 
     def update(self, after: Buff, before: Buff) -> None:
         """
@@ -271,15 +257,17 @@ class Buffs:
         self.remove(before)
         self.add(after)
 
-    def load(self) -> None:
+    @classmethod
+    def load(cls, filename: str = BUFFSDB) -> None:
         """
         センター効果データベースの読み込みを行う。
         """
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise BuffsError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise BuffsError(f"{cls.__name__}.load: ")
 
-        with self._path.open() as f:
+        with path.open() as f:
             datas = json.load(f)
 
         for data in datas:
@@ -305,17 +293,19 @@ class Buffs:
                 music=MusicType(data["楽曲要件"]),
                 buffparts=buffparts,
             )
-            self._buffs.add(buff)
+            cls._buffs.add(buff)
 
-        LibsBuffsLogger.info(f"{self.__class__.__name__}.load: {len(self._buffs)}件のセンター効果を読み込みました。")
+        LibsBuffsLogger.info(f"{cls.__name__}.load: {len(cls._buffs)}件のセンター効果を読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = BUFFSDB) -> None:
         """
         センター効果データベースの保存を行う。
         """
 
-        if not isinstance(self._path, Path):
-            raise BuffsError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise BuffsError(f"{cls.__name__}.save: ")
 
         datas = [
             {
@@ -338,13 +328,13 @@ class Buffs:
                     for buffpart in sorted(buff.buffparts)
                 ],
             }
-            for buff in sorted(self._buffs)
+            for buff in sorted(cls._buffs)
         ]
 
-        with self._path.open(mode="w") as f:
+        with path.open(mode="w") as f:
             json.dump(datas, f, ensure_ascii=False, indent=4)
 
-        LibsBuffsLogger.info(f"{self.__class__.__name__}: センター効果データベースを保存しました。")
+        LibsBuffsLogger.info(f"{cls.__name__}.save:  {len(cls._buffs)}件のセンター効果データベースを保存しました。")
 
 
 class BuffsMystyle(Buffs):
@@ -352,9 +342,15 @@ class BuffsMystyle(Buffs):
     マイスタイルアイドル用のセンター効果データベース。
     """
 
-    def __init__(self) -> None:
-        self._buffs: set[Buff] = set()
-        self._path: Path = Path(BUFFSDB_MYSTYLE)
+    _buffs: set[Buff] = set()
+
+    @classmethod
+    def load(cls, filename: str = BUFFSDB_MYSTYLE) -> None:
+        super().load(filename)
+
+    @classmethod
+    def save(cls, filename: str = BUFFSDB_MYSTYLE) -> None:
+        super().save(filename)
 
 
 if __name__ == "__main__":

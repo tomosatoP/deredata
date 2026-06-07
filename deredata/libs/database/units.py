@@ -139,7 +139,7 @@ class Units:
         :param str name: 抽出条件のユニット名。
         """
 
-        result: set[Unit | GrandliveUnit] = {unit for unit in Units._units if unit.name == name}
+        result: set[Unit | GrandliveUnit] = {unit for unit in self.__class__._units if unit.name == name}
         return result.pop() if result else Unit()
 
     def gets(self) -> set[Unit | GrandliveUnit]:
@@ -150,7 +150,7 @@ class Units:
         :rtype: set[Unit]
         """
 
-        return Units._units
+        return self.__class__._units
 
     def add(self, unit: Unit | GrandliveUnit) -> None:
         """
@@ -159,7 +159,7 @@ class Units:
         :param Unit | GrandliveUnit unit: 追加する通常ライブもしくはグランドライブのユニット。
         """
 
-        Units._units.add(unit)
+        self.__class__._units.add(unit)
 
     def remove(self, unit: Unit | GrandliveUnit) -> None:
         """
@@ -168,7 +168,7 @@ class Units:
         :param Unit | GrandliveUnit unit: 削除する通常ライブもしくはグランドライブのユニット。
         """
 
-        Units._units.remove(unit)
+        self.__class__._units.remove(unit)
 
     def update(self, after: Unit | GrandliveUnit, before: Unit | GrandliveUnit) -> None:
         """
