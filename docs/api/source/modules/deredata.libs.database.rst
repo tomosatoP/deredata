@@ -20,13 +20,13 @@ Submodules
    deredata.libs.database.buffs
    deredata.libs.database.comborates
    deredata.libs.database.configurations
-   deredata.libs.database.dominant
+   deredata.libs.database.dominants
    deredata.libs.database.enumerations
    deredata.libs.database.episodes
    deredata.libs.database.flavors
    deredata.libs.database.idols
-   deredata.libs.database.lifesparkle
-   deredata.libs.database.motif
+   deredata.libs.database.lifesparkles
+   deredata.libs.database.motives
    deredata.libs.database.musiclevels
    deredata.libs.database.musics
    deredata.libs.database.potentials
