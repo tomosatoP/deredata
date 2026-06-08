@@ -15,6 +15,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsDominantLogger
 
+# 特技ドミナント・ハーモニーの効果量のデータベースのファイル名。
 DOMINANTDB: str = database_folder() + "dominant.json"
 
 
@@ -49,22 +50,8 @@ class Dominants:
     特技ドミナント・ハーモニーの効果量のデータベースクラス。
     """
 
-    def __init__(self) -> None:
-        self._dominants_guest: list[Dominant] = list()
-        self._dominants_noguest: list[Dominant] = list()
-        self._path = Path(DOMINANTDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        特技ドミナント・ハーモニー効果量データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _dominants_with_guest: list[Dominant] = list()
+    _dominants_without_guest: list[Dominant] = list()
 
     def value(self, number: int, type: int, guest: bool = True) -> float:
         """
@@ -80,26 +67,37 @@ class Dominants:
         :rtype: float
         """
 
-        database = self._dominants_guest if guest else self._dominants_noguest
+        database = self.__class__._dominants_with_guest if guest else self.__class__._dominants_without_guest
         result = list(filter(lambda d: d.number == number, database))[0]
 
         return result.score if type == 0 else result.combo
 
-    def load(self, path: Path | None = None) -> None:
+    def add_with_guest(self, dominant: Dominant) -> None:
+        self.__class__._dominants_with_guest.append(dominant)
+
+    def add_without_guest(self, dominant: Dominant) -> None:
+        self.__class__._dominants_without_guest.append(dominant)
+
+    @classmethod
+    def _clear(cls) -> None:
+        cls._dominants_with_guest.clear()
+        cls._dominants_without_guest.clear()
+
+    @classmethod
+    def load(cls, filename: str = DOMINANTDB) -> None:
         """
         特技ドミナント・ハーモニーの効果量のデータベースを読み込む。
         """
 
-        self._dominants_guest.clear()
-        self._dominants_noguest.clear()
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise DominantError(f"{cls.__name__}.load: ")
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise DominantError(f"{self.__class__.__name__}.load: ")
-
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        cls._clear()
+        with path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
             for dominant in data["ゲスト有り"]:
-                self._dominants_guest.append(
+                cls._dominants_with_guest.append(
                     Dominant(
                         number=int(dominant["編成人数"]),
                         score=float(dominant["スコアボーナス"]),
@@ -107,7 +105,7 @@ class Dominants:
                     )
                 )
             for dominant in data["ゲスト無し"]:
-                self._dominants_noguest.append(
+                cls._dominants_without_guest.append(
                     Dominant(
                         number=int(dominant["編成人数"]),
                         score=float(dominant["スコアボーナス"]),
@@ -115,19 +113,18 @@ class Dominants:
                     )
                 )
 
-        LibsDominantLogger.info(
-            f"{self.__class__.__name__}.load: {
-                len(self._dominants_guest) + len(self._dominants_noguest)
-            }件の特技ドミナント・ハーモニー効果量を読み込みました。"
-        )
+        number: int = len(cls._dominants_with_guest) + len(cls._dominants_without_guest)
+        LibsDominantLogger.info(f"{cls.__name__}.load: {number}件の特技ドミナント・ハーモニー効果量を読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = DOMINANTDB) -> None:
         """
         特技ドミナント・ハーモニーの効果量のデータベースを保存する。
         """
 
-        if not isinstance(self._path, Path):
-            raise DominantError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise DominantError(f"{cls.__name__}.save: ")
 
         guestdb = [
             {
@@ -135,7 +132,7 @@ class Dominants:
                 "スコアボーナス": dominant.score,
                 "COMBOボーナス": dominant.combo,
             }
-            for dominant in self._dominants_guest
+            for dominant in cls._dominants_with_guest
         ]
 
         noguestdb = [
@@ -144,14 +141,15 @@ class Dominants:
                 "スコアボーナス": dominant.score,
                 "COMBOボーナス": dominant.combo,
             }
-            for dominant in self._dominants_noguest
+            for dominant in cls._dominants_without_guest
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump({"ゲスト有り": guestdb, "ゲスト無し": noguestdb}, f, indent=4, ensure_ascii=False)
 
+        number: int = len(cls._dominants_with_guest) + len(cls._dominants_without_guest)
         LibsDominantLogger.info(
-            f"{self.__class__.__name__}.save: 特技ドミナント・ハーモニー効果量データベースを保存しました。"
+            f"{cls.__name__}.save: {number}件の特技ドミナント・ハーモニー効果量データベースを保存しました。"
         )
 
 

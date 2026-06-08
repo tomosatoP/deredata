@@ -1222,18 +1222,18 @@ class Calculator:
 
         LibsAppealLogger.info(f"{function_name}メンバー {self.unit[0]}")
         LibsAppealLogger.info(
-            f"{function_name}アイドルタイプ {[Calculator._episodes.get(episode).type.name for episode in self.unit[0]]}"
+            f"{function_name}アイドルタイプ {[self.__class__._episodes.get(episode).type.name for episode in self.unit[0]]}"
         )
         LibsAppealLogger.info(
             f"{function_name}ドミナントアイドルタイプ {
-                [Calculator._episodes.get(episode).dominant.name for episode in self.unit[0]]
+                [self.__class__._episodes.get(episode).dominant.name for episode in self.unit[0]]
             }"
         )
         LibsAppealLogger.info(
-            f"{function_name}センター効果 {[Calculator._episodes.get(episode).buff_class for episode in self.unit[0]]}"
+            f"{function_name}センター効果 {[self.__class__._episodes.get(episode).buff_class for episode in self.unit[0]]}"
         )
         LibsAppealLogger.info(
-            f"{function_name}特技 {[Calculator._episodes.get(episode).skill_class for episode in self.unit[0]]}"
+            f"{function_name}特技 {[self.__class__._episodes.get(episode).skill_class for episode in self.unit[0]]}"
         )
         LibsAppealLogger.info(f"{function_name}サポメン {self.supports[0]}")
         LibsAppealLogger.info(
@@ -1262,7 +1262,7 @@ class Calculator:
 
         # ゲストを含むユニットメンバーのアピール値計算
         self._unit_episodes: list[Episode] = [
-            Calculator._episodes.get(episode) for episode in unit.positions.list() if isinstance(episode, str)
+            self.__class__._episodes.get(episode) for episode in unit.positions.list() if isinstance(episode, str)
         ]
 
         unit_factors = [
@@ -1304,7 +1304,7 @@ class Calculator:
 
         # 全エピソードのアピール値合計を計算し、リスト化。
         # まず、未所有（スターランク=0）を取り除く
-        episode_all = sorted({episode for episode in Calculator._episodes.gets() if episode.star_rank > 0})
+        episode_all = sorted({episode for episode in self.__class__._episodes.gets() if episode.star_rank > 0})
         episode_all_factors = [
             self._base(episode_all),  # 基礎値
             self._potential(episode_all),  # ポテンシャル補正
@@ -1348,12 +1348,12 @@ class Calculator:
                 [episode.visual for episode in episodes],
                 [episode.life for episode in episodes],
                 [
-                    probability_value(Calculator._skills.get(episode.skill).probability)
+                    probability_value(self.__class__._skills.get(episode.skill).probability)
                     * (1.0 + (episode.skill_level - 1) / 18)
                     for episode in episodes
                 ],
                 [
-                    duration_value(Calculator._skills.get(episode.skill).duration)
+                    duration_value(self.__class__._skills.get(episode.skill).duration)
                     * (1.0 + (episode.skill_level - 1) / 18)
                     for episode in episodes
                 ],
@@ -1373,29 +1373,29 @@ class Calculator:
         """
 
         idols: list[Idol] = [
-            Calculator._idols.get(episode.ruby) for episode in episodes if isinstance(episode, Episode)
+            self.__class__._idols.get(episode.ruby) for episode in episodes if isinstance(episode, Episode)
         ]
 
         return np.array(
             [
                 [
-                    Calculator._potentials.value("ボーカル", episode.rare, idol.vocal)
+                    self.__class__._potentials.value("ボーカル", episode.rare, idol.vocal)
                     for idol, episode in zip(idols, episodes)
                 ],
                 [
-                    Calculator._potentials.value("ダンス", episode.rare, idol.dance)
+                    self.__class__._potentials.value("ダンス", episode.rare, idol.dance)
                     for idol, episode in zip(idols, episodes)
                 ],
                 [
-                    Calculator._potentials.value("ビジュアル", episode.rare, idol.visual)
+                    self.__class__._potentials.value("ビジュアル", episode.rare, idol.visual)
                     for idol, episode in zip(idols, episodes)
                 ],
                 [
-                    Calculator._potentials.value("ライフ", episode.rare, idol.life)
+                    self.__class__._potentials.value("ライフ", episode.rare, idol.life)
                     for idol, episode in zip(idols, episodes)
                 ],
                 [
-                    Calculator._potentials.value("特技発動率", episode.rare, idol.skill)
+                    self.__class__._potentials.value("特技発動率", episode.rare, idol.skill)
                     for idol, episode in zip(idols, episodes)
                 ],
                 [0 for _ in episodes],
@@ -1491,12 +1491,12 @@ class Calculator:
         np3d[0] = basematch(lstype, episodes)
 
         # ドミナント・デュエットのタイプ一致（センターあるいは、ブレスによる全員のセンター効果発動）
-        buff = Calculator._buffs.get(episodes[0].buff) if episodes else Buff()
+        buff = self.__class__._buffs.get(episodes[0].buff) if episodes else Buff()
         np3d[1] = typematch(buff, episodes)
 
         # ドミナント・デュエットのタイプ一致（ゲストあるいは、ブレスによる全員のセンター効果発動）
         if len(episodes) == 6:
-            buff = Calculator._buffs.get(episodes[5].buff)
+            buff = self.__class__._buffs.get(episodes[5].buff)
             np3d[2] = typematch(buff, episodes)
 
         return np3d.max(axis=0)
@@ -1515,7 +1515,7 @@ class Calculator:
         context = BuffContext(
             on_resonance=self._resonance,
             position=position,
-            buff=Calculator._buffs.get(episodes[position].buff),
+            buff=self.__class__._buffs.get(episodes[position].buff),
             live_songtype=self._music.song.type,
             idoltypes_set={episode.type for episode in episodes},
             dominanttypes_set={episode.dominant for episode in episodes},
@@ -1523,7 +1523,7 @@ class Calculator:
             idoltypes_list=[episode.type for episode in episodes],
             dominanttypes_list=[episode.dominant for episode in episodes],
             episodes_list=episodes,
-            buffs_list=[Calculator._buffs.get(episode.buff) for episode in episodes],
+            buffs_list=[self.__class__._buffs.get(episode.buff) for episode in episodes],
         )
 
         if episodes[position].buff_class in buff_funcname:

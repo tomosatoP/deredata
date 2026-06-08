@@ -72,7 +72,7 @@ class Idols:
         :rtype: Idol
         """
 
-        result: set[Idol] = {idol for idol in Idols._idols if idol.ruby == ruby}
+        result: set[Idol] = {idol for idol in self.__class__._idols if idol.ruby == ruby}
 
         return result.pop() if result else Idol()
 
@@ -84,7 +84,7 @@ class Idols:
         :rytpe: set[Idol]
         """
 
-        return Idols._idols
+        return self.__class__._idols
 
     def add(self, idol: Idol) -> None:
         """
@@ -93,7 +93,7 @@ class Idols:
         :param Idol idol: 追加するアイドルの基本情報。
         """
 
-        Idols._idols.add(idol)
+        self.__class__._idols.add(idol)
 
     def remove(self, idol: Idol) -> None:
         """
@@ -102,7 +102,7 @@ class Idols:
         :param Idol idol: 削除するアイドルの基本情報。
         """
 
-        Idols._idols.remove(idol)
+        self.__class__._idols.remove(idol)
 
     def update(self, after: Idol, before: Idol) -> None:
         """

@@ -12,6 +12,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsLifesparkleLogger
 
+# 特技ライフスパークルの効果量のデータベースのファイル名。
 LIFESPARKLEDB: str = database_folder() + "lifesparkle.json"
 
 
@@ -44,19 +45,8 @@ class Lifesparkles:
     特技ライフスパークルの効果量のデータベースクラス。
     """
 
-    def __init__(self) -> None:
-        self._lifesparkles_ssr: list[Lifesparkle] = list()
-        self._lifesparkles_sr: list[Lifesparkle] = list()
-        self._path = Path(LIFESPARKLEDB)
-
-    @property
-    def filename(self) -> str:
-        """特技ライフスパークル効果量データベースのファイル名。"""
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _lifesparkles_ssr: list[Lifesparkle] = list()
+    _lifesparkles_sr: list[Lifesparkle] = list()
 
     def value(self, life: int, rare: str = "SSR") -> float:
         """
@@ -71,56 +61,68 @@ class Lifesparkles:
         :rtype: float
         """
 
-        database = self._lifesparkles_ssr if rare == "SSR" else self._lifesparkles_sr
+        database = self.__class__._lifesparkles_ssr if rare == "SSR" else self.__class__._lifesparkles_sr
 
         return list(filter(lambda d: d.life <= life, database))[-1].rate
 
-    def load(self, path: Path | None = None) -> None:
+    def add_ssr(self, lifesparkle: Lifesparkle) -> None:
+        self.__class__._lifesparkles_ssr.append(lifesparkle)
+
+    def add_sr(self, lifesparkle: Lifesparkle) -> None:
+        self.__class__._lifesparkles_sr.append(lifesparkle)
+
+    @classmethod
+    def _clear(cls) -> None:
+        cls._lifesparkles_ssr.clear()
+        cls._lifesparkles_sr.clear()
+
+    @classmethod
+    def load(cls, filename: str = LIFESPARKLEDB) -> None:
         """
         特技ライフスパークルの効果量（倍率）のデータを読み込む。
         """
-        self._lifesparkles_ssr.clear()
-        self._lifesparkles_sr.clear()
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise LifesparkleError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise LifesparkleError(f"{cls.__name__}.load: ")
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        cls._clear()
+        with path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
             for lifesparkle in data["ＳＳＲ"]:
-                self._lifesparkles_ssr.append(
+                cls._lifesparkles_ssr.append(
                     Lifesparkle(
                         life=int(lifesparkle["残ライフ値"]),
                         rate=float(lifesparkle["倍率"]),
                     )
                 )
             for lifesparkle in data["ＳＲ"]:
-                self._lifesparkles_sr.append(
+                cls._lifesparkles_sr.append(
                     Lifesparkle(
                         life=int(lifesparkle["残ライフ値"]),
                         rate=float(lifesparkle["倍率"]),
                     )
                 )
-        LibsLifesparkleLogger.info(
-            f"{self.__class__.__name__}.load. {
-                (len(self._lifesparkles_ssr) + len(self._lifesparkles_sr))
-            }件の特技ライフスパークル効果量を読み込みました。"
-        )
 
-    def save(self) -> None:
+        number: int = len(cls._lifesparkles_ssr) + len(cls._lifesparkles_sr)
+        LibsLifesparkleLogger.info(f"{cls.__name__}.load. {number}件の特技ライフスパークル効果量を読み込みました。")
+
+    @classmethod
+    def save(cls, filename: str = LIFESPARKLEDB) -> None:
         """
         特技ライフスパークルの効果量のデータを保存。
         """
 
-        if not isinstance(self._path, Path):
-            raise LifesparkleError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise LifesparkleError(f"{cls.__name__}.save: ")
 
         ssrdb = [
             {
                 "残ライフ値": lifesparkle.life,
                 "倍率": lifesparkle.rate,
             }
-            for lifesparkle in self._lifesparkles_ssr
+            for lifesparkle in cls._lifesparkles_ssr
         ]
 
         srdb = [
@@ -128,14 +130,15 @@ class Lifesparkles:
                 "残ライフ値": lifesparkle.life,
                 "倍率": lifesparkle.rate,
             }
-            for lifesparkle in self._lifesparkles_sr
+            for lifesparkle in cls._lifesparkles_sr
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump({"ＳＳＲ": ssrdb, "ＳＲ": srdb}, f, indent=4, ensure_ascii=False)
 
+        number: int = len(cls._lifesparkles_ssr) + len(cls._lifesparkles_sr)
         LibsLifesparkleLogger.info(
-            f"{self.__class__.__name__}.save. 特技ライフスパークル効果量データベースを保存しました。"
+            f"{cls.__name__}.save. {number}件の特技ライフスパークル効果量データベースを保存しました。"
         )
 
 

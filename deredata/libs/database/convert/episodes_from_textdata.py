@@ -14,8 +14,8 @@ from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.flavors import Flavor, Flavors
 
-episodedatas = Episodes()
-flavordatas = Flavors()
+episodedatas: Episodes = Episodes()
+flavordatas: Flavors = Flavors()
 
 EPISODEFIXEDDATA: str = textdata_folder() + "episodes_fixed.txt"
 EPISODEDATA: str = textdata_folder() + "episodes.txt"
@@ -105,9 +105,10 @@ def convert(
                     }
                 )
 
-    episodedatas.save(episodes_jsonfilename) if episodes_jsonfilename else episodedatas.save()
-    flavordatas.save(flavors_jsonfilename) if flavors_jsonfilename else flavordatas.save()
+    Episodes.save(episodes_jsonfilename) if episodes_jsonfilename else Episodes.save()
+    Flavors.save(flavors_jsonfilename) if flavors_jsonfilename else Flavors.save()
 
 
 if __name__ == "__main__":
     print(__file__)
+    convert()

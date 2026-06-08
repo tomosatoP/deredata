@@ -5,7 +5,7 @@
 import csv
 
 from deredata.libs.database.configurations import textdata_folder
-from deredata.libs.database.dominant import Dominant, Dominants
+from deredata.libs.database.dominants import Dominant, Dominants
 
 dominants: Dominants = Dominants()
 
@@ -13,8 +13,14 @@ GUESTDATA: str = textdata_folder() + "appendix_dominant_guest.txt"
 NOGUESTDATA: str = textdata_folder() + "appendix_dominant_noguest.txt"
 
 
-def main() -> None:
-    with open(GUESTDATA, "r", encoding="utf-8-sig") as f:
+def convert(
+    dominant_guest_txtfilename: str = GUESTDATA,
+    dominant_noguest_txtfilename: str = NOGUESTDATA,
+    dominant_jsonfilename: str | None = None,
+) -> None:
+
+    Dominants._clear()
+    with open(dominant_guest_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -23,9 +29,9 @@ def main() -> None:
                 score=float(data["スコアボーナス"]),
                 combo=float(data["COMBOボーナス"]),
             )
-            dominants._dominants_guest.append(dominant)
+            dominants.add_with_guest(dominant)
 
-    with open(NOGUESTDATA, "r", encoding="utf-8-sig") as f:
+    with open(dominant_noguest_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -34,15 +40,11 @@ def main() -> None:
                 score=float(data["スコアボーナス"]),
                 combo=float(data["COMBOボーナス"]),
             )
-            dominants._dominants_noguest.append(dominant)
+            dominants.add_without_guest(dominant)
 
-    dominants.save()
+    Dominants.save(dominant_jsonfilename) if dominant_jsonfilename else Dominants.save()
 
 
 if __name__ == "__main__":
-    load_dominants: Dominants = Dominants()
-    load_dominants.load()
-
-    print(load_dominants.value(2, 0))  # 0.2
-    print(load_dominants.value(2, 1))  # 0.25
-    print(load_dominants.value(2, 0, False))  # 0.3
+    print(__file__)
+    convert()

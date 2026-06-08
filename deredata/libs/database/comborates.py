@@ -15,6 +15,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsComboratesLogger
 
+# コンボ倍率データベースのファイル名。
 COMBORATESDB: str = database_folder() + "comborates.json"
 
 
@@ -45,21 +46,7 @@ class ComboRates:
     コンボ倍率データベース。
     """
 
-    def __init__(self) -> None:
-        self._rates: list[Comborate] = list()
-        self._path: Path = Path(COMBORATESDB)
-
-    @property
-    def filename(self) -> str:
-        """
-        コンボ倍率データベースのファイル名。
-        """
-
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _rates: list[Comborate] = list()
 
     def rate(self, ratio: float) -> float:
         """
@@ -73,7 +60,7 @@ class ComboRates:
         :rtype: float
         """
 
-        return [comborate.rate for comborate in self._rates if comborate.ulimit >= ratio][0]
+        return [comborate.rate for comborate in self.__class__._rates if comborate.ulimit >= ratio][0]
 
     def add(self, comborate: Comborate) -> None:
         """
@@ -82,50 +69,58 @@ class ComboRates:
         :param Comborate comborate: 追加するコンボ倍率。
         """
 
-        self._rates.append(comborate)
+        self.__class__._rates.append(comborate)
 
-    def load(self) -> None:
+    @classmethod
+    def _clear(cls) -> None:
+        cls._rates.clear()
+
+    @classmethod
+    def load(cls, filename: str = COMBORATESDB) -> None:
         """
         コンボ倍率データベースを読み込む。
         """
 
-        self._rates.clear()
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise ComboratesError(f"{cls.__name__}.load: ")
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise ComboratesError(f"{self.__class__.__name__}.load: ")
-
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        cls._clear()
+        with path.open("r", encoding="utf-8-sig") as f:
             datas = json.load(f)
 
             for data in datas:
-                self._rates.append(
+                cls._rates.append(
                     Comborate(
                         ulimit=float(data["上限"]),
                         rate=float(data["コンボ倍率"]),
                     )
                 )
-        LibsComboratesLogger.info(f"{self.__class__.__name__}.load: {len(self._rates)}件のコンボ倍率を読み込みました。")
 
-    def save(self) -> None:
+        LibsComboratesLogger.info(f"{cls.__name__}.load: {len(cls._rates)}件のコンボ倍率を読み込みました。")
+
+    @classmethod
+    def save(cls, filename: str = COMBORATESDB) -> None:
         """
         コンボ倍率データベースを保存する。
         """
 
-        if not isinstance(self._path, Path):
-            raise ComboratesError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise ComboratesError(f"{cls.__name__}.save: ")
 
         comborates = [
             {
                 "上限": comborate.ulimit,
                 "コンボ倍率": comborate.rate,
             }
-            for comborate in self._rates
+            for comborate in cls._rates
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump(comborates, f, indent=4, ensure_ascii=False)
 
-        LibsComboratesLogger.info(f"{self.__class__.__name__}.save: コンボ倍率データベースを保存しました。")
+        LibsComboratesLogger.info(f"{cls.__name__}.save: {len(cls._rates)}件のコンボ倍率データベースを保存しました。")
 
 
 if __name__ == "__main__":

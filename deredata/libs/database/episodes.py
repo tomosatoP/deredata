@@ -92,7 +92,7 @@ class Episodes:
         :rtype: Episode
         """
 
-        result: set[Episode] = {epi for epi in Episodes._episodes if epi.episode == episode}
+        result: set[Episode] = {epi for epi in self.__class__._episodes if epi.episode == episode}
         return result.pop() if result else Episode()
 
     def gets(self) -> set[Episode]:
@@ -100,7 +100,7 @@ class Episodes:
         get
         """
 
-        return Episodes._episodes
+        return self.__class__._episodes
 
     def add(self, idol: Episode) -> None:
         """
@@ -109,7 +109,7 @@ class Episodes:
         :param Episode idol: 追加するエピソードの基本情報。
         """
 
-        Episodes._episodes.add(idol)
+        self.__class__._episodes.add(idol)
 
     def remove(self, idol: Episode) -> None:
         """
@@ -118,7 +118,7 @@ class Episodes:
         :param Episode idol: 削除するエピソードの基本情報。
         """
 
-        Episodes._episodes.remove(idol)
+        self.__class__._episodes.remove(idol)
 
     def update(self, after: Episode, before: Episode) -> None:
         """

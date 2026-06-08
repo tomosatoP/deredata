@@ -87,7 +87,7 @@
 import numpy as np
 import re
 from functools import reduce, partial, wraps
-from typing import Callable, Any
+from typing import Callable
 from operator import mul
 from random import seed, random
 from math import ceil
@@ -101,9 +101,9 @@ from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.skills import Skill, Skills, SkillPart, IconType, SkillTriggerType, EffectType
 from deredata.libs.database.musiclevels import MusicLevels
 from deredata.libs.database.comborates import ComboRates
-from deredata.libs.database.motif import Motives
-from deredata.libs.database.dominant import Dominants
-from deredata.libs.database.lifesparkle import Lifesparkles
+from deredata.libs.database.motives import Motives
+from deredata.libs.database.dominants import Dominants
+from deredata.libs.database.lifesparkles import Lifesparkles
 
 from kivy.logger import Logger as LibsStageLogger
 
@@ -1712,28 +1712,6 @@ class Simulator:
 
         LibsStageLogger.info(f"{self.__class__.__name__}.init: 初期化完了。")
 
-    @classmethod
-    def load(cls) -> None:
-        """
-        データベースを読み込む。
-
-        エピソード、特技、楽曲レベル、コンボ倍率、特技モチーフ効果量、特技ドミナント・ハーモニー効果量、\
-            特技ライフスパークル効果量のデータベースを読み込む。
-        シミュレーション実行前に行うこと。
-        
-        :strong:`データベースに変更があれば、再実行する。`
-        """
-
-        cls._episodes.load()
-        cls._skills.load()
-        cls._musiclevels.load()
-        cls._comborates.load()
-        cls._motives.load()
-        cls._dominants.load()
-        cls._lifesparkles.load()
-
-        LibsStageLogger.info(f"{cls.__name__}.load: データベースの読み込み完了。")
-
     def run(self, isresonance: bool, unit: list, supports: list = []) -> list[int]:
         """
         ノートのスコア計算シミュレーションを行う。
@@ -1778,7 +1756,9 @@ class Simulator:
         seed()
 
         # ゲストを含むユニットメンバーエピソードリスト。
-        episodes: list[Episode] = [Simulator._episodes.get(episode) for episode in unit[0] if isinstance(episode, str)]
+        episodes: list[Episode] = [
+            self.__class__._episodes.get(episode) for episode in unit[0] if isinstance(episode, str)
+        ]
 
         live_context = LiveContext(
             on_resonance=isresonance,
@@ -1801,7 +1781,7 @@ class Simulator:
             ],
             probabilities_list=unit[5][:UNIT_SIZE],
             durations_list=[int(timestamp * FPS) for timestamp in unit[6][:UNIT_SIZE]],
-            skills_list=[Simulator._skills.get(episode.skill) for episode in episodes[:UNIT_SIZE]],
+            skills_list=[self.__class__._skills.get(episode.skill) for episode in episodes[:UNIT_SIZE]],
         )
 
         timetables: list[TimeTable] = self._skill_timetables(live_context)
@@ -1899,7 +1879,7 @@ class Simulator:
                 [
                     context.base,
                     self._perfection_rate("PERFECT"),
-                    Simulator._comborates.rate(combo / self._music.note_number),
+                    self.__class__._comborates.rate(combo / self._music.note_number),
                     reduce(  # スコア系倍率 * COMBO系倍率 * オルタネイト系倍率 * ミューチャル系倍率
                         mul,
                         self._skillcategory_rates(
@@ -1924,7 +1904,7 @@ class Simulator:
         :rtype: float
         """
 
-        return appeals * Simulator._musiclevels.rate(self._music.song.level) / self._music.note_number
+        return appeals * self.__class__._musiclevels.rate(self._music.song.level) / self._music.note_number
 
     def _perfection_rate(self, perfection: str) -> float:
         """

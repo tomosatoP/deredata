@@ -13,8 +13,8 @@ from deredata.libs.database.enumerations import IdolType
 from deredata.libs.database.idols import Idol, Idols
 from deredata.libs.database.profiles import Profile, Profiles
 
-idoldatas = Idols()
-profiledatas = Profiles()
+idoldatas: Idols = Idols()
+profiledatas: Profiles = Profiles()
 
 IDOLFIXEDDATA: str = textdata_folder() + "idols_fixed.txt"
 IDOLDATA: str = textdata_folder() + "idols.txt"
@@ -127,9 +127,10 @@ def convert(
                     }
                 )
 
-    idoldatas.save(idols_jsonfilename) if idols_jsonfilename else idoldatas.save()
-    profiledatas.save(profiles_jsonfilename) if profiles_jsonfilename else profiledatas.save()
+    Idols.save(idols_jsonfilename) if idols_jsonfilename else Idols.save()
+    Profiles.save(profiles_jsonfilename) if profiles_jsonfilename else Profiles.save()
 
 
 if __name__ == "__main__":
     print(__file__)
+    convert()

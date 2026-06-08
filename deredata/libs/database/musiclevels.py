@@ -88,7 +88,7 @@ class MusicLevels:
         with path.open("w", encoding="utf-8") as f:
             json.dump(musiclevels, f, indent=4, ensure_ascii=False)
 
-        LibsMusiclevelsLogger.info(f"{cls.__name__}.save:  {len(cls._levels)}件の曲係数データベースを保存しました。")
+        LibsMusiclevelsLogger.info(f"{cls.__name__}.save: {len(cls._levels)}件の曲係数データベースを保存しました。")
 
 
 if __name__ == "__main__":

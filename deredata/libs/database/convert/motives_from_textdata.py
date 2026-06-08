@@ -5,7 +5,7 @@
 import csv
 
 from deredata.libs.database.configurations import textdata_folder
-from deredata.libs.database.motif import Motif, Motives
+from deredata.libs.database.motives import Motif, Motives
 
 motives: Motives = Motives()
 
@@ -13,8 +13,14 @@ MOTIFDATA: str = textdata_folder() + "appendix_motif.txt"
 MOTIFDATA_GRAND: str = textdata_folder() + "appendix_motif_grand.txt"
 
 
-def main() -> None:
-    with open(MOTIFDATA, "r", encoding="utf-8-sig") as f:
+def convert(
+    motives_txtfilenam: str = MOTIFDATA,
+    motives_grand_txtfilename: str = MOTIFDATA_GRAND,
+    motives_jsonfilename: str | None = None,
+) -> None:
+
+    Motives._clear()
+    with open(motives_txtfilenam, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -22,9 +28,9 @@ def main() -> None:
                 appeal=int(data["アピール値"]),
                 rate=float(data["倍率"]),
             )
-            motives._motives.append(motif)
+            motives.add_motif(motif)
 
-    with open(MOTIFDATA_GRAND, "r", encoding="utf-8-sig") as f:
+    with open(motives_grand_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -32,14 +38,11 @@ def main() -> None:
                 appeal=int(data["アピール値"]),
                 rate=float(data["倍率"]),
             )
-            motives._motives_grand.append(motif)
+            motives.add_motif_grand(motif)
 
-    motives.save()
+    Motives.save(motives_jsonfilename) if motives_jsonfilename else Motives.save()
 
 
 if __name__ == "__main__":
-    load_motives: Motives = Motives()
-    load_motives.load()
-
-    print(load_motives.value(45000))  # 0.23
-    print(load_motives.value(46000, True))  # 0.28
+    print(__file__)
+    convert()

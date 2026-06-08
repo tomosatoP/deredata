@@ -12,6 +12,7 @@ from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsMotifLogger
 
+# 特技モチーフ効果量のデータベースのファイル名。
 MOTIFDB: str = database_folder() + "motif.json"
 
 
@@ -44,19 +45,8 @@ class Motives:
     特技モチーフ効果量のデータベースクラス。
     """
 
-    def __init__(self) -> None:
-        self._motives: list[Motif] = list()
-        self._motives_grand: list[Motif] = list()
-        self._path = Path(MOTIFDB)
-
-    @property
-    def filename(self) -> str:
-        """特技モチーフ効果量データベースのファイル名。"""
-        return self._path.name
-
-    @filename.setter
-    def filename(self, value: str) -> None:
-        self._path = Path(value)
+    _motives: list[Motif] = list()
+    _motives_grand: list[Motif] = list()
 
     def value(self, appeal: int, grand: bool = False) -> float:
         """
@@ -71,57 +61,69 @@ class Motives:
         :rtype: float
         """
 
-        database = self._motives if not grand else self._motives_grand
+        database = self.__class__._motives if not grand else self.__class__._motives_grand
 
         return [motif.rate for motif in database if motif.appeal <= appeal][-1]
 
-    def load(self, path: Path | None = None) -> None:
+    def add_motif(self, motif: Motif) -> None:
+        self.__class__._motives.append(motif)
+
+    def add_motif_grand(self, motif: Motif) -> None:
+        self.__class__._motives_grand.append(motif)
+
+    @classmethod
+    def _clear(cls) -> None:
+        cls._motives.clear()
+        cls._motives_grand.clear()
+
+    @classmethod
+    def load(cls, filename: str = MOTIFDB) -> None:
         """
         特技モチーフ効果量のデータを読み込む。
         """
-        self._motives.clear()
-        self._motives_grand.clear()
 
-        if not isinstance(self._path, Path) or not self._path.exists():
-            raise MotifError(f"{self.__class__.__name__}.load: ")
+        path = Path(filename)
+        if any([not isinstance(path, Path), not path.exists(), not path.is_file()]):
+            raise MotifError(f"{cls.__name__}.load: ")
 
-        with self._path.open("r", encoding="utf-8-sig") as f:
+        cls._clear()
+
+        with path.open("r", encoding="utf-8-sig") as f:
             data = json.load(f)
             for motif in data["通常ライブ"]:
-                self._motives.append(
+                cls._motives.append(
                     Motif(
                         appeal=int(motif["アピール値"]),
                         rate=float(motif["倍率"]),
                     )
                 )
             for motif in data["グランドライブ"]:
-                self._motives_grand.append(
+                cls._motives_grand.append(
                     Motif(
                         appeal=int(motif["アピール値"]),
                         rate=float(motif["倍率"]),
                     )
                 )
 
-        LibsMotifLogger.info(
-            f"{self.__class__.__name__}.load: {
-                (len(self._motives) + len(self._motives_grand))
-            }件の特技モチーフ効果量を読み込みました。"
-        )
+        number: int = len(cls._motives) + len(cls._motives_grand)
+        LibsMotifLogger.info(f"{cls.__name__}.load: {number}件の特技モチーフ効果量を読み込みました。")
 
-    def save(self) -> None:
+    @classmethod
+    def save(cls, filename: str = MOTIFDB) -> None:
         """
         特技モチーフ効果量のデータを保存。
         """
 
-        if not isinstance(self._path, Path):
-            raise MotifError(f"{self.__class__.__name__}.save: ")
+        path: Path = Path(filename)
+        if not isinstance(path, Path):
+            raise MotifError(f"{cls.__name__}.save: ")
 
         motifdb = [
             {
                 "アピール値": motif.appeal,
                 "倍率": motif.rate,
             }
-            for motif in self._motives
+            for motif in cls._motives
         ]
 
         motifdb_grand = [
@@ -129,13 +131,14 @@ class Motives:
                 "アピール値": motif.appeal,
                 "倍率": motif.rate,
             }
-            for motif in self._motives_grand
+            for motif in cls._motives_grand
         ]
 
-        with self._path.open("w", encoding="utf-8") as f:
+        with path.open("w", encoding="utf-8") as f:
             json.dump({"通常ライブ": motifdb, "グランドライブ": motifdb_grand}, f, indent=4, ensure_ascii=False)
 
-        LibsMotifLogger.info(f"{self.__class__.__name__}.save: 特技モチーフ効果量データベースを保存しました。")
+        number: int = len(cls._motives) + len(cls._motives_grand)
+        LibsMotifLogger.info(f"{cls.__name__}.save: {number}件の特技モチーフ効果量データベースを保存しました。")
 
 
 if __name__ == "__main__":

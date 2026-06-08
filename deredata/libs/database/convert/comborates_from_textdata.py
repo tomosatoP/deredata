@@ -12,8 +12,13 @@ comboratedatas: ComboRates = ComboRates()
 COMBORATEDATA: str = textdata_folder() + "appendix_comborate.txt"
 
 
-def main() -> None:
-    with open(COMBORATEDATA, "r", encoding="utf-8-sig") as f:
+def convert(
+    comborate_txtfilename: str = COMBORATEDATA,
+    comborate_jsonfilename: str | None = None,
+) -> None:
+
+    ComboRates._clear()
+    with open(comborate_txtfilename, "r", encoding="utf-8-sig") as f:
         datas = csv.DictReader(f)
 
         for data in datas:
@@ -23,11 +28,9 @@ def main() -> None:
             )
             comboratedatas.add(comborate)
 
-    comboratedatas.save()
+    ComboRates.save(comborate_jsonfilename) if comborate_jsonfilename else ComboRates.save()
 
 
 if __name__ == "__main__":
-    load_comboratedatas: ComboRates = ComboRates()
-    load_comboratedatas.load()
-
-    print(f"{load_comboratedatas.rate(0.1)}")
+    print(__file__)
+    convert()

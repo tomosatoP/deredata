@@ -64,7 +64,7 @@ class Flavors:
         :rtype: Falvor
         """
 
-        return {flavor for flavor in Flavors._flavors if flavor.episode == episode}.pop()
+        return {flavor for flavor in self.__class__._flavors if flavor.episode == episode}.pop()
 
     def gets(self) -> set[Flavor]:
         """
@@ -74,7 +74,7 @@ class Flavors:
         :rtype: set[Flavor]
         """
 
-        return Flavors._flavors
+        return self.__class__._flavors
 
     def add(self, flavor: Flavor) -> None:
         """
@@ -83,7 +83,7 @@ class Flavors:
         :param Flavor flavor: 追加するエピソードのフレーバー
         """
 
-        Flavors._flavors.add(flavor)
+        self.__class__._flavors.add(flavor)
 
     def remove(self, flavor: Flavor) -> None:
         """
@@ -92,7 +92,7 @@ class Flavors:
         :param Flavor flavor: 削除するエピソードのフレーバー。
         """
 
-        Flavors._flavors.remove(flavor)
+        self.__class__._flavors.remove(flavor)
 
     @classmethod
     def load(cls, filename: str = FLAVORSDB) -> None:
@@ -115,7 +115,7 @@ class Flavors:
                 gacha=GachaType(data["入手枠"]),
                 registration_date=data["登録日"],
             )
-            Flavors._flavors.add(flavor)
+            cls._flavors.add(flavor)
 
         LibsFlavorsLogger.info(
             f"{cls.__name__}.load: {len(cls._flavors)}件のエピソードフレーバー情報データベースを読み込みました。"

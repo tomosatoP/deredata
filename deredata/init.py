@@ -64,9 +64,9 @@ def setup_databeses() -> None:
     from deredata.libs.database.convert import skills_from_textdata
     from deredata.libs.database.convert import skills_from_textdata_mystyle
     from deredata.libs.database.convert import comborates_from_textdata
-    from deredata.libs.database.convert import dominant_from_textdata
-    from deredata.libs.database.convert import lifesparkle_from_textdata
-    from deredata.libs.database.convert import motif_from_textdata
+    from deredata.libs.database.convert import dominants_from_textdata
+    from deredata.libs.database.convert import lifesparkles_from_textdata
+    from deredata.libs.database.convert import motives_from_textdata
     from deredata.libs.database.convert import musiclevels_from_textdata
     from deredata.libs.database.convert import potentials_from_textdata
 
@@ -76,10 +76,10 @@ def setup_databeses() -> None:
     buffs_from_textdata_mystyle.convert()
     skills_from_textdata.convert()
     skills_from_textdata_mystyle.convert()
-    comborates_from_textdata.main()
-    dominant_from_textdata.main()
-    lifesparkle_from_textdata.main()
-    motif_from_textdata.main()
+    comborates_from_textdata.convert()
+    dominants_from_textdata.convert()
+    lifesparkles_from_textdata.convert()
+    motives_from_textdata.convert()
     musiclevels_from_textdata.convert()
     potentials_from_textdata.convert()
 
