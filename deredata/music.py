@@ -163,10 +163,10 @@ class MusicView(Factory.BoxLayout):
     musicdatalabel = Factory.ObjectProperty(None)  # デレステ譜面データの項目ラベル
     musicdataviews = Factory.ObjectProperty(None)  # デレステ譜面データの選択対象リスト
 
-    _musics: Musics = Musics()
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
+
+        self._musics: Musics = Musics()
 
         self.musicdatalabel.songcategory.values = ["すべてのカテゴリー"] + [member.value for member in SongCategory]
         self.musicdatalabel.songtype.values = ["すべての楽曲タイプ"] + [member.value for member in SongType]
@@ -179,16 +179,6 @@ class MusicView(Factory.BoxLayout):
         self.musicdataviews.layout_manager.bind(selected_nodes=lambda instance, values: self.update_timechart(values))
 
         MusicLogger.info(f"{self.__class__.__name__}: 初期化しました。")
-
-    @classmethod
-    def load(cls) -> None:
-        """
-        デレステ譜面ファイルデータベースを読み込む。
-        """
-
-        cls._musics.load()
-
-        MusicLogger.info(f"{cls.__name__}: データベースを読み込みました。")
 
     def close(self) -> None:
         """
@@ -213,20 +203,16 @@ class MusicView(Factory.BoxLayout):
 
         # カテゴリーによるデレステ譜面データの選抜
         musics_by_category: set[Music] = (
-            {
-                music
-                for music in MusicView._musics.gets()
-                if music.song.category == self.musicdatalabel.songcategory.text
-            }
+            {music for music in self._musics.gets() if music.song.category == self.musicdatalabel.songcategory.text}
             if self.musicdatalabel.songcategory.text != "すべてのカテゴリー"
-            else MusicView._musics.gets()
+            else self._musics.gets()
         )
 
         # 楽曲タイプによるデレステ譜面データの選抜
         musics_by_type: set[Music] = (
-            {music for music in MusicView._musics.gets() if music.song.type == self.musicdatalabel.songtype.text}
+            {music for music in self._musics.gets() if music.song.type == self.musicdatalabel.songtype.text}
             if self.musicdatalabel.songtype.text != "すべての楽曲タイプ"
-            else MusicView._musics.gets()
+            else self._musics.gets()
         )
 
         self.musicdataviews.layout_manager.clear_selection()

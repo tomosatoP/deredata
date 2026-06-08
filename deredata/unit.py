@@ -87,17 +87,11 @@ class UnitView(Factory.BoxLayout):
 
     unitdataviews = Factory.ObjectProperty(None)
 
-    _units: Units = Units()
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
+        super().__init__(**kwargs)
+        self._units: Units = Units()
 
-    @classmethod
-    def load(cls) -> None:
-        """
-        ユニットデータベースを読み込む。
-        """
-
-        cls._units.load()
-
-        UnitLogger.info(f"{cls.__name__}: データベースを読み込みました。")
+        UnitLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 
     def close(self) -> None:
         """
@@ -112,7 +106,7 @@ class UnitView(Factory.BoxLayout):
         """
 
         self.unitdataviews.layout_manager.clear_selection()
-        self.unitdataviews.data = [{"unitdata": unit} for unit in sorted(UnitView._units.gets())]
+        self.unitdataviews.data = [{"unitdata": unit} for unit in sorted(self._units.gets())]
 
     def selected(self) -> list[Unit | GrandliveUnit]:
         """

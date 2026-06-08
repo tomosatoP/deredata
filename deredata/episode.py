@@ -73,6 +73,14 @@ class EpisodeFlavorView(Factory.BoxLayout):
     alterlife = Factory.ObjectProperty(None)
     alterskill = Factory.ObjectProperty(None)
 
+    def __init__(self, **kwargs: dict) -> None:
+        super().__init__(**kwargs)
+
+        self._episodes: Episodes = Episodes()
+        self._skills: Skills = Skills()
+        self._idols: Idols = Idols()
+        self._potentials: Potentials = Potentials()
+
     def update(self, flavor: Flavor = Flavor()) -> None:
         """
         アイドルのエピソードフレーバーを更新する。
@@ -82,9 +90,9 @@ class EpisodeFlavorView(Factory.BoxLayout):
         :param Flavor flavor: アイドルのエピソードフレーバー。
         """
 
-        episode: Episode = EpisodeView._episodes.get(flavor.episode)
-        skill: Skill = EpisodeView._skills.get(episode.skill)
-        idol: Idol = EpisodeView._idols.get(episode.ruby)
+        episode: Episode = self._episodes.get(flavor.episode)
+        skill: Skill = self._skills.get(episode.skill)
+        idol: Idol = self._idols.get(episode.ruby)
 
         self.ruby.update("ふりがな", str(episode.ruby))
 
@@ -98,22 +106,22 @@ class EpisodeFlavorView(Factory.BoxLayout):
 
         self.altervocal.update(
             "ボーカル",
-            str(ceil((episode.vocal + EpisodeView._potentials.value("ボーカル", episode.rare, idol.vocal)) * 1.4))
+            str(ceil((episode.vocal + self._potentials.value("ボーカル", episode.rare, idol.vocal)) * 1.4))
             + f"({idol.vocal})",
         )
         self.alterdance.update(
             "ダンス",
-            str(ceil((episode.dance + EpisodeView._potentials.value("ダンス", episode.rare, idol.dance)) * 1.4))
+            str(ceil((episode.dance + self._potentials.value("ダンス", episode.rare, idol.dance)) * 1.4))
             + f"({idol.dance})",
         )
         self.altervisual.update(
             "ビジュアル",
-            str(ceil((episode.visual + EpisodeView._potentials.value("ビジュアル", episode.rare, idol.visual)) * 1.4))
+            str(ceil((episode.visual + self._potentials.value("ビジュアル", episode.rare, idol.visual)) * 1.4))
             + f"({idol.visual})",
         )
         self.alterlife.update(
             "ライフ",
-            str(episode.life + EpisodeView._potentials.value("ライフ", episode.rare, idol.life)) + f"({idol.life})",
+            str(episode.life + self._potentials.value("ライフ", episode.rare, idol.life)) + f"({idol.life})",
         )
         self.alterskill.update(
             "特技発動確率(%)",
@@ -121,7 +129,7 @@ class EpisodeFlavorView(Factory.BoxLayout):
                 ceil(
                     (
                         probability_value(skill.probability) * (1.00 + (episode.skill_level - 1.0) / 18.0)
-                        + EpisodeView._potentials.value("特技発動率", episode.rare, idol.skill)
+                        + self._potentials.value("特技発動率", episode.rare, idol.skill)
                     )
                     * 130
                 )
@@ -244,15 +252,13 @@ class EpisodeView(Factory.BoxLayout):
     episodedataviews = Factory.ObjectProperty(None)
     episodeflavorview = Factory.ObjectProperty(None)
 
-    _idols: Idols = Idols()
-    _episodes: Episodes = Episodes()
-    _flavors: Flavors = Flavors()
-    _buffs: Buffs = Buffs()
-    _skills: Skills = Skills()
-    _potentials: Potentials = Potentials()
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
+
+        self._episodes: Episodes = Episodes()
+        self._flavors: Flavors = Flavors()
+        self._buffs: Buffs = Buffs()
+        self._skills: Skills = Skills()
 
         self.episodedatalabel.name.values = list(HIRAGANA)
         self.episodedatalabel.type.values = ["CUTE", "COOL", "PASSION"]
@@ -260,9 +266,9 @@ class EpisodeView(Factory.BoxLayout):
         self.episodedatalabel.mystyle.values = ["マイスタイルを含むアイドル", "マイスタイル"]
         self.episodedatalabel.rare.values = ["USRPLUS", "SSRPLUS", "SRPLUS", "RPLUS", "NPLUS"]
         self.episodedatalabel.buff_class.values = ["すべてのセンター効果"] + list(
-            EpisodeView._buffs.buff_groupby_categorynames
+            self._buffs.buff_groupby_categorynames
         )
-        self.episodedatalabel.skill_class.values = ["すべての特技"] + list(EpisodeView._skills.skill_groupby_categories)
+        self.episodedatalabel.skill_class.values = ["すべての特技"] + list(self._skills.skill_groupby_categories)
 
         self.episodedatalabel.name.text = "あ行"
         self.episodedatalabel.type.text = "CUTE"
@@ -284,18 +290,6 @@ class EpisodeView(Factory.BoxLayout):
 
         EpisodeLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 
-    @classmethod
-    def load(cls) -> None:
-
-        cls._idols.load()
-        cls._episodes.load()
-        cls._flavors.load()
-        cls._buffs.load()
-        cls._skills.load()
-        cls._potentials.load()
-
-        EpisodeLogger.info(f"{cls.__class__.__name__}: データベースを読み込みました。")
-
     def close(self) -> None:
         """
         データベースを閉じる。
@@ -308,7 +302,7 @@ class EpisodeView(Factory.BoxLayout):
     def update_flavor(self, selected_nodes: list[int] = []) -> None:
 
         flavor: Flavor = (
-            EpisodeView._flavors.get(self.episodedataviews.data[selected_nodes[0]]["episodedata"].episode)
+            self._flavors.get(self.episodedataviews.data[selected_nodes[0]]["episodedata"].episode)
             if selected_nodes
             else Flavor()
         )
@@ -319,60 +313,56 @@ class EpisodeView(Factory.BoxLayout):
         # アイドルのふりがな（頭文字のみ）の絞り込み
         episodes_by_ruby: set[Episode] = {
             episode
-            for episode in EpisodeView._episodes.gets()
+            for episode in self._episodes.gets()
             if episode.ruby.startswith(HIRAGANA.get(self.episodedatalabel.name.text, ()))
         }
 
         # アイドルタイプの絞り込み
         episodes_by_type: set[Episode] = {
-            episode for episode in EpisodeView._episodes.gets() if episode.type.name == self.episodedatalabel.type.text
+            episode for episode in self._episodes.gets() if episode.type.name == self.episodedatalabel.type.text
         }
 
         # ドミナントアイドルタイプの絞り込み
         episodes_by_dominant: set[Episode] = (
-            {
-                episode
-                for episode in EpisodeView._episodes.gets()
-                if episode.dominant.name in ["CUTE", "COOL", "PASSION"]
-            }
+            {episode for episode in self._episodes.gets() if episode.dominant.name in ["CUTE", "COOL", "PASSION"]}
             if self.episodedatalabel.dominant.text != "ドミナントを含むアイドル"
-            else EpisodeView._episodes.gets()
+            else self._episodes.gets()
         )
 
         # マイスタイルの絞り込み
         episodes_by_mystyle: set[Episode] = (
-            {episode for episode in EpisodeView._episodes.gets() if episode.mystyle}
+            {episode for episode in self._episodes.gets() if episode.mystyle}
             if self.episodedatalabel.mystyle.text != "マイスタイルを含むアイドル"
-            else EpisodeView._episodes.gets()
+            else self._episodes.gets()
         )
 
         # レア度の絞り込み
         episodes_by_rare: set[Episode] = {
-            episode for episode in EpisodeView._episodes.gets() if episode.rare.name == self.episodedatalabel.rare.text
+            episode for episode in self._episodes.gets() if episode.rare.name == self.episodedatalabel.rare.text
         }
 
         # センター効果の絞り込み
         episodes_by_buff: set[Episode] = (
             {
                 episode
-                for episode in EpisodeView._episodes.gets()
+                for episode in self._episodes.gets()
                 if episode.buff_class
-                in EpisodeView._buffs.buff_groupby_categorynames.get(self.episodedatalabel.buff_class.text, ())
+                in self._buffs.buff_groupby_categorynames.get(self.episodedatalabel.buff_class.text, ())
             }
             if self.episodedatalabel.buff_class.text != "すべてのセンター効果"
-            else EpisodeView._episodes.gets()
+            else self._episodes.gets()
         )
 
         # 特技の絞り込み
         episodes_by_skill: set[Episode] = (
             {
                 episode
-                for episode in EpisodeView._episodes.gets()
+                for episode in self._episodes.gets()
                 if episode.skill_class
-                in EpisodeView._skills.skill_groupby_categories.get(self.episodedatalabel.skill_class.text, ())
+                in self._skills.skill_groupby_categories.get(self.episodedatalabel.skill_class.text, ())
             }
             if self.episodedatalabel.skill_class.text != "すべての特技"
-            else EpisodeView._episodes.gets()
+            else self._episodes.gets()
         )
 
         self.episodedataviews.layout_manager.clear_selection()

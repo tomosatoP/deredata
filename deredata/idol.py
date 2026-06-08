@@ -184,11 +184,11 @@ class IdolView(Factory.BoxLayout):
     idoldataviews = Factory.ObjectProperty(None)
     idolprofileview = Factory.ObjectProperty(None)
 
-    _idols: Idols = Idols()
-    _profiles: Profiles = Profiles()
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
+
+        self._idols: Idols = Idols()
+        self._profiles: Profiles = Profiles()
 
         self.idoldatalabel.name.values = list(HIRAGANA)
         self.idoldatalabel.type.values = ["CUTE", "COOL", "PASSION"]
@@ -201,17 +201,6 @@ class IdolView(Factory.BoxLayout):
         self.idoldataviews.layout_manager.bind(selected_nodes=lambda instacne, values: self.update_profile(values))
 
         IdolLogger.info(f"{self.__class__.__name__}: 初期化しました。")
-
-    @classmethod
-    def load(cls) -> None:
-        """
-        アイドルのデータとプロフィールのデータベースを読み込む。
-        """
-
-        cls._idols.load()
-        cls._profiles.load()
-
-        IdolLogger.info(f"{cls.__name__}: データベースを読み込みました。")
 
     def close(self) -> None:
         """
@@ -228,7 +217,7 @@ class IdolView(Factory.BoxLayout):
         """
 
         profile: Profile = (
-            IdolView._profiles.get(self.idoldataviews.data[selected_nodes[0]]["idoldata"].ruby)
+            self._profiles.get(self.idoldataviews.data[selected_nodes[0]]["idoldata"].ruby)
             if selected_nodes
             else Profile()
         )
@@ -247,7 +236,7 @@ class IdolView(Factory.BoxLayout):
                 idol.ruby.startswith(HIRAGANA.get(self.idoldatalabel.name.text, ()))
                 and idol.type.name == self.idoldatalabel.type.text
             ),
-            sorted(IdolView._idols.gets(), key=lambda x: x.ruby),
+            sorted(self._idols.gets(), key=lambda x: x.ruby),
         )
 
         self.idoldataviews.layout_manager.clear_selection()

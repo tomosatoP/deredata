@@ -27,6 +27,10 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
     selected = Factory.BooleanProperty(None)
     selectable = Factory.BooleanProperty(True)
 
+    def __init__(self, **kwargs: dict[str, Any]) -> None:
+        super().__init__(**kwargs)
+        self._idols: Idols = Idols()
+
     def refresh_view_attrs(self, rv: RecycleView, index: int, data: dict) -> Any:
         """
         データ、ビューの初期化時、インデックスを付け直す（class ``RecycleAdapter`` が呼び出す）。
@@ -45,11 +49,11 @@ class EpisodeInfoViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
         self.strepisode.text = self.episode.episode
         self.buff.text = self.episode.buff_class
         self.skill.text = self.episode.skill_class
-        self.vocal_potential.text = str(BuffSkillView._idols.get(self.episode.ruby).vocal)
-        self.dance_potential.text = str(BuffSkillView._idols.get(self.episode.ruby).dance)
-        self.visual_potential.text = str(BuffSkillView._idols.get(self.episode.ruby).visual)
-        self.life_potential.text = str(BuffSkillView._idols.get(self.episode.ruby).life)
-        self.skill_potential.text = str(BuffSkillView._idols.get(self.episode.ruby).skill)
+        self.vocal_potential.text = str(self._idols.get(self.episode.ruby).vocal)
+        self.dance_potential.text = str(self._idols.get(self.episode.ruby).dance)
+        self.visual_potential.text = str(self._idols.get(self.episode.ruby).visual)
+        self.life_potential.text = str(self._idols.get(self.episode.ruby).life)
+        self.skill_potential.text = str(self._idols.get(self.episode.ruby).skill)
 
         return super().refresh_view_attrs(rv, index, data)
 
@@ -100,15 +104,11 @@ class EpisodeSelector(Factory.BoxLayout):
     episodeselector = Factory.ObjectProperty(None)
 
     def __init__(self, **kwargs: dict[str, Any]) -> None:
-        """
-        各種絞り込み条件の変更に応じて、アイドルのエピソードを絞り込みを行う。
-
-        - 所有、アイドルタイプ、レア度、特技発動間隔
-        - センター効果分類説明
-        - 特技分類
-        """
-
         super().__init__(**kwargs)
+
+        self._skills: Skills = Skills()
+        self._buffs: Buffs = Buffs()
+        self._episodes: Episodes = Episodes()
 
         # 所有、アイドルタイプ、レア度、特技発動間隔で絞り込み
         self.framework.clear_widgets()
@@ -130,21 +130,21 @@ class EpisodeSelector(Factory.BoxLayout):
             self.framework.add_widget(togglebutton)
 
         self.framework.add_widget(Factory.StrView(text="特技発動間隔"))
-        for interval in sorted({skill.interval for skill in BuffSkillView._skills.gets()}, reverse=True):
+        for interval in sorted({skill.interval for skill in self._skills.gets()}, reverse=True):
             togglebutton = Factory.StrToggleButton(text=str(interval), state="normal")
             togglebutton.bind(state=lambda instance, values: self.update())
             self.framework.add_widget(togglebutton)
 
         # センター効果分類説明で絞り込み
         self.buffselector.clear_widgets()
-        for categoryname in sorted(BuffSkillView._buffs.categorynames):
+        for categoryname in sorted(self._buffs.categorynames):
             togglebutton = Factory.StrToggleButton(text=categoryname, state="normal")
             togglebutton.bind(state=lambda instance, values: self.update())
             self.buffselector.add_widget(togglebutton)
 
         # 特技分類で絞り込み
         self.skillselector.clear_widgets()
-        for category in sorted(BuffSkillView._skills.categories):
+        for category in sorted(self._skills.categories):
             togglebutton = Factory.StrToggleButton(text=category, state="normal")
             togglebutton.bind(state=lambda instance, values: self.update())
             self.skillselector.add_widget(togglebutton)
@@ -161,9 +161,9 @@ class EpisodeSelector(Factory.BoxLayout):
         # 所有しているかどうかでエピソードを制限
         episodes_by_hold: set[Episode]
         if self.hold.state == "down":
-            episodes_by_hold = {episode for episode in BuffSkillView._episodes.gets() if episode.star_rank > 0}
+            episodes_by_hold = {episode for episode in self._episodes.gets() if episode.star_rank > 0}
         else:
-            episodes_by_hold = {episode for episode in BuffSkillView._episodes.gets()}
+            episodes_by_hold = {episode for episode in self._episodes.gets()}
 
         # アイドルタイプでエピソードを制限
         types: set[str] = {
@@ -171,9 +171,7 @@ class EpisodeSelector(Factory.BoxLayout):
             for widget in self.framework.children
             if widget.text in ["CUTE", "COOL", "PASSION"] and widget.state == "down"
         }
-        episodes_by_type: set[Episode] = {
-            episode for episode in BuffSkillView._episodes.gets() if episode.type.name in types
-        }
+        episodes_by_type: set[Episode] = {episode for episode in self._episodes.gets() if episode.type.name in types}
 
         # レア度でエピソードを制限
         rares: set[str] = {
@@ -181,30 +179,22 @@ class EpisodeSelector(Factory.BoxLayout):
             for widget in self.framework.children
             if widget.text in ["USRPLUS", "SSRPLUS", "SRPLUS", "RPLUS", "NPLUS"] and widget.state == "down"
         }
-        episodes_by_rare: set[Episode] = {
-            episode for episode in BuffSkillView._episodes.gets() if episode.rare.name in rares
-        }
+        episodes_by_rare: set[Episode] = {episode for episode in self._episodes.gets() if episode.rare.name in rares}
 
         # センター効果でエピソードを制限
         buffcategorynames: set[str] = {widget.text for widget in self.buffselector.children if widget.state == "down"}
         buffs: set[str] = set(
-            itertools.chain.from_iterable(
-                [BuffSkillView._buffs.buffs_by_categoryname(name) for name in buffcategorynames]
-            )
+            itertools.chain.from_iterable([self._buffs.buffs_by_categoryname(name) for name in buffcategorynames])
         )
-        episodes_by_buff: set[Episode] = {
-            episode for episode in BuffSkillView._episodes.gets() if episode.buff_class in buffs
-        }
+        episodes_by_buff: set[Episode] = {episode for episode in self._episodes.gets() if episode.buff_class in buffs}
 
         # 特技でエピソードを制限
         skillcategories: set[str] = {widget.text for widget in self.skillselector.children if widget.state == "down"}
         skills: set[str] = set(
-            itertools.chain.from_iterable(
-                [BuffSkillView._skills.skills_by_category(category) for category in skillcategories]
-            )
+            itertools.chain.from_iterable([self._skills.skills_by_category(category) for category in skillcategories])
         )
         episodes_by_skill: set[Episode] = {
-            episode for episode in BuffSkillView._episodes.gets() if episode.skill_class in skills
+            episode for episode in self._episodes.gets() if episode.skill_class in skills
         }
 
         # 特技発動間隔でエピソードを制限
@@ -212,9 +202,7 @@ class EpisodeSelector(Factory.BoxLayout):
             int(widget.text) for widget in self.framework.children if widget.text.isdigit() and widget.state == "down"
         }
         episodes_by_interval: set[Episode] = {
-            episode
-            for episode in BuffSkillView._episodes.gets()
-            if BuffSkillView._skills.get(episode.skill).interval in intervals
+            episode for episode in self._episodes.gets() if self._skills.get(episode.skill).interval in intervals
         }
 
         # 選択されたエピソード
@@ -356,11 +344,6 @@ class BuffSkillView(Factory.TabbedPanel):
     grandb = Factory.ObjectProperty(None)
     grandc = Factory.ObjectProperty(None)
 
-    _idols: Idols = Idols()
-    _buffs: Buffs = Buffs()
-    _skills: Skills = Skills()
-    _episodes: Episodes = Episodes()
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
@@ -371,19 +354,6 @@ class BuffSkillView(Factory.TabbedPanel):
         self.grandc.add_widget(FiveMemberUnit())
 
         BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
-
-    @classmethod
-    def load(cls) -> None:
-        """
-        データベースの読み込み。
-        """
-
-        cls._idols.load()
-        cls._episodes.load()
-        cls._buffs.load()
-        cls._skills.load()
-
-        BuffSkillLogger.info(f"{cls.__name__}: データベースを読み込みました。")
 
     def close(self) -> None:
         """

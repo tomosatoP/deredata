@@ -107,20 +107,12 @@ class SimulatorView(Factory.BoxLayout):
 
     simulatordataviews = Factory.ObjectProperty(None)
 
-    _episodes: Episodes = Episodes()
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
-        pass
+        self._episodes: Episodes = Episodes()
 
-    @classmethod
-    def load(cls) -> None:
-        cls._episodes.load()
-        Calculator.load()
-        Simulator.load()
-
-        SimulatorLogger.info(f"{cls.__name__}: データベースを読み込みました。")
+        SimulatorLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 
     def close(self) -> None:
 
@@ -137,7 +129,7 @@ class SimulatorView(Factory.BoxLayout):
         # 6人編成のみ。
         # :todo: 6人編成を確認
         status: str = "追加"
-        episodes: list[Episode] = [SimulatorView._episodes.get(episodename) for episodename in unit.positions.list()]
+        episodes: list[Episode] = [self._episodes.get(episodename) for episodename in unit.positions.list()]
         if music.note_number != 0 and len(episodes) == 6:
             appeal = Calculator(music)
             appeal.run(unit)

@@ -11,8 +11,20 @@ from string import ascii_letters, digits
 from typing import Any
 from itertools import product
 
-from deredata.libs.database.units import Unit, Positions6
-from deredata.libs.database.musics import Music
+from deredata.libs.database.idols import Idols
+from deredata.libs.database.profiles import Profiles
+from deredata.libs.database.episodes import Episodes
+from deredata.libs.database.flavors import Flavors
+from deredata.libs.database.buffs import Buffs
+from deredata.libs.database.skills import Skills
+from deredata.libs.database.potentials import Potentials
+from deredata.libs.database.musiclevels import MusicLevels
+from deredata.libs.database.comborates import ComboRates
+from deredata.libs.database.motives import Motives
+from deredata.libs.database.dominants import Dominants
+from deredata.libs.database.lifesparkles import Lifesparkles
+from deredata.libs.database.units import Positions6, Unit, Units
+from deredata.libs.database.musics import Music, Musics
 
 from deredata.unit import UnitView
 from deredata.buffskill import BuffSkillView
@@ -284,12 +296,21 @@ class MainviewApp(App):
 
     def build(self) -> Deredata:
 
-        UnitView.load()
-        IdolView.load()
-        EpisodeView.load()
-        BuffSkillView.load()
-        MusicView.load()
-        SimulatorView.load()
+        # データベースの読み込み。
+        Idols.load()
+        Profiles.load()
+        Episodes.load()
+        Flavors.load()
+        Buffs.load()
+        Skills.load()
+        Potentials.load()
+        MusicLevels.load()
+        ComboRates.load()
+        Motives.load()
+        Dominants.load()
+        Lifesparkles.load()
+        Units.load()
+        Musics.load()
 
         self.root = Deredata()
         self.root.update()
