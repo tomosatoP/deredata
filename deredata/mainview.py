@@ -26,9 +26,10 @@ from deredata.libs.database.lifesparkles import Lifesparkles
 from deredata.libs.database.units import Positions6, Unit, Units
 from deredata.libs.database.musics import Music, Musics
 
+from deredata.livestyle import LiveStyleView
+from deredata.music import MusicView
 from deredata.unit import UnitView
 from deredata.buffskill import BuffSkillView
-from deredata.music import MusicView
 from deredata.episode import EpisodeView
 from deredata.idol import IdolView
 from deredata.simulator import SimulatorView
@@ -39,12 +40,22 @@ from kivy.uix.widget import Widget
 from kivy.logger import Logger as MainviewLogger
 
 
+TEST: dict = {
+    "a": {
+        "b": ["c", "d"],
+    },
+}
+
 COMMANDS: dict = {
+    "ライブスタイル": {
+        "ライブスタイル選択": "label_title",
+    },
     "楽曲一覧": {
-        "楽曲一覧": "command_show_button",
+        "楽曲選択": "label_title",
     },
     "ユニット一覧": {
-        "選択楽曲": "command_show_music_title",
+        "ライブスタイル選択": "label_title",
+        "選択楽曲": "label_muisc_title",
         "ユニット名を編集": "command_edit_unit_name",
         "ユニット一覧に追加": "command_add_unit",
         "ユニット一覧から削除": "command_delete_unit",
@@ -52,12 +63,14 @@ COMMANDS: dict = {
         "計算開始": "command_simulate",
     },
     "センター効果・特技": {
-        "選択楽曲": "command_show_music_title",
+        "ライブスタイル選択": "label_title",
+        "選択楽曲": "label_muisc_title",
         "シミュレーターに一括追加": "command_set_simulator_from_music_and_buffskill",
         "計算開始": "command_simulate",
     },
     "エピソード一覧": {
-        "選択楽曲": "command_show_music_title",
+        "ライブスタイル選択": "label_title",
+        "選択楽曲": "label_muisc_title",
         "センターに追加": "command_set_episode",
         "左隣りに追加": "command_set_episode",
         "右隣りに追加": "command_set_episode",
@@ -67,7 +80,7 @@ COMMANDS: dict = {
         "計算開始": "command_simulate",
     },
     "アイドル一覧": {
-        "アイドル一覧": "command_show_button",
+        "アイドル一覧": "label_title",
     },
 }
 
@@ -77,15 +90,17 @@ class DatabaseSeries(Factory.TabbedPanel):
     DatabaseSeries
     """
 
+    livestyelview = Factory.ObjectProperty(None)
+    musicview = Factory.ObjectProperty(None)
     unitview = Factory.ObjectProperty(None)
     buffskillview = Factory.ObjectProperty(None)
-    musicview = Factory.ObjectProperty(None)
     episodeview = Factory.ObjectProperty(None)
     idolview = Factory.ObjectProperty(None)
 
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
+        self.livestyleview.add_widget(LiveStyleView())
         self.unitview.add_widget(UnitView())
         self.buffskillview.add_widget(BuffSkillView())
         self.musicview.add_widget(MusicView())
@@ -155,24 +170,20 @@ class Deredata(Factory.BoxLayout):
         self.commands.clear_widgets()
 
         for key, value in COMMANDS[itemtitle].items():
-            self.commands.add_widget(Factory.Button(text=key, on_release=getattr(self, value)))
+            match value:
+                case "label_title":
+                    self.commands.add_widget(Factory.Label(text=key))
 
-    def command_show_button(self, instance: Widget) -> None: ...
+                case "label_muisc_title":
+                    if self.databaseseries.musicview.content.selected():
+                        music: Music = self.databaseseries.musicview.content.selected()
+                        title = "\n".join([music.song.category.name, music.song.name])
+                    else:
+                        title = "選択楽曲"
+                    self.commands.add_widget(Factory.Label(text=title))
 
-    def command_show_music_title(self, instance: Widget) -> None:
-        """
-        選択されている楽曲を表示する。
-
-        :param Widget instance: 呼び出したボタンウィジット。
-
-        :todo: 表示する文字列を省略表記設定。
-        """
-
-        if self.databaseseries.musicview.content.selected():
-            music: Music = self.databaseseries.musicview.content.selected()
-            instance.text = "\n".join([music.song.category.name, music.song.name])
-        else:
-            instance.text = "選択楽曲"
+                case _:
+                    self.commands.add_widget(Factory.Button(text=key, on_release=getattr(self, value)))
 
     def command_set_episode(self, instance: Widget) -> None:
         """

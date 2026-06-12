@@ -6,7 +6,7 @@
 #:include episode.kv
 #:include idol.kv
 #:include music.kv
-
+#:include livestyle.kv
 
 <DatabaseSeries>:
     unitview: unitview
@@ -14,11 +14,16 @@
     musicview: musicview
     episodeview: episodeview
     idolview: idolview
+    livestyleview: livestyleview
 
     tab_pos: "top_left" # "bottom_left"
-    tab_width: self.width / 5
+    tab_width: self.width / 6
     tab_height: set_height * 2
     do_default_tab: False
+
+    TabbedPanelItem:
+        id: livestyleview
+        text: "ライブスタイル"
 
     TabbedPanelItem:
         id: musicview

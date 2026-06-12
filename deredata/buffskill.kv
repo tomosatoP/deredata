@@ -174,31 +174,31 @@
     leftendposition: leftendposition
     rightendposition: rightendposition
 
+    TabbedPanel:
+        tab_pos: "top_left" # "bottom_left"
+        tab_width: self.width / 6
+        tab_height: set_height
+        do_default_tab: False
 
-    tab_pos: "top_left" # "bottom_left"
-    tab_width: self.width / 6
-    tab_height: set_height
-    do_default_tab: False
+        TabbedPanelItem:
+            id: centerposition
+            text: "センター"
 
-    TabbedPanelItem:
-        id: centerposition
-        text: "センター"
+        TabbedPanelItem:
+            id: leftposition
+            text: "左隣り"
 
-    TabbedPanelItem:
-        id: leftposition
-        text: "左隣り"
+        TabbedPanelItem:
+            id: rightposition
+            text: "右隣り"
 
-    TabbedPanelItem:
-        id: rightposition
-        text: "右隣り"
+        TabbedPanelItem:
+            id: leftendposition
+            text: "左端"
 
-    TabbedPanelItem:
-        id: leftendposition
-        text: "左端"
-
-    TabbedPanelItem:
-        id: rightendposition
-        text: "右端"
+        TabbedPanelItem:
+            id: rightendposition
+            text: "右端"
 
 <SixMemberUnit>:
     centerposition: centerposition
@@ -208,64 +208,33 @@
     rightendposition: rightendposition
     guestposition: guestposition
 
+    TabbedPanel:
 
-    tab_pos: "top_left" # "bottom_left"
-    tab_width: self.width / 6
-    tab_height: set_height
-    do_default_tab: False
+        tab_pos: "top_left" # "bottom_left"
+        tab_width: self.width / 6
+        tab_height: set_height
+        do_default_tab: False
 
-    TabbedPanelItem:
-        id: centerposition
-        text: "センター"
+        TabbedPanelItem:
+            id: centerposition
+            text: "センター"
 
-    TabbedPanelItem:
-        id: leftposition
-        text: "左隣り"
+        TabbedPanelItem:
+            id: leftposition
+            text: "左隣り"
 
-    TabbedPanelItem:
-        id: rightposition
-        text: "右隣り"
+        TabbedPanelItem:
+            id: rightposition
+            text: "右隣り"
 
-    TabbedPanelItem:
-        id: leftendposition
-        text: "左端"
+        TabbedPanelItem:
+            id: leftendposition
+            text: "左端"
 
-    TabbedPanelItem:
-        id: rightendposition
-        text: "右端"
+        TabbedPanelItem:
+            id: rightendposition
+            text: "右端"
 
-    TabbedPanelItem:
-        id: guestposition
-        text: "ゲスト"
-
-<BuffSKillView>
-    wideguest: wideguest
-    widenoguest: widenoguest
-    granda: granda
-    grandb: grandb
-    grandc: grandc
-
-    tab_pos: "top_left" # "bottom_left"
-    tab_width: self.width / 5
-    tab_height: set_height
-    do_default_tab: False
-
-    TabbedPanelItem:
-        id: wideguest
-        text: "Wide with Guest"
-
-    TabbedPanelItem:
-        id: widenoguest
-        text: "Wide"
-
-    TabbedPanelItem:
-        id: granda
-        text: "GrandLive A"
-
-    TabbedPanelItem:
-        id: grandb
-        text: "GrandLive B"
-
-    TabbedPanelItem:
-        id: grandc
-        text: "GrandLive C"
+        TabbedPanelItem:
+            id: guestposition
+            text: "ゲスト"

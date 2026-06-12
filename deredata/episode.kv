@@ -151,9 +151,11 @@
     height: set_height
 
     StrView:
+        size_hint_x: 40
         id: title
 
     StrView:
+        size_hint_x: 60
         id: value
 
 <EpisodeFlavorView>
@@ -221,7 +223,7 @@
 
     BoxLayout:
         orientation: "vertical"
-        size_hint_x: 90
+        size_hint_x: 80
 
         EpisodeDataLabel
             id: episodedatalabel
@@ -246,10 +248,10 @@
                 key_selection: "episodedata"
 
     Splitter:
-        size_hint_x: 15
+        size_hint_x: 20
         strip_size: set_height
         min_size: self.parent.width * 0.10
-        max_size: self.parent.width * 0.20
+        max_size: self.parent.width * 0.30
 
         ScrollView:
             do_scroll_x: False

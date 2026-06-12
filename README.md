@@ -59,6 +59,7 @@ cd derenotes
 . venv/bin/activate
 pip install git+https://github.com/tomosatoP/deredata.git
 init
+deactivate
 ~~~
 
 ### アップデート
@@ -69,6 +70,7 @@ cd derenotes
 . venv/bin/activate
 pip install -U git+https://github.com/tomosatoP/deredata.git
 init
+deactivate
 ~~~
 
 ## 使い方

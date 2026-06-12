@@ -232,7 +232,7 @@ class EpisodeSelector(Factory.BoxLayout):
         return reslut
 
 
-class FiveMemberUnit(Factory.TabbedPanel):
+class FiveMemberUnit(Factory.Screen):
     """
     5人編成
     """
@@ -243,7 +243,7 @@ class FiveMemberUnit(Factory.TabbedPanel):
     leftendposition = Factory.ObjectProperty(None)
     rightendposition = Factory.ObjectProperty(None)
 
-    def __init__(self, **kwargs: dict[str, Any]) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         self.centerposition.add_widget(EpisodeSelector())
@@ -279,7 +279,7 @@ class FiveMemberUnit(Factory.TabbedPanel):
         return result
 
 
-class SixMemberUnit(Factory.TabbedPanel):
+class SixMemberUnit(Factory.Screen):
     """
     6人編成
     """
@@ -291,7 +291,7 @@ class SixMemberUnit(Factory.TabbedPanel):
     rightendposition = Factory.ObjectProperty(None)
     guestposition = Factory.ObjectProperty(None)
 
-    def __init__(self, **kwargs: dict[str, Any]) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
 
         self.centerposition.add_widget(EpisodeSelector())
@@ -330,7 +330,7 @@ class SixMemberUnit(Factory.TabbedPanel):
         return reslut
 
 
-class BuffSkillView(Factory.TabbedPanel):
+class BuffSkillView(Factory.ScreenManager):
     """
     立ち位置別、各種条件でアイドルのエピソードを絞り込むウィジット。
 
@@ -338,20 +338,24 @@ class BuffSkillView(Factory.TabbedPanel):
       センター、左隣り、右隣り、左端、右端、ゲスト
     """
 
-    wideguest = Factory.ObjectProperty(None)
-    widenoguest = Factory.ObjectProperty(None)
-    granda = Factory.ObjectProperty(None)
-    grandb = Factory.ObjectProperty(None)
-    grandc = Factory.ObjectProperty(None)
-
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
-        self.wideguest.add_widget(SixMemberUnit())
-        self.widenoguest.add_widget(FiveMemberUnit())
-        self.granda.add_widget(FiveMemberUnit())
-        self.grandb.add_widget(FiveMemberUnit())
-        self.grandc.add_widget(FiveMemberUnit())
+        self.add_widget(SixMemberUnit(name="wide6"))
+        self.add_widget(FiveMemberUnit(name="unita"))
+        self.add_widget(FiveMemberUnit(name="unitb"))
+        self.add_widget(FiveMemberUnit(name="unitc"))
+        self.add_widget(FiveMemberUnit(name="carnival_1"))
+        self.add_widget(FiveMemberUnit(name="carnival_2"))
+        self.add_widget(FiveMemberUnit(name="carnival_3"))
+        self.add_widget(FiveMemberUnit(name="carnival_4"))
+        self.add_widget(FiveMemberUnit(name="carnival_5"))
+        self.add_widget(FiveMemberUnit(name="carnival_6"))
+        self.add_widget(FiveMemberUnit(name="carnival_7"))
+        self.add_widget(FiveMemberUnit(name="carnival_8"))
+        self.add_widget(FiveMemberUnit(name="carnival_9"))
+
+        self.current = "wide6"
 
         BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 
@@ -367,18 +371,19 @@ class BuffSkillView(Factory.TabbedPanel):
         更新。
         """
 
-        self.wideguest.content.update()
-        self.widenoguest.content.update()
-        self.granda.content.update()
-        self.grandb.content.update()
-        self.grandc.content.update()
+        # self.wideguest.content.update()
+        # self.widenoguest.content.update()
+        # self.granda.content.update()
+        # self.grandb.content.update()
+        # self.grandc.content.update()
+        pass
 
     def selected(self) -> list[Episode]:
         """
         選択されたエピソードを返す。
         """
 
-        reslut: list[Episode] = self.current_tab.content.selected()
+        reslut: list[Episode] = self.current_screen.selected()
         return reslut
 
 

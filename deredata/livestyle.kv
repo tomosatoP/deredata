@@ -1,0 +1,48 @@
+#:kivy 2.3.0
+#:include basewidget.kv
+
+
+<LiveCarnival@GridLayout>:
+    rows: 2
+
+    Label:
+        size_hint_x: 1
+        size_hint_y: None
+        height: set_height * 2
+        text: "ライブカーニバル"
+
+    Button:
+        text: "bb"
+
+<LiveStyleView>:
+
+    orientation: "lr-tb"
+
+    Button:
+        size_hint_x: 0.25
+        size_hint_y: None
+        height: set_height * 2
+        text: "通常ライブ"
+
+    Button:
+        size_hint_x: 0.25
+        size_hint_y: None
+        height: set_height * 2
+        text: "グランドライブ・ユニットＡ"
+
+    Button:
+        size_hint_x: 0.25
+        size_hint_y: None
+        height: set_height * 2
+        text: "グランドライブ・ユニットＢ"
+
+    Button:
+        size_hint_x: 0.25
+        size_hint_y: None
+        height: set_height * 2
+        text: "グランドライブ・ユニットＣ"
+
+    LiveCarnival:
+        size_hint_x: 1
+        size_hint_y: None
+        height: root.height - set_height * 2

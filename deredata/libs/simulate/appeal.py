@@ -46,7 +46,7 @@
 :出力:
     レゾナンスの適否
 
-    ユニット情報
+    ユニット情報（リスト）
         - 0: ゲストを含むユニットメンバーのエピソード名リスト
         - 1: ゲストを含むユニットメンバーのボーカルアピール値リスト
         - 2: ゲストを含むユニットメンバーのダンスアピール値リスト
@@ -55,7 +55,7 @@
         - 5: ユニットメンバーの特技発動確率リスト
         - 6: ユニットメンバーの特技継続期間リスト
 
-    サポートメンバー情報
+    サポートメンバー情報（リスト）
         - 0: サポートメンバーのエピソード名リスト
         - 1: サポートメンバーのボーカルアピール値リスト
         - 2: サポートメンバーのダンスアピール値リスト
@@ -120,40 +120,45 @@ class BoothIndices(IntEnum):
     """
     BOOTH効果の列挙クラス。ブース効果の添え字に相当する。
 
-    :CUTE: 0: キュートタイプ楽曲のみ選択可能、キュートタイプアイドルのアピール値アップ。
-    :COOL: 1: クールタイプ楽曲のみ選択可能、クールタイプアイドルのアピール値アップ。
-    :PASSION: 2: パッションタイプ楽曲のみ選択可能、パッションタイプアイドルのアピール値アップ。
-    :ALL_IDOLS: 3: 全てのアイドルのアピール値アップ。
-    :VOCAL: 4: ボーカルアピール値がアップ。
-    :DANCE: 5: ダンスアピール値がアップ。
-    :VISUAL: 6: ビジュアルアピール値がアップ。
-    :VOCAL_ONLY: 7: ボーカルアピール値のみアップ、ダンス、ビジュアルアピール値は ZERO。
-    :DANCE_ONLY: 8: ダンスアピール値のみアップ、ボーカル、ビジュアルアピール値は ZERO。
-    :VISUAL_ONLY: 9: ビジュアルアピール値のみアップ、ボーカル、ダンスアピール値は ZERO。
-    :UNIT_LIFE: 10: ユニットのライフに応じてアピール値がアップ。
-    :IDOL_STAR_RANK: 11: アイドルのスターランクに応じてアピール値がアップ。
-    :PRODUCE_PT: 12: アイドルの開放されているプロデュースptに応じてアピール値がアップ。
-    :EVENT_IDOL: 13: イベント指定アイドルのアピール値アップ。
-    :SONG_TYPE: 14: アピール値アップ。
-    :SKILL_TYPE: 15: 対象の特技を持つアイドルのみアピール値アップ。
+    :NA 0: 非該当
+    :ALL 1: 全てのアイドルのアピール値アップ。
+    :CUTE 2: キュートタイプ楽曲のみ選択可能、キュートタイプアイドルのアピール値アップ。
+    :COOL 3: クールタイプ楽曲のみ選択可能、クールタイプアイドルのアピール値アップ。
+    :PASSION 4: パッションタイプ楽曲のみ選択可能、パッションタイプアイドルのアピール値アップ。
+    :SELECTED 5: 特定楽曲のみ選択可能、アピール値アップ。
+    :VOCAL 9: ボーカルアピール値がアップ。
+    :DANCE 10: ダンスアピール値がアップ。
+    :VISUAL 11: ビジュアルアピール値がアップ。
+    :VOCAL_ONLY 12: ボーカルアピール値のみアップ、ダンス、ビジュアルアピール値は ZERO。
+    :DANCE_ONLY 13: ダンスアピール値のみアップ、ボーカル、ビジュアルアピール値は ZERO。
+    :VISUAL_ONLY 14: ビジュアルアピール値のみアップ、ボーカル、ダンスアピール値は ZERO。
+    :LIFE 15: ユニットのライフに応じてアピール値がアップ。
+    :STAR_RANK 16: アイドルのスターランクに応じてアピール値がアップ。
+    :PRODUCE_PT 17: アイドルの開放されているプロデュースptに応じてアピール値がアップ。
+    :EVENT_IDOL 18: イベント指定アイドルのアピール値アップ。
+    :SKILL 19: 対象の特技を持つアイドルのみアピール値アップ。
     """
 
-    CUTE = 0
-    COOL = 1
-    PASSION = 2
-    ALL_IDOLS = 3
-    VOCAL = 4
-    DANCE = 5
-    VISUAL = 6
-    VOCAL_ONLY = 7
-    DANCE_ONLY = 8
-    VISUAL_ONLY = 9
-    UNIT_LIFE = 10
-    IDOL_STAR_RANK = 11
-    PRODUCE_PT = 12
-    EVENT_IDOL = 13
-    SONG_TYPE = 14
-    SKILL_TYPE = 15
+    NA = 0
+    CUTE = 1
+    COOL = 2
+    PASSION = 3
+    ALL = 4
+    CUTE_SELECTED = 5
+    COOL_SELECTED = 6
+    PASSION_SELECTED = 7
+    ALL_SELECTED = 8
+    VOCAL = 9
+    DANCE = 10
+    VISUAL = 11
+    VOCAL_ONLY = 12
+    DANCE_ONLY = 13
+    VISUAL_ONLY = 14
+    LIFE = 15
+    STAR_RANK = 16
+    PRODUCE_PT = 17
+    EVENT_IDOL = 18
+    SKILL = 19
 
 
 @dataclass
@@ -221,49 +226,61 @@ class BuffContext:
     buffs_list: list[Buff] = field(default_factory=list)
 
 
-def appeal_formula(bonuses: list[np.ndarray]) -> np.ndarray:
+def appeal_formula(bonuses: list[np.ndarray], booth_buff: BoothIndices = BoothIndices.NA) -> np.ndarray:
     """
-    要素がボーナス（基礎値、様々な効果など）値のNUMPY配列から、メンバーもしくはサポメンのアピール値を計算する。
+    アピールを計算する。
+
+    ボーナス値を要素とするNUMPY配列（軸0: 効果、軸1: アピール、軸2: メンバー）から、
+    **効果** を組み合わせてアピール（軸0: アピール、軸1: メンバー）を求める。
 
         計算式: :math:`(bonuses[0]+bonuses[1])\\times(1.00+\\displaystyle \\sum{bonuses[2:]})`
 
     ボーカル・ダンス・ビジュアル
-        小数点以下切り上げ
+        小数点以下切り上げ。
+        GrandLiveでは、ユニット単位で適用し、合計する。
 
-            ゲストを含むユニットメンバーの場合
-                - bonuses[0]: 基礎値
-                - bonuses[1]: ポテンシャル補正
-                - bonuses[2]: 楽曲タイプ一致効果
-                - bonuses[3]: ルーム効果
-                - bonuses[4]: センター効果
-                - bonuses[5]: ゲストのセンター効果
+            ユニットメンバーの場合
+                - bonuses[0]: 基礎値のボーナス配列
+                - bonuses[1]: ポテンシャル補正のボーナス配列
+                - bonuses[2]: 楽曲タイプ一致効果のボーナス配列
+                - bonuses[3]: ルーム効果のボーナス配列
+                - bonuses[4]: センター効果のボーナス配列
+                - bonuses[5]: ゲストのセンター効果のボーナス配列（ゲストを含まない場合は、ZERO で埋める）
+                - bonuses[6]: BOOTH効果
 
             サポートメンバーの場合（**0.5倍する**）
-                - bonuses[0]: 基礎値
-                - bonuses[1]: ポテンシャル補正
-                - bonuses[2]: 楽曲タイプ一致効果
+                - bonuses[0]: 基礎値のボーナス配列
+                - bonuses[1]: ポテンシャル補正のボーナス配列
+                - bonuses[2]: 楽曲タイプ一致効果のボーナス配列
 
     ライフ
-        小数点以下切り上げ
-                - bonuses[0]: 基礎値
-                - bonuses[1]: ポテンシャル補正
-                - bonuses[2]: センター効果
-                - bonuses[3]: ゲストのセンター効果
+        小数点以下切り上げ。
+        サポートメンバーには、適用しない。
+        GrandLiveでは、ユニット単位で適用し、平均値を採用する。
+
+                - bonuses[0]: 基礎値のボーナス配列
+                - bonuses[1]: ポテンシャル補正のボーナス配列
+                - bonuses[2]: センター効果のボーナス配列
+                - bonuses[3]: ゲストのセンター効果のボーナス配列（ゲストを含まない場合は、ZERO で埋める）
 
     特技発動確率
+        サポートメンバーには、適用しない。
+
                 - bonuses[0]: :math:`基礎値\\times(1.00+\\dfrac{特技LV-1}{18})`
-                - bonuses[1]: ポテンシャル補正
-                - bonuses[2]: 楽曲タイプ一致効果
-                - bonuses[3]: センター効果
-                - bonuses[4]: ゲストのセンター効果
+                - bonuses[1]: ポテンシャル補正のボーナス配列
+                - bonuses[2]: 楽曲タイプ一致効果のボーナス配列
+                - bonuses[3]: センター効果のボーナス配列
+                - bonuses[4]: ゲストのセンター効果のボーナス配列（ゲストを含まない場合は、ZERO で埋める）
 
 
     特技継続時間
+        サポートメンバーには、適用しない。
+
                 - bonuses[0]: :math:`基礎値\\times(1.00+\\dfrac{特技LV-1}{18})`
 
-    :param list[np.ndarray] bonuses: 計算に用いる項目リスト。
+    :param list[np.ndarray] bonuses: 要素がボーナス値の配列のリスト。
 
-    :return: 計算結果。
+    :return: アピール。
     :rtype: np.ndarray
     """
 
