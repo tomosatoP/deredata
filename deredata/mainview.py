@@ -40,12 +40,6 @@ from kivy.uix.widget import Widget
 from kivy.logger import Logger as MainviewLogger
 
 
-TEST: dict = {
-    "a": {
-        "b": ["c", "d"],
-    },
-}
-
 COMMANDS: dict = {
     "ライブスタイル": {
         "ライブスタイル選択": "label_title",
@@ -54,7 +48,7 @@ COMMANDS: dict = {
         "楽曲選択": "label_title",
     },
     "ユニット一覧": {
-        "ライブスタイル選択": "label_title",
+        "ライブスタイル選択": "label_livestyle",
         "選択楽曲": "label_muisc_title",
         "ユニット名を編集": "command_edit_unit_name",
         "ユニット一覧に追加": "command_add_unit",
@@ -63,13 +57,13 @@ COMMANDS: dict = {
         "計算開始": "command_simulate",
     },
     "センター効果・特技": {
-        "ライブスタイル選択": "label_title",
+        "ライブスタイル選択": "label_livestyle",
         "選択楽曲": "label_muisc_title",
         "シミュレーターに一括追加": "command_set_simulator_from_music_and_buffskill",
         "計算開始": "command_simulate",
     },
     "エピソード一覧": {
-        "ライブスタイル選択": "label_title",
+        "ライブスタイル選択": "label_livestyle",
         "選択楽曲": "label_muisc_title",
         "センターに追加": "command_set_episode",
         "左隣りに追加": "command_set_episode",
@@ -87,7 +81,7 @@ COMMANDS: dict = {
 
 class DatabaseSeries(Factory.TabbedPanel):
     """
-    DatabaseSeries
+    タブにデータベースを表示する。
     """
 
     livestyelview = Factory.ObjectProperty(None)
@@ -108,15 +102,24 @@ class DatabaseSeries(Factory.TabbedPanel):
         self.idolview.add_widget(IdolView())
 
     def update(self) -> None:
+        """
+        各タブ（データベース）の表示データ更新処理を呼び出す。
 
+        データベースの読み込み、再読み込みを表示に反映することを意図している。
+        """
+
+        self.musicview.content.update()
         self.unitview.content.update()
-        self.buffskillview.content.update()
+        self.buffskillview.content.update()  # 調整中
         self.episodeview.content.update()
         self.idolview.content.update()
-        self.musicview.content.update()
 
     def close(self) -> None:
+        """
+        各タブ（データベース）の停止処理を呼び出す。
+        """
 
+        self.livestyleview.content.close()
         self.unitview.content.close()
         self.buffskillview.content.close()
         self.episodeview.content.close()
@@ -172,6 +175,13 @@ class Deredata(Factory.BoxLayout):
         for key, value in COMMANDS[itemtitle].items():
             match value:
                 case "label_title":
+                    self.commands.add_widget(Factory.Label(text=key))
+
+                case "label_livestyle":
+                    if itemtitle == "センター効果・特技":
+                        # ライブスタイル選択に合わせ、スクリーンを切り替える。
+                        # いまのところ、通常ライブにしか対応できなので、"wide6"。
+                        self.databaseseries.buffskillview.content.current = "wide6"
                     self.commands.add_widget(Factory.Label(text=key))
 
                 case "label_muisc_title":

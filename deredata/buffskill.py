@@ -354,6 +354,9 @@ class BuffSkillView(Factory.ScreenManager):
         self.add_widget(FiveMemberUnit(name="carnival_7"))
         self.add_widget(FiveMemberUnit(name="carnival_8"))
         self.add_widget(FiveMemberUnit(name="carnival_9"))
+        self.add_widget(FiveMemberUnit(name="carnival_a"))
+        self.add_widget(FiveMemberUnit(name="carnival_b"))
+        self.add_widget(FiveMemberUnit(name="carnival_c"))
 
         self.current = "wide6"
 
@@ -371,12 +374,8 @@ class BuffSkillView(Factory.ScreenManager):
         更新。
         """
 
-        # self.wideguest.content.update()
-        # self.widenoguest.content.update()
-        # self.granda.content.update()
-        # self.grandb.content.update()
-        # self.grandc.content.update()
-        pass
+        for screen in self.screens:
+            screen.update()
 
     def selected(self) -> list[Episode]:
         """

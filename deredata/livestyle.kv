@@ -1,48 +1,181 @@
 #:kivy 2.3.0
 #:include basewidget.kv
 
+<LabelFrame@Label>:
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        Line:
+            width: 1
+            rectangle: self.x + 1 , self.y + 1, self.width - 2, self.height - 2
 
-<LiveCarnival@GridLayout>:
-    rows: 2
+<SelectionLabel>:
+    canvas.before:
+        Color:
+            rgba: (1, 1, 1, 1)
+        Line:
+            width: 1
+            rectangle: self.x + 1 , self.y + 1, self.width - 2, self.height - 2
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
 
-    Label:
+<SelectionLayout>:
+    number: number
+    effect: effect
+    effectlist: effectlist
+
+    canvas.before:
+        Color:
+            rgba: (0.0, 0.9, 0.1, 0.3) if self.selected else (0, 0, 0, 0)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    orientation: "horizontal"
+    size_hint_y: None
+    height: set_height
+
+    StrFrameView:
+        id: number
         size_hint_x: 1
-        size_hint_y: None
-        height: set_height * 2
-        text: "ライブカーニバル"
 
-    Button:
-        text: "bb"
+    StrFrameView:
+        id: effect
+        size_hint_x: 10
+
+    StrSpinner:
+        id: effectlist
+        size_hint_x: 5
 
 <LiveStyleView>:
+    regularlive: regularlive
+    grandlivea: grandlivea
+    grandliveb: grandliveb
+    grandlivec: grandlivec
+    year: year
+    season: season
+    rank: rank
+    booth1: booth1
+    booth2: booth2
+    booth3: booth3
+    booth4: booth4
+    booth5: booth5
+    booth6: booth6
+    booth7: booth7
+    booth8: booth8
+    booth9: booth9
+    booth10a: booth10a
+    booth10b: booth10b
+    booth10c: booth10c
 
-    orientation: "lr-tb"
+    orientation: "vertical"
 
-    Button:
-        size_hint_x: 0.25
+    BoxLayout:
+        orientation: "horizontal"
         size_hint_y: None
         height: set_height * 2
-        text: "通常ライブ"
+        
+        SelectionLabel:
+            id: regularlive
 
-    Button:
-        size_hint_x: 0.25
-        size_hint_y: None
-        height: set_height * 2
-        text: "グランドライブ・ユニットＡ"
+            size_hint_y: None
+            height: set_height * 2
+            text: "通常ライブ"
 
-    Button:
-        size_hint_x: 0.25
-        size_hint_y: None
-        height: set_height * 2
-        text: "グランドライブ・ユニットＢ"
+        SelectionLabel:
+            id: grandlivea
 
-    Button:
-        size_hint_x: 0.25
-        size_hint_y: None
-        height: set_height * 2
-        text: "グランドライブ・ユニットＣ"
+            size_hint_y: None
+            height: set_height * 2
+            text: "グランドライブ・ユニットＡ"
 
-    LiveCarnival:
-        size_hint_x: 1
-        size_hint_y: None
-        height: root.height - set_height * 2
+        SelectionLabel:
+            id: grandliveb
+
+            size_hint_y: None
+            height: set_height * 2
+            text: "グランドライブ・ユニットＢ"
+
+        SelectionLabel:
+            id: grandlivec
+
+            size_hint_y: None
+            height: set_height * 2
+            text: "グランドライブ・ユニットＣ"
+
+    BoxLayout:
+        orientation: "vertical"
+
+        BoxLayout:
+            orientation: "horizontal"
+    
+            LabelFrame:
+                size_hint_x: 6
+                size_hint_y: None
+                height: set_height * 2
+                text: "ライブカーニバル"
+
+            Spinner:
+                id: year
+
+                size_hint_x: 1
+                size_hint_y: None
+                height: set_height * 2
+                text: "2026年"
+
+            Spinner:
+                id: season
+
+                size_hint_x: 1
+                size_hint_y: None
+                height: set_height * 2
+                text: "Spring"
+
+            Spinner:
+                id: rank
+
+                size_hint_x: 1
+                size_hint_y: None
+                height: set_height * 2
+                text: "SSS"
+
+        ScrollView:
+            do_scroll_x: False
+            do_scroll_y: True
+            size_hint_y: None
+            always_overscroll: False
+            height: root.height - set_height * 4
+            bar_width: set_height * 2
+
+            BoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+        
+                SelectionLayout:  #1
+                    id: booth1
+                SelectionLayout:  #2
+                    id: booth2
+                SelectionLayout:  #3
+                    id: booth3
+                SelectionLayout:  #4
+                    id: booth4
+                SelectionLayout:  #5
+                    id: booth5
+                SelectionLayout:  #6
+                    id: booth6
+                SelectionLayout:  #7
+                    id: booth7
+                SelectionLayout:  #8
+                    id: booth8
+                SelectionLayout:  #9
+                    id: booth9
+                SelectionLayout:  #A
+                    id: booth10a
+                SelectionLayout:  #B
+                    id: booth10b
+                SelectionLayout:  #C
+                    id: booth10c
