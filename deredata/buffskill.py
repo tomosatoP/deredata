@@ -341,24 +341,24 @@ class BuffSkillView(Factory.ScreenManager):
     def __init__(self, **kwargs: dict[str, Any]) -> None:
         super().__init__(**kwargs)
 
-        self.add_widget(SixMemberUnit(name="wide6"))
-        self.add_widget(FiveMemberUnit(name="unita"))
-        self.add_widget(FiveMemberUnit(name="unitb"))
-        self.add_widget(FiveMemberUnit(name="unitc"))
-        self.add_widget(FiveMemberUnit(name="carnival_1"))
-        self.add_widget(FiveMemberUnit(name="carnival_2"))
-        self.add_widget(FiveMemberUnit(name="carnival_3"))
-        self.add_widget(FiveMemberUnit(name="carnival_4"))
-        self.add_widget(FiveMemberUnit(name="carnival_5"))
-        self.add_widget(FiveMemberUnit(name="carnival_6"))
-        self.add_widget(FiveMemberUnit(name="carnival_7"))
-        self.add_widget(FiveMemberUnit(name="carnival_8"))
-        self.add_widget(FiveMemberUnit(name="carnival_9"))
-        self.add_widget(FiveMemberUnit(name="carnival_a"))
-        self.add_widget(FiveMemberUnit(name="carnival_b"))
-        self.add_widget(FiveMemberUnit(name="carnival_c"))
+        self.add_widget(SixMemberUnit(name="通常ライブ"))
+        self.add_widget(FiveMemberUnit(name="グランドライブ・ユニットＡ"))
+        self.add_widget(FiveMemberUnit(name="グランドライブ・ユニットＢ"))
+        self.add_widget(FiveMemberUnit(name="グランドライブ・ユニットＣ"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 1"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 2"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 3"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 4"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 5"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 6"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 7"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 8"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 9"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 10 A"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 10 B"))
+        self.add_widget(FiveMemberUnit(name="BOOTH 10 C"))
 
-        self.current = "wide6"
+        self.current = "通常ライブ"
 
         BuffSkillLogger.info(f"{self.__class__.__name__}: 初期化しました。")
 

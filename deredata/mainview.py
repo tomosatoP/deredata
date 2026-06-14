@@ -178,11 +178,11 @@ class Deredata(Factory.BoxLayout):
                     self.commands.add_widget(Factory.Label(text=key))
 
                 case "label_livestyle":
+                    title: str = self.databaseseries.livestyleview.content.selected()[0]
                     if itemtitle == "センター効果・特技":
                         # ライブスタイル選択に合わせ、スクリーンを切り替える。
-                        # いまのところ、通常ライブにしか対応できなので、"wide6"。
-                        self.databaseseries.buffskillview.content.current = "wide6"
-                    self.commands.add_widget(Factory.Label(text=key))
+                        self.databaseseries.buffskillview.content.current = title
+                    self.commands.add_widget(Factory.Label(text=title))
 
                 case "label_muisc_title":
                     if self.databaseseries.musicview.content.selected():

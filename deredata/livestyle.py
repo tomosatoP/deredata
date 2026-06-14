@@ -26,6 +26,7 @@ class SelectionLayout(Factory.BoxLayout):
         self.number.text = number
         self.effect.text = effect
         self.effectlist.text = effectlist[0]
+        self.effectlist.values = effectlist
 
 
 class LiveStyleView(Factory.CompoundSelectionBehavior, Factory.BoxLayout):
@@ -66,6 +67,8 @@ class LiveStyleView(Factory.CompoundSelectionBehavior, Factory.BoxLayout):
 
     def do_touch(self, instance: Widget, touch: Any) -> bool:
         if instance.collide_point(*touch.pos):
+            if isinstance(instance, SelectionLayout) and instance.effectlist.collide_point(*touch.pos):
+                return False
             self.select_with_touch(instance, touch)
         else:
             return False
@@ -74,11 +77,11 @@ class LiveStyleView(Factory.CompoundSelectionBehavior, Factory.BoxLayout):
     def get_selectable_nodes(self) -> list:
 
         return [
-            self.regularlive,
+            self.regularlive,  # SelectionLabel
             self.grandlivea,
             self.grandliveb,
             self.grandlivec,
-            self.booth1,
+            self.booth1,  # SelectionLayout
             self.booth2,
             self.booth3,
             self.booth4,
@@ -93,18 +96,18 @@ class LiveStyleView(Factory.CompoundSelectionBehavior, Factory.BoxLayout):
         ]
 
     def livecarnival(self) -> None:
-        self.booth1.content("BOOTH 1", "ブース効果", ["ブース効果リスト"])
-        self.booth2.content("BOOTH 2", "ブース効果", ["ブース効果リスト"])
-        self.booth3.content("BOOTH 3", "ブース効果", ["ブース効果リスト"])
-        self.booth4.content("BOOTH 4", "ブース効果", ["ブース効果リスト"])
-        self.booth5.content("BOOTH 5", "ブース効果", ["ブース効果リスト"])
-        self.booth6.content("BOOTH 6", "ブース効果", ["ブース効果リスト"])
-        self.booth7.content("BOOTH 7", "ブース効果", ["ブース効果リスト"])
-        self.booth8.content("BOOTH 8", "ブース効果", ["ブース効果リスト"])
-        self.booth9.content("BOOTH 9", "ブース効果", ["ブース効果リスト"])
-        self.booth10a.content("BOOTH 10 A", "ブース効果", ["ブース効果リスト"])
-        self.booth10b.content("BOOTH 10 B", "ブース効果", ["ブース効果リスト"])
-        self.booth10c.content("BOOTH 10 C", "ブース効果", ["ブース効果リスト"])
+        self.booth1.content("BOOTH 1", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth2.content("BOOTH 2", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth3.content("BOOTH 3", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth4.content("BOOTH 4", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth5.content("BOOTH 5", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth6.content("BOOTH 6", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth7.content("BOOTH 7", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth8.content("BOOTH 8", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth9.content("BOOTH 9", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth10a.content("BOOTH 10 A", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth10b.content("BOOTH 10 B", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
+        self.booth10c.content("BOOTH 10 C", "ブース効果", ["ブース効果リスト1", "ブース効果リスト2"])
 
     def select_node(self, node: Widget) -> None:
         super().select_node(node)
@@ -117,6 +120,11 @@ class LiveStyleView(Factory.CompoundSelectionBehavior, Factory.BoxLayout):
         node.selected = False
 
     def selected(self) -> list:
+        result: Widget = [node for node in self.get_selectable_nodes() if node.selected][0]
+        if isinstance(result, SelectionLabel):
+            return [result.text]
+        elif isinstance(result, SelectionLayout):
+            return [result.number.text, result.effect.text, result.effectlist.text, result.effectlist.values]
         return list()
 
 
