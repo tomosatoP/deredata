@@ -142,7 +142,7 @@ class Deredata(Factory.BoxLayout):
         # 上部領域にタブ（各種データベース）を追加。
         # カレントタブで中央のコマンド群を変更
         self.databaseseries = DatabaseSeries()
-        self.databaseseries.bind(current_tab=lambda instance, item: self.set_commands(item.text))
+        self.databaseseries.bind(current_tab=lambda instance, panel: self.set_commands(panel.text))
         self.upperregion.add_widget(self.databaseseries)
 
         # 下部領域にシミュレーターを追加
@@ -165,21 +165,21 @@ class Deredata(Factory.BoxLayout):
 
         self.databaseseries.update()
 
-    def set_commands(self, itemtitle: str) -> None:
+    def set_commands(self, tabbedpanel_text: str) -> None:
         """
         表示されているデータベースに合わせてコマンド（ボタン）を変更する。
         """
 
         self.commands.clear_widgets()
 
-        for key, value in COMMANDS[itemtitle].items():
+        for key, value in COMMANDS[tabbedpanel_text].items():
             match value:
                 case "label_title":
                     self.commands.add_widget(Factory.Label(text=key))
 
                 case "label_livestyle":
                     title: str = self.databaseseries.livestyleview.content.selected()[0]
-                    if itemtitle == "センター効果・特技":
+                    if tabbedpanel_text == "センター効果・特技":
                         # ライブスタイル選択に合わせ、スクリーンを切り替える。
                         self.databaseseries.buffskillview.content.current = title
                     self.commands.add_widget(Factory.Label(text=title))

@@ -15,7 +15,7 @@ from deredata.libs.database.skills import Skills
 from deredata.libs.database.units import Unit
 from deredata.libs.database.musics import Music
 
-from deredata.libs.simulate.appeal import Calculator
+from deredata.libs.simulate.backstage import Calculator
 from deredata.libs.simulate.stage import Simulator
 
 from kivy.factory import Factory

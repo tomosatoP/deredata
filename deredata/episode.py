@@ -72,6 +72,7 @@ class EpisodeFlavorView(Factory.BoxLayout):
     altervisual = Factory.ObjectProperty(None)
     alterlife = Factory.ObjectProperty(None)
     alterskill = Factory.ObjectProperty(None)
+    alterskillduration = Factory.ObjectProperty(None)
 
     def __init__(self, **kwargs: dict) -> None:
         super().__init__(**kwargs)
@@ -124,7 +125,7 @@ class EpisodeFlavorView(Factory.BoxLayout):
             str(episode.life + self._potentials.value("ライフ", episode.rare, idol.life)) + f"({idol.life})",
         )
         self.alterskill.update(
-            "特技発動確率(%)",
+            "特技発動確率[%]",
             str(
                 ceil(
                     (
@@ -136,6 +137,7 @@ class EpisodeFlavorView(Factory.BoxLayout):
             )
             + f"({idol.skill})",
         )
+        self.alterskillduration.update("特技発動間隔[秒]", str(skill.interval))
 
 
 class EpisodeDataViewclass(Factory.RecycleDataViewBehavior, Factory.BoxLayout):
@@ -375,7 +377,9 @@ class EpisodeView(Factory.BoxLayout):
                 & episodes_by_mystyle
                 & episodes_by_rare
                 & episodes_by_buff
-                & episodes_by_skill
+                & episodes_by_skill,
+                # key=lambda episode: episode.vocal,
+                # reverse=True,
             )
         ]
 

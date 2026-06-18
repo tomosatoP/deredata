@@ -68,7 +68,7 @@ class Idols:
 
         :param str ruby: 抽出条件のアイドルのふりがな。
 
-        :return: アイドルのふりがなを条件に取り出した愛ルドの基本情報。
+        :return: アイドルのふりがなを条件に取り出したアイドルの基本情報。
         :rtype: Idol
         """
 

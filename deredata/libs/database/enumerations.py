@@ -17,7 +17,7 @@ class IdolType(StrEnum):
     アイドルタイプの列挙クラス。
 
     :NA: 非該当（主にプロデューサー自身のこと）
-    :ALL: 全員
+    :UNIT: 全員
     :CUTE: キュートアイドル
     :COOL: クールアイドル
     :PASSION: パッションアイドル

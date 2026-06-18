@@ -13,6 +13,7 @@ Submodules
    deredata.episode
    deredata.idol
    deredata.init
+   deredata.livestyle
    deredata.mainview
    deredata.music
    deredata.simulator
