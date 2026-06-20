@@ -12,15 +12,12 @@ from deredata.libs.database.musics import SongType
 from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
 from deredata.libs.database.episodes import Episode
 from deredata.libs.database.buffs import BuffPart, Buff, Buffs
-from deredata.libs.database.skills import Skill, Skills
 
 from deredata.libs.simulate.enumerations import AppealIndices
-
 
 from kivy.logger import Logger as LibsCenterbuffLogger
 
 _buffs: Buffs = Buffs()
-_skills: Skills = Skills()
 
 
 class CenterbuffError(Exception):
@@ -39,20 +36,16 @@ class BuffPartContext:
 
     アピールのボーナス配列を取得する際、必要となるセンター効果パーツに関わる各種条件を格納する。
 
-    アピール: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
-
+    :param bool dominant: センター効果「ドミナント・デュエット」のセンター効果パーツかどうか。
+    :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param BuffPart buffpart: センター効果パーツ。
     :param SongType song_type: ライブの楽曲タイプ。
-    :param list[IdolType] idol_types: ゲストを含むユニットメンバーのアイドルタイプリスト。
-    :param list[DominantType] dominant_types:
-        ゲストを含むユニットメンバーのドミナントアイドルタイプリスト。
-        センター効果「ドミナント・デュエット」の評価時以外は、空のリスト。
     """
 
+    buff_dominant_duet: bool = False
+    episode: Episode = Episode()
     buffpart: BuffPart = BuffPart()
     song_type: SongType = SongType.ALL
-    idol_types: list[IdolType] = field(default_factory=list)
-    dominant_types: list[DominantType] = field(default_factory=list)
 
 
 @dataclass
@@ -60,27 +53,22 @@ class BuffContext:
     """
     センター効果のコンテキストのデータクラス。
 
-    アピールのボーナス配列を取得する際、必要となるセンター効果に関わるの各種条件を格納する。
-
-    :アピール: ボーカル、ダンス、ビジュアル、ライフ、特技発動確率、特技継続期間
+    アピールのボーナス配列を取得する際、必要となるセンター効果に関わる各種条件を格納する。
 
     :param bool on_resonance: レゾナンス（全ての特技効果が重複時に加算）
+    :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param Buff buff: センター効果
     :param SongType songtype: ライブの楽曲のタイプ
     :param list[IdolType] idol_types: ゲストを含むユニットメンバーのアイドルタイプリスト
-    :param list[DominantType] dominant_types: ゲストを含むユニットメンバーのドミナントアイドルタイプリスト
     :param list[Episode] episodes: ゲストを含むユニットメンバーのエピソードリスト
-    :param list[Buff] buffs: ゲストを含むユニットメンバーのセンター効果リスト
     """
 
     on_resonance: bool = False
+    episode: Episode = Episode()
     buff: Buff = Buff()
     song_type: SongType = SongType.ALL
     idol_types: list[IdolType] = field(default_factory=list)
-    dominant_types: list[DominantType] = field(default_factory=list)
     episodes: list[Episode] = field(default_factory=list)
-    buffs: list[Buff] = field(default_factory=list)
-    skills: list[Skill] = field(default_factory=list)
 
 
 @singledispatch
@@ -167,15 +155,13 @@ def buffpartwrap(func: Callable) -> Callable:
 
         bonus_array: np.ndarray = np.zeros((len(AppealIndices),))
         for id in appealidices:
-            if not context.dominant_types:
-                bonus_array[id] = np.array(
-                    [bonus if idoltypematch(type, matchtype) else 0.0 for type in context.idol_types]
-                )
+            if not context.buff_dominant_duet:
+                bonus_array[id] = bonus if idoltypematch(context.episode.type, matchtype) else 0.0
             else:
                 # ドミナントアイドルタイプリストが空リストではないので、センター効果「ドミナント・デュエット」と判定。
                 bonus_array[id] = np.maximum(
-                    np.array([bonus if idoltypematch(type, matchtype) else 0.0 for type in context.idol_types]),
-                    np.array([bonus if idoltypematch(type, matchtype) else 0.0 for type in context.dominant_types]),
+                    bonus if idoltypematch(context.episode.type, matchtype) else 0.0,
+                    bonus if idoltypematch(context.episode.dominant, matchtype) else 0.0,
                 )
 
         return bonus_array
@@ -335,10 +321,10 @@ def breakdown2buffparts(buffcontext: BuffContext, bonus_array_ext: np.ndarray) -
             if buffpart.appeal in bonus_funcname:
                 contexts.append(
                     BuffPartContext(
-                        buffpart,
-                        buffcontext.song_type,
-                        buffcontext.idol_types,
-                        buffcontext.dominant_types,
+                        buff_dominant_duet=True,
+                        episode=buffcontext.episode,
+                        buffpart=buffpart,
+                        song_type=buffcontext.song_type,
                     )
                 )
     else:
@@ -346,9 +332,9 @@ def breakdown2buffparts(buffcontext: BuffContext, bonus_array_ext: np.ndarray) -
             if buffpart.appeal in bonus_funcname:
                 contexts.append(
                     BuffPartContext(
-                        buffpart,
-                        buffcontext.song_type,
-                        buffcontext.idol_types,
+                        episode=buffcontext.episode,
+                        buffpart=buffpart,
+                        song_type=buffcontext.song_type,
                     )
                 )
 
@@ -437,13 +423,12 @@ def buff_cinderella_bless(context: BuffContext, bonus_array_ext: np.ndarray) -> 
 
                 temp[member] = centerbuff_funcname[episode.buff_class](
                     BuffContext(
+                        on_resonance=context.on_resonance,
+                        episode=context.episode,
                         buff=_buffs.get(context.episodes[member].buff),
                         song_type=context.song_type,
                         idol_types=context.idol_types,
-                        dominant_types=context.dominant_types,
                         episodes=context.episodes,
-                        buffs=context.buffs,
-                        skills=context.skills,
                     )
                 )
 
@@ -917,34 +902,39 @@ centerbuff_funcname: dict[str, Callable] = {
 # アピール（ボーカル、ダンス、ビジュアル、ライフ、特技発動確率）のボーナスに関わるセンター効果のみ。
 
 
-def bonus(buff: Buff, episodes: list[Episode], songtype: SongType) -> np.ndarray:
+def bonus(
+    episode: Episode,
+    buff: Buff,
+    episodes: list[Episode],
+    song_type: SongType,
+) -> tuple[np.ndarray, bool]:
     """
     センター効果ボーナス。
 
+    :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param Buff buff: センター効果。
     :param list[Episode] episodes: ゲストを含むユニットメンバーのエピソードリスト。
     :param SongType songtype: ライブ楽曲の楽曲タイプ。
 
-    :return: センター効果ボーナス。
-    :rtype: np.ndarray
+    :return: センター効果ボーナス、 レゾナンスが有効かどうか。
+    :rtype: tuple[np.ndarray, bool]
     """
 
     if buff.buff in centerbuff_funcname:
         context = BuffContext(
             on_resonance=False,
+            episode=episode,
             buff=buff,
-            song_type=songtype,
+            song_type=song_type,
             idol_types=[episode.type for episode in episodes],
-            dominant_types=[episode.dominant for episode in episodes],
             episodes=episodes,
-            buffs=[_buffs.get(episode.buff) for episode in episodes],
-            skills=[_skills.get(episode.skill) for episode in episodes],
         )
 
-        return centerbuff_funcname[buff.buff](context)
+        result = centerbuff_funcname[buff.buff](context)
+        return result, context.on_resonance
 
     LibsCenterbuffLogger.error(f"centerbuff.bonus: {buff.buff}は、未実装です。")
-    return np.zeros((len(AppealIndices),))
+    return np.zeros((len(AppealIndices),)), False
 
 
 if __name__ == "__main__":
