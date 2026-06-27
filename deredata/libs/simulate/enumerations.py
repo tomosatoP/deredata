@@ -2,7 +2,7 @@
 列挙クラスの一覧のモジュール。
 """
 
-from enum import StrEnum, IntEnum
+from enum import IntEnum
 
 
 class AppealIndices(IntEnum):

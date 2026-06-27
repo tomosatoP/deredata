@@ -3,13 +3,12 @@
 """
 
 import numpy as np
-from typing import Any, Callable
+from typing import Callable
 from functools import wraps, partial
 from dataclasses import dataclass, field
-from functools import singledispatch
 
 from deredata.libs.database.musics import SongType
-from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
 from deredata.libs.database.episodes import Episode
 from deredata.libs.database.buffs import BuffPart, Buff, Buffs
 
@@ -36,7 +35,7 @@ class BuffPartContext:
 
     アピールのボーナス配列を取得する際、必要となるセンター効果パーツに関わる各種条件を格納する。
 
-    :param bool dominant: センター効果「ドミナント・デュエット」のセンター効果パーツかどうか。
+    :param bool buff_dominant_duet: センター効果「ドミナント・デュエット」のセンター効果パーツかどうか。
     :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param BuffPart buffpart: センター効果パーツ。
     :param SongType song_type: ライブの楽曲タイプ。
@@ -58,8 +57,8 @@ class BuffContext:
     :param bool on_resonance: レゾナンス（全ての特技効果が重複時に加算）
     :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param Buff buff: センター効果
-    :param SongType songtype: ライブの楽曲のタイプ
-    :param list[IdolType] idol_types: ゲストを含むユニットメンバーのアイドルタイプリスト
+    :param SongType song_type: ライブの楽曲のタイプ
+    :param list[IdolType] idol_types: ゲストを含むユニットメンバーのアイドルタイプおよびドミナントアイドルタイプのリスト
     :param list[Episode] episodes: ゲストを含むユニットメンバーのエピソードリスト
     """
 
@@ -69,48 +68,6 @@ class BuffContext:
     song_type: SongType = SongType.ALL
     idol_types: list[IdolType] = field(default_factory=list)
     episodes: list[Episode] = field(default_factory=list)
-
-
-@singledispatch
-def idoltypematch(type: Any, idoltype: IdolType) -> bool:
-    """
-    タイプとアイドルタイプの一致を判定する。
-
-    引数 *type* と 引数 *idoltype* のタイプが一致する場合に、``True`` を返す。
-    それ以外は、 ``False`` を返す。
-
-    :param Any type: アイドルタイプ（*IdolType*）／ドミナントアイドルタイプ（*DominantType*）。
-    :param IdolType idoltype: アイドルタイプ。
-
-    :return: タイプが一致する時は **True** 、一致しない時は **False** を返す。
-    :rtype: bool
-    """
-
-    LibsCenterbuffLogger.error(f"centerbuff.idoltypematch: {type}が、不正です。")
-    return False
-
-
-@idoltypematch.register(IdolType)
-def _(type: IdolType, idoltype: IdolType) -> bool:
-
-    match [type, idoltype]:
-        case [IdolType(itype), IdolType(stype)]:
-            return True if itype.name == stype.name else False
-
-        case _:
-            LibsCenterbuffLogger.error(f"centerbuff.idoltypematch: {type},{idoltype} が、不正です。")
-            return False
-
-
-@idoltypematch.register(DominantType)
-def _(type: DominantType, idoltype: IdolType) -> bool:
-    match [type, idoltype]:
-        case [DominantType(dtype), IdolType(stype)]:
-            return True if dtype.name == stype.name else False
-
-        case _:
-            LibsCenterbuffLogger.error(f"centerbuff.songtypematch: {type},{idoltype} が、不正です。")
-            return False
 
 
 def buffpartwrap(func: Callable) -> Callable:
@@ -143,6 +100,19 @@ def buffpartwrap(func: Callable) -> Callable:
         :return: アピールタイプのリスト。
         :rtype: list[AppealIndices]
         """
+
+        def idoltypematch(type: IdolType, matchtype: IdolType) -> bool:
+            match [type, matchtype]:
+                case [x, IdolType.NA]:  # noqa: F841
+                    return False
+                case [y, IdolType.HELEN]:  # noqa: F841
+                    return False
+                case [z, IdolType.UNIT]:  # noqa: F841
+                    return True
+                case [IdolType(itype), IdolType(mtype)]:
+                    return True if itype == mtype else False
+                case _:
+                    return False
 
         # 前処理
         LibsCenterbuffLogger.debug(f"centerbuff.buffpartwrap: センター効果パーツ・{context.buffpart.name}を処理。")
@@ -236,14 +206,8 @@ def buffpart_dance(context: BuffPartContext) -> list[AppealIndices]:
 
     :return: アピールタイプのリスト。
     :rtype: list[AppealIndices]
-
-    :todo: ワールドレベル（自分のダンスアピール値100%アップ、フェイスオープンしたら全員のダンスアピール値130%アップ）
     """
 
-    LibsCenterbuffLogger.error("centerbuff.buffpart_dance: センター効果・ワールドレベルのヘレン対応は、実装中です。")
-    LibsCenterbuffLogger.error(
-        "centerbuff.buffpart_dance: センター効果・ワールドレベルのフェイスオープン対応は、未実装です。"
-    )
     return [AppealIndices.DANCE]
 
 
@@ -469,7 +433,6 @@ def buff_multi_appeal(context: BuffContext, bonus_array_ext: np.ndarray) -> np.n
     """
 
     idol_typeset: set = set(context.idol_types)
-
     match context.buff.formation:
         case UnitType.NA:
             # キュートブリリアンス、クールブリリアンス、パッションブリリアンス。
@@ -530,7 +493,6 @@ def buff_single_appeal(context: BuffContext, bonus_array_ext: np.ndarray) -> np.
     """
 
     idol_typeset: set = set(context.idol_types)
-
     match context.buff.formation:
         case UnitType.NA:
             # キュートボイス、キュートステップ、キュートメイク
@@ -623,7 +585,6 @@ def buff_probability(context: BuffContext, bonus_array_ext: np.ndarray) -> np.nd
     """
 
     idol_typeset: set = set(context.idol_types)
-
     match context.buff.formation:
         case UnitType.NA:
             # キュートアビリティ、クールアビリティ、パッションアビリティ
@@ -926,7 +887,8 @@ def bonus(
             episode=episode,
             buff=buff,
             song_type=song_type,
-            idol_types=[episode.type for episode in episodes],
+            idol_types=[episode.type for episode in episodes]
+            + [episode.dominant for episode in episodes if episode.dominant != IdolType.NA],
             episodes=episodes,
         )
 

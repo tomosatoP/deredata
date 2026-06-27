@@ -96,7 +96,7 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 
 from deredata.libs.database.musics import FPS, Note, NoteType, SongType, Music
-from deredata.libs.database.enumerations import IdolType, DominantType, MusicType, UnitType
+from deredata.libs.database.enumerations import IdolType, MusicType, UnitType
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.skills import Skill, Skills, SkillPart, IconType, SkillTriggerType, EffectType
 from deredata.libs.database.musiclevels import MusicLevels
@@ -162,7 +162,7 @@ class SkillCategoryIndices(IntEnum):
         "シンデレラマジック", "─", "", "", "[#f7]_"
         "アンコール", "─", "", "", "[#f7]_"
 
-    .. rublic:: 注釈
+    .. rubric:: 注釈
     .. [#f1] ノートのスコア計算で使う。
     .. [#f2] ノートのスコア計算で、残ライフ評価に使う。
     .. [#f3] PERFECT判定が前提なので、評価しない。
@@ -1739,7 +1739,7 @@ class Simulator:
         :rtype: list[int]
         """
 
-        def number_type(episodes: list[Episode], idoltype: IdolType, dominant: DominantType) -> int:
+        def number_type(episodes: list[Episode], idoltype: IdolType) -> int:
             """
             ゲストを含むユニットメンバーのアイドルタイプ（ドミナントアイドルタイプを含む）別の人数を数える。
 
@@ -1750,7 +1750,7 @@ class Simulator:
             :rtype: int
             """
 
-            temp = filter(lambda episode: any([episode.type == idoltype, episode.dominant == dominant]), episodes)
+            temp = filter(lambda episode: any([episode.type == idoltype, episode.dominant == idoltype]), episodes)
             return len(list(temp))
 
         seed()
@@ -1771,9 +1771,9 @@ class Simulator:
             livesong_type=self._music.song.type,
             idoltypes_set={episode.type for episode in episodes},
             type_numbers_list=[
-                number_type(episodes, IdolType.CUTE, DominantType.CUTE),
-                number_type(episodes, IdolType.COOL, DominantType.COOL),
-                number_type(episodes, IdolType.PASSION, DominantType.PASSION),
+                number_type(episodes, IdolType.CUTE),
+                number_type(episodes, IdolType.COOL),
+                number_type(episodes, IdolType.PASSION),
             ],
             idoltypes_list=[episode.type for episode in episodes[:UNIT_SIZE]],
             intervals_list=[

@@ -9,7 +9,7 @@ import csv
 from pathlib import Path
 from setuptools._distutils.util import strtobool
 
-from deredata.libs.database.enumerations import IdolType, DominantType, GachaType, RareClass
+from deredata.libs.database.enumerations import IdolType, GachaType, RareClass
 from deredata.libs.database.configurations import textdata_folder
 from deredata.libs.database.episodes import Episode, Episodes
 from deredata.libs.database.flavors import Flavor, Flavors
@@ -36,7 +36,7 @@ def convert(
                 ruby=data["ふりがな"],
                 episode=data["エピソード"],
                 type=IdolType(data["アイドルタイプ"]),
-                dominant=DominantType(data["ドミナントアイドルタイプ"]),
+                dominant=IdolType(data["ドミナントアイドルタイプ"]),
                 mystyle=strtobool(data["マイスタイル"]),
                 rare=RareClass(data["レア度"]),
                 star_rank=0,

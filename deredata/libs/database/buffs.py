@@ -43,21 +43,21 @@ class BuffTriggerType(StrEnum):
     """
     センター効果・発動要件の列挙クラス。
 
-      :NA: 非該当
-      :CLEAR_LIVE: LIVEクリア
+    :NA: 非該当
+    :CLEAR_LIVE: LIVEクリア（スコア計算に関わらないので、アピール値計算に使わない）
     """
 
     NA = "非該当"
-    CLEAR_LIVE = "LIVEクリア"  # スコア計算に関わらないので、アピール値計算に使わない。
+    CLEAR_LIVE = "LIVEクリア"
 
 
 class BuffPartTriggerType(StrEnum):
     """
     センター効果パーツ・適用要件列挙クラス。
 
-      :NA: 非該当
-      :OPEN_FACE: フェイスオープン
-      :MIDDLE: 中確率
+    :NA: 非該当
+    :OPEN_FACE: フェイスオープン
+    :MIDDLE: 中確率
     """
 
     NA = "非該当"
@@ -69,23 +69,23 @@ class AppealType(StrEnum):
     """
     センター効果パーツ・適用アピールの列挙クラス。
 
-      :NA: 非該当
-      :ALL: 全アピール値
-      :VOCAL: ボーカルアピール値
-      :DANCE: ダンスアピール値
-      :VISUAL: ビジュアルアピール値
-      :LIFE: ライフ
-      :ABILITY: 特技発動確率
-      :BLESS: シンデレラブレス（全員のセンター効果を発揮し、最も高い効果を適用）
-      :RESONANCE: レゾナンス（全ての特技効果が重複時に加算）
-      :TYPEMATCH: タイプ一致
-      :STARPIECE: スターピース
-      :EXP: 獲得経験値
-      :FANS: 獲得ファン数
-      :STAREMBLEM: スターエンブレム
-      :MONEYS: マニー
-      :FREINDSHIP: 友情pt
-      :REWARD: 特別報酬
+    :NA: 非該当
+    :ALL: 全アピール値
+    :VOCAL: ボーカルアピール値
+    :DANCE: ダンスアピール値
+    :VISUAL: ビジュアルアピール値
+    :LIFE: ライフ
+    :ABILITY: 特技発動確率
+    :BLESS: シンデレラブレス（全員のセンター効果を発揮し、最も高い効果を適用）
+    :RESONANCE: レゾナンス（全ての特技効果が重複時に加算）
+    :TYPEMATCH: タイプ一致
+    :STARPIECE: スターピース（これより下はスコア計算に関わらないので、アピール値計算に使わない）
+    :EXP: 獲得経験値
+    :FANS: 獲得ファン数
+    :STAREMBLEM: スターエンブレム
+    :MONEYS: マニー
+    :FREINDSHIP: 友情pt
+    :REWARD: 特別報酬
     """
 
     NA = "非該当"
@@ -95,10 +95,10 @@ class AppealType(StrEnum):
     VISUAL = "ビジュアルアピール値"
     LIFE = "ライフ"
     ABILITY = "特技発動確率"
-    BLESS = "シンデレラブレス"  # 全員のセンター効果を発揮し、最も高い効果を適用
-    RESONANCE = "レゾナンス"  # 全ての特技効果が重複時に加算
+    BLESS = "シンデレラブレス"
+    RESONANCE = "レゾナンス"
     TYPEMATCH = "タイプ一致"
-    STARPIECE = "スターピース"  # これより下はスコア計算に関わらないので、アピール値計算に使わない。
+    STARPIECE = "スターピース"
     EXP = "獲得経験値"
     FANS = "獲得ファン数"
     STAREMBLEM = "スターエンブレム"

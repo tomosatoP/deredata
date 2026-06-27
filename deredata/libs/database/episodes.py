@@ -12,7 +12,7 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from setuptools._distutils.util import strtobool
 
-from deredata.libs.database.enumerations import IdolType, DominantType, RareClass
+from deredata.libs.database.enumerations import IdolType, RareClass
 from deredata.libs.database.configurations import database_folder
 
 from kivy.logger import Logger as LibsEpisodesLogger
@@ -58,7 +58,7 @@ class Episode:
     ruby: str = "ふりがな"  # ふりがな。アイドル情報（idols, profiles）のアクセスキー。
     episode: str = "エピソード"  # エピソード。エピソード情報（episodes, flavors, buffs, skills）へのアクセスキー。
     type: IdolType = field(default=IdolType.NA, compare=False)  # アイドルタイプ
-    dominant: DominantType = field(default=DominantType.NA, compare=False)  # ドミナントアイドルタイプ
+    dominant: IdolType = field(default=IdolType.NA, compare=False)  # ドミナントアイドルタイプ
     mystyle: bool = field(default=False, compare=False)  # マイスタイル
     rare: RareClass = field(default=RareClass.N, compare=False)  # レア度
     star_rank: int = field(default=0, compare=False)  # スターランク
@@ -157,7 +157,7 @@ class Episodes:
                 ruby=data["ふりがな"],
                 episode=data["エピソード"],
                 type=IdolType(data["アイドルタイプ"]),
-                dominant=DominantType(data["ドミナントアイドルタイプ"]),
+                dominant=IdolType(data["ドミナントアイドルタイプ"]),
                 mystyle=strtobool(data["マイスタイル"]),
                 rare=RareClass(data["レア度"]),
                 star_rank=int(data["スターランク"]),
@@ -198,7 +198,7 @@ class Episodes:
                 "ふりがな": episode.ruby,
                 "エピソード": episode.episode,
                 "アイドルタイプ": IdolType(episode.type),
-                "ドミナントアイドルタイプ": DominantType(episode.dominant),
+                "ドミナントアイドルタイプ": IdolType(episode.dominant),
                 "マイスタイル": str(episode.mystyle),
                 "レア度": RareClass(episode.rare),
                 "スターランク": int(episode.star_rank),

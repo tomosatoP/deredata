@@ -1,5 +1,20 @@
 """
 アピールを計算するモジュール。
+
+エピソードのアピール、サポートメンバーのアピール、ユニットメンバーのアピールを計算する。
+    * アピールには、ボーカル、ダンス、ビジュアル、ライフ、特技発動率、特技継続期間がある。
+    * ボーカル、ダンス、ビジュアル、ライフの値は、整数に切り上げられる。
+    * ユニットメンバーにゲストがいる場合、ゲストのセンター効果も加えられる。
+
+エピソードのアピールの計算式
+    :math:`(基礎値+ポテンシャル補正)\\times(1.00+楽曲タイプ一致効果+ルーム効果+センター効果)`
+
+サポートメンバーのアピールの計算式
+    :math:`(基礎値+ポテンシャル補正)\\times(1.00+楽曲タイプ一致効果)`
+
+ユニットメンバーのアピールの計算式
+    :math:`(基礎値+ポテンシャル補正)\\times(1.00+楽曲タイプ一致効果+ルーム効果+センター効果)`
+
 """
 
 import numpy as np
@@ -45,7 +60,7 @@ class BonusContext:
     :param Skill skill: 対象メンバーのエピソードの特技。
     :param SongType song_type: ライブ楽曲の楽曲タイプ。
     :param list[Episode] episodes: ユニットメンバーのエピソードリスト
-    :param bool on_resonance: レゾナンスが有効かどうか。
+    :param bool resonance: レゾナンスが有効かどうか。
     """
 
     episode: Episode = Episode()
@@ -54,7 +69,7 @@ class BonusContext:
     skill: Skill = Skill()
     song_type: SongType = SongType.ALL
     episodes: list[Episode] = field(default_factory=list)
-    on_resonance: bool = False
+    resonance: bool = False
 
 
 def base_value(context: BonusContext) -> np.ndarray:
@@ -62,6 +77,8 @@ def base_value(context: BonusContext) -> np.ndarray:
     アピールの基礎値。
 
     特技発動確率および、特技継続期間の計算式: :math:`基礎値\\times(1.00+\\dfrac{特技LV-1.00}{18.00})`
+
+    上記以外のアピールには、エピソードの基礎値を用いる。
 
     :param EpisodeContext context: エピソードコンテキスト。
 
@@ -85,13 +102,9 @@ def potential_bonus(context: BonusContext) -> np.ndarray:
     """
     アピールのポテンシャル補正ボーナス。
 
-    .. csv-table:: ポテンシャル補正
-        :header-rows: 1
-        :stub-columns: 1
-        :widths: 1, 6
+    アイドルのポテンシャルに応じたボーナスをエピソードに与える。
 
-        "項目", "内容"
-        "対象", "ボーカルアピール、ダンスアピール、ビジュアルアピール、ライフ、特技発動確率"
+    対象のアピールは、ボーカル、ダンス、ビジュアル、ライフ、特技発動率。
 
     :param EpisodeContext context: エピソードコンテキスト。
 
@@ -115,16 +128,12 @@ def musicbuff_bonus(context: BonusContext) -> np.ndarray:
     """
     アピールの楽曲タイプ一致効果ボーナス。
 
-    .. csv-table:: 楽曲タイプ一致効果
-        :header-rows: 1
-        :stub-columns: 1
-        :widths: 1, 6
+    楽曲タイプとアイドルタイプが一致するエピソードに *30%* のボーナスを与える。
+    楽曲タイプとドミナントアイドルタイプが一致するエピソードに *30%* のボーナスを与える。
+    センター効果「ドミナント・デュエット」が有効な場合、
+    アイドル（楽曲）タイプが一致するエピソードに *30%* のボーナスを与える。
 
-        "項目", "内容"
-        "条件", "ライブの楽曲タイプとアイドルタイプが一致。"
-        "条件", "センター効果「ドミナント・デュエット」有効時、ライブの楽曲タイプとドミナントアイドルタイプが一致。"
-        "対象", "ボーカルアピール、ダンスアピール、ビジュアルアピール、特技発動確率。"
-        "効果量", "30%"
+    対象のアピールは、ボーカル、ダンス、ビジュアル、特技発動率。
 
     :param EpisodeContext context: エピソードコンテキスト。
 
@@ -132,8 +141,8 @@ def musicbuff_bonus(context: BonusContext) -> np.ndarray:
     :rtype: np.ndarray
     """
 
-    def songtypematch(type: IdolType, matchtype: SongType) -> bool:
-        match [type, matchtype]:
+    def songtypematch(type: IdolType, song_type: SongType) -> bool:
+        match [type, song_type]:
             case [x, SongType.ALL]:  # noqa: F841
                 return True
             case [IdolType(itype), SongType(stype)]:
@@ -142,6 +151,7 @@ def musicbuff_bonus(context: BonusContext) -> np.ndarray:
                 return False
 
     def songtypematch_bonus(type: IdolType, song_type: SongType) -> np.ndarray:
+        """楽曲タイプ一致ボーナス。"""
         return np.array(
             [
                 0.3 if songtypematch(type, song_type) else 0.0,
@@ -154,6 +164,7 @@ def musicbuff_bonus(context: BonusContext) -> np.ndarray:
         )
 
     def idoltypematch_bonus(type: IdolType, idol_type: IdolType) -> np.ndarray:
+        """ドミナント・デュエット用タイプ一致ボーナス。"""
         return np.array(
             [
                 0.3 if type == idol_type else 0.0,
@@ -165,32 +176,41 @@ def musicbuff_bonus(context: BonusContext) -> np.ndarray:
             ]
         )
 
+    def dominant_duet_typematch(buff: Buff, episode: Episode, song_type: SongType) -> np.ndarray:
+        """ドミナント・デュエット。"""
+        if buff.buff.startswith("ドミナント・デュエット"):
+            for buffpart in buff.buffparts:
+                if buffpart.appeal == AppealType.TYPEMATCH and buff.music.name == song_type.name:
+                    return idoltypematch_bonus(episode.type, buffpart.member)
+        return np.zeros((len(AppealIndices),))
+
     buffs: list[Buff] = [_buffs.get(episode.buff) for episode in context.episodes]
-    result: np.ndarray = np.zeros((7, len(AppealIndices)))
+    result: np.ndarray = np.zeros((8, len(AppealIndices)))
 
-    # ドミナントアイドルタイプ以外の場合。
-    result[6] = songtypematch_bonus(context.episode.type, context.song_type)
+    # 楽曲タイプ一致効果（センター効果「ドミナント・デュエット」のタイプ一致以外）。
+    result[7] = songtypematch_bonus(context.episode.type, context.song_type)
+    result[6] = songtypematch_bonus(context.episode.dominant, context.song_type)
 
-    if buffs[0].buff.startswith("ドミナント・デュエット"):
-        # センターのセンター効果が、ドミナント・デュエットの場合。
-        for buffpart in buffs[0].buffparts:
-            if buffpart.appeal == AppealType.TYPEMATCH and buffs[0].music.name == context.song_type.name:
-                result[0] = idoltypematch_bonus(context.episode.type, buffpart.member)
+    # センター効果「ドミナント・デュエット」のタイプ一致効果：サポートメンバーの場合。
+    if not buffs:
+        result[0] = dominant_duet_typematch(_buffs.get(context.episode.buff), context.episode, context.song_type)
 
-    if buffs[5].buff.startswith("ドミナント・デュエット"):
-        # ゲストのセンター効果が、ドミナント・デュエットの場合。
-        for buffpart in buffs[5].buffparts:
-            if buffpart.appeal == AppealType.TYPEMATCH and buffs[5].music.name == context.song_type.name:
-                result[5] = idoltypematch_bonus(context.episode.type, buffpart.member)
+    # センター効果「ドミナント・デュエット」のタイプ一致効果：ユニットメンバーの場合。
+    if buffs:
+        result[0] = dominant_duet_typematch(buffs[0], context.episode, context.song_type)
 
-    if any([buffs[0].buff.startswith("シンデレラブレス"), buffs[5].buff.startswith("シンデレラブレス")]):
+    if len(buffs) == 6:
+        result[5] = dominant_duet_typematch(buffs[5], context.episode, context.song_type)
+
+    if buffs and buffs[0].buff.startswith("シンデレラブレス"):
         # センターのセンター効果が、シンデレラブレスの場合。
         for i in [1, 2, 3, 4]:
-            if buffs[i].buff.startswith("ドミナント・デュエット"):
-                # センター効果が、ドミナント・デュエットの場合。
-                for buffpart in buffs[i].buffparts:
-                    if buffpart.appeal == AppealType.TYPEMATCH and buffs[i].music.name == context.song_type.name:
-                        result[i] = idoltypematch_bonus(context.episode.type, buffpart.member)
+            result[i] = dominant_duet_typematch(buffs[i], context.episode, context.song_type)
+
+    if len(buffs) == 6 and buffs[5].buff.startswith("シンデレラブレス"):
+        # ゲストのセンター効果が、シンデレラブレスの場合。
+        for i in [1, 2, 3, 4]:
+            result[i] = dominant_duet_typematch(buffs[i], context.episode, context.song_type)
 
     return result.max(axis=0)
 
@@ -199,17 +219,11 @@ def roombuff_bonus(context: BonusContext) -> np.ndarray:
     """
     アピールのルーム効果ボーナス。
 
-    .. csv-table:: ルーム効果
-        :header-rows: 1
-        :stub-columns: 1
-        :widths: 1, 6
+    *10%* のボーナスを与える。
 
-        "項目", "内容"
-        "条件", "サポートメンバー以外"
-        "対象", "ボーカルアピール、ダンスアピール、ビジュアルアピール"
-        "効果量", "10%"
+    対象のアピールは、ボーカル、ダンス、ビジュアル。
 
-    :param EpisodeConext context: エピソードコンテキスト。
+    :param BonusConext context: エピソードコンテキスト。
 
     :return: アピールのルーム効果。
     :rtype: np.ndarray
@@ -222,7 +236,9 @@ def centerbuff_bonus(context: BonusContext, number: int) -> np.ndarray:
     """
     アピールのセンター効果ボーナス。
 
-    :param EpisodeConext context: エピソードコンテキスト。
+    せんーた効果に応じたボーナスを与える。
+
+    :param BonusConext context: エピソードコンテキスト。
     :param int number: 評価するセンター効果を持っているメンバーの立ち位置。
 
     :return: アピールのセンター効果。
@@ -236,7 +252,7 @@ def centerbuff_bonus(context: BonusContext, number: int) -> np.ndarray:
         song_type=context.song_type,
     )
 
-    context.on_resonance = True if result[1] or context.on_resonance else False
+    context.resonance = True if result[1] or context.resonance else False
     return result[0]
 
 
@@ -244,76 +260,62 @@ def boothbuff_bonus(context: BonusContext) -> np.ndarray:
     """
     アピールのブース効果ボーナス。
 
-    :param EpisodeConext context: エピソードコンテキスト。
+    ブース効果に応じたボーナスを与える。
+
+    :param BonusConext context: エピソードコンテキスト。
 
     :return: アピールのブース効果。
     :rtype: np.ndarray
+
+    :todo: 未着手なので、ZERO を返す。
     """
 
     return np.zeros((len(AppealIndices),))
 
 
-def appeal(
-    position: int,
+def appeal_episode(
+    episode: Episode,
     episodes: list[Episode],
-    music: Music = Music(),
-    support: bool = False,
+    music: Music,
     boothtype: BoothIndices = BoothIndices.NA,
-) -> tuple[list, bool]:
+) -> list[int | float]:
     """
-    アピール。
+    エピソードのアピール。
 
-    :param int position: ライブの立ち位置。センター(0)/左隣り(1)/右隣り(2)/左端(3)/右端(4)/ゲスト(5)
-    :param list[Episode] episodes: ユニットメンバーのエピソードリスト。
+    :param Episode episode: 対象のエピソード。
+    :param list[Episode] episodes: ユニットメンバーのエピソードリスト。ゲスト有は、長さ6。ゲスト無しは、長さ5。
     :param Music music: ライブの楽曲。
-    :param bool support: **False** は、ユニットメンバー（初期値）。**True** は、サポートメンバー。
     :param BoothIndices boothtype: ライブカーニバルのブース効果。初期値は、非該当。
 
-    :return: アピールの値リスト、レゾナンスが有効かどうか。
-    :rtype: tuple[list, bool]
+    :return: エピソードのアピールの値リスト。
+    :rtype: list[int | float]
     """
 
     def formula(bonuses: list[np.ndarray]) -> np.ndarray:
         return (bonuses[0] + bonuses[1]) * (1.00 + np.sum(bonuses[2:], axis=0))
 
-    def tolist(appeal_bonuses: np.ndarray, support: bool = False) -> list:
+    def tolist(appeal_bonuses: np.ndarray) -> list[int | float]:
 
-        if support:
-            return [
-                ceil(0.5 * appeal_bonuses[AppealIndices.VOCAL]),
-                ceil(0.5 * appeal_bonuses[AppealIndices.DANCE]),
-                ceil(0.5 * appeal_bonuses[AppealIndices.VISUAL]),
-            ]
-
-        else:
-            return [
-                ceil(appeal_bonuses[AppealIndices.VOCAL]),
-                ceil(appeal_bonuses[AppealIndices.DANCE]),
-                ceil(appeal_bonuses[AppealIndices.VISUAL]),
-                ceil(appeal_bonuses[AppealIndices.LIFE]),
-                float(appeal_bonuses[AppealIndices.PROBABILITY]),
-                float(appeal_bonuses[AppealIndices.DURATION]),
-            ]
+        return [
+            ceil(appeal_bonuses[AppealIndices.VOCAL]),
+            ceil(appeal_bonuses[AppealIndices.DANCE]),
+            ceil(appeal_bonuses[AppealIndices.VISUAL]),
+            ceil(appeal_bonuses[AppealIndices.LIFE]),
+            float(appeal_bonuses[AppealIndices.PROBABILITY]),
+            float(appeal_bonuses[AppealIndices.DURATION]),
+        ]
 
     context = BonusContext(
-        episode=episodes[position],
-        idol=_idols.get(episodes[position].ruby),
-        buff=_buffs.get(episodes[position].buff),
-        skill=_skills.get(episodes[position].skill),
+        episode=episode,
+        idol=_idols.get(episode.ruby),
+        buff=_buffs.get(episode.buff),
+        skill=_skills.get(episode.skill),
         song_type=music.song.type,
-        episodes=[episodes[i] if len(episodes) > i else Episode() for i in range(6)],
-        on_resonance=False,
+        episodes=episodes,
     )
 
-    print(f"基礎値: {base_value(context)}")
-    print(f"ポテンシャル補正: {potential_bonus(context)}")
-    print(f"楽曲タイプ一致補正: {musicbuff_bonus(context)}")
-    print(f"ルーム効果: {roombuff_bonus(context)}")
-    print(f"センター効果（センター）: {centerbuff_bonus(context, 0)}")
-    print(f"センター効果（ゲスト）: {centerbuff_bonus(context, 5)}")
-
-    match [boothtype, support]:
-        case [BoothIndices.NA, False]:
+    match [boothtype, len(episodes)]:
+        case [BoothIndices.NA, 6]:
             return tolist(
                 formula(
                     bonuses=[
@@ -325,19 +327,145 @@ def appeal(
                         centerbuff_bonus(context, 5),
                     ]
                 )
-            ), context.on_resonance
+            )
 
-        case [BoothIndices.NA, True]:
+        case [BoothIndices.NA, 5]:
             return tolist(
                 formula(
                     bonuses=[
                         base_value(context),
                         potential_bonus(context),
                         musicbuff_bonus(context),
+                        roombuff_bonus(context),
+                        centerbuff_bonus(context, 0),
                     ]
-                ),
-                support=True,
-            ), False
+                )
+            )
+
+        case _:
+            return tolist(np.zeros((len(AppealIndices),)))
+
+
+def appeal_support_member(support: Episode, music: Music) -> list[int]:
+    """
+    サポートメンバーエピソードのアピール。
+
+    :param Episode support: サポートメンバーエピソード。
+    :param Music music: ライブの楽曲。
+
+    :return: サポートメンバーエピソードのアピールの値リスト。
+    :rtype: list[int]
+    """
+
+    def formula(bonuses: list[np.ndarray]) -> np.ndarray:
+        return (bonuses[0] + bonuses[1]) * (1.00 + np.sum(bonuses[2:], axis=0))
+
+    def tolist(appeal_bonuses: np.ndarray) -> list[int]:
+
+        return [
+            ceil(0.5 * appeal_bonuses[AppealIndices.VOCAL]),
+            ceil(0.5 * appeal_bonuses[AppealIndices.DANCE]),
+            ceil(0.5 * appeal_bonuses[AppealIndices.VISUAL]),
+        ]
+
+    context = BonusContext(
+        episode=support,
+        idol=_idols.get(support.ruby),
+        buff=_buffs.get(support.buff),
+        skill=_skills.get(support.skill),
+        song_type=music.song.type,
+    )
+
+    return tolist(formula(bonuses=[base_value(context), potential_bonus(context), musicbuff_bonus(context)]))
+
+
+def appeal_unit(
+    episodes: list[Episode],
+    music: Music = Music(),
+    boothtype: BoothIndices = BoothIndices.NA,
+) -> tuple[list[list[int | float]], bool]:
+    """
+    ユニットのアピール。
+
+    :param list[Episode] episodes: ユニットメンバーのエピソードリスト。ゲスト有は、長さ6。ゲスト無しは、長さ5。
+    :param Music music: ライブの楽曲。
+    :param BoothIndices boothtype: ライブカーニバルのブース効果。初期値は、非該当。
+
+    :return: エピソードリスト✕アピールの値リスト、レゾナンスが有効かどうか。
+    :rtype: tuple[list[list[int | float]], bool]
+    """
+
+    def formula(bonuses: list[np.ndarray]) -> np.ndarray:
+        return (bonuses[0] + bonuses[1]) * (1.00 + np.sum(bonuses[2:], axis=0))
+
+    def tolist(appeal_bonuses: np.ndarray) -> list:
+
+        return [
+            ceil(appeal_bonuses[AppealIndices.VOCAL]),
+            ceil(appeal_bonuses[AppealIndices.DANCE]),
+            ceil(appeal_bonuses[AppealIndices.VISUAL]),
+            ceil(appeal_bonuses[AppealIndices.LIFE]),
+            float(appeal_bonuses[AppealIndices.PROBABILITY]),
+            float(appeal_bonuses[AppealIndices.DURATION]),
+        ]
+
+    result: list = list()
+    resonace: bool = False
+    match [boothtype, len(episodes)]:
+        case [BoothIndices.NA, 6]:
+            for i, episode in enumerate(episodes):
+                context = BonusContext(
+                    episode=episode,
+                    idol=_idols.get(episode.ruby),
+                    buff=_buffs.get(episode.buff),
+                    skill=_skills.get(episode.skill),
+                    song_type=music.song.type,
+                    episodes=episodes,
+                    resonance=False,
+                )
+                result.append(
+                    tolist(
+                        formula(
+                            bonuses=[
+                                base_value(context),
+                                potential_bonus(context),
+                                musicbuff_bonus(context),
+                                roombuff_bonus(context),
+                                centerbuff_bonus(context, 0),
+                                centerbuff_bonus(context, 5),
+                            ]
+                        )
+                    )
+                )
+                resonace = True if context.resonance or resonace else False
+            return result, resonace
+
+        case [BoothIndices.NA, 5]:
+            for i, episode in enumerate(episodes):
+                context = BonusContext(
+                    episode=episode,
+                    idol=_idols.get(episode.ruby),
+                    buff=_buffs.get(episode.buff),
+                    skill=_skills.get(episode.skill),
+                    song_type=music.song.type,
+                    episodes=episodes,
+                    resonance=False,
+                )
+                result.append(
+                    tolist(
+                        formula(
+                            bonuses=[
+                                base_value(context),
+                                potential_bonus(context),
+                                musicbuff_bonus(context),
+                                roombuff_bonus(context),
+                                centerbuff_bonus(context, 0),
+                            ]
+                        )
+                    )
+                )
+                resonace = True if context.resonance or resonace else False
+            return result, resonace
 
         case _:
             return tolist(np.zeros((len(AppealIndices),))), False

@@ -2,7 +2,6 @@
 列挙クラスの一覧のモジュール。
 
 :class IdolType: アイドルタイプの列挙クラス。
-:class DominantType: ドミナントアイドルタイプの列挙クラス。
 :class RareClass: レア度の列挙クラス。
 :class MusicType: 楽曲タイプの列挙クラス。
 :class GachaType: 入手枠（ガチャ＆マイスタイル）タイプの列挙クラス。
@@ -18,42 +17,26 @@ class IdolType(StrEnum):
 
     :NA: 非該当（主にプロデューサー自身のこと）
     :UNIT: 全員
-    :CUTE: キュートアイドル
-    :COOL: クールアイドル
-    :PASSION: パッションアイドル
+    :CUTE: キュート
+    :COOL: クール
+    :PASSION: パッション
     :HELEN: ヘレン
     :UNITS: 全ユニット
-    :CUTE_OF_UNITS: 全ユニットのキュートアイドル
-    :COOL_OF_UNITS: 全ユニットのクールアイドル
-    :PASSION_OF_UNITS: 全ユニットのパッションアイドル
+    :CUTE_OF_UNITS: 全ユニットのキュート
+    :COOL_OF_UNITS: 全ユニットのクール
+    :PASSION_OF_UNITS: 全ユニットのパッション
     """
 
     NA = "非該当"  # プロデューサー
     UNIT = "全員"
-    CUTE = "キュートアイドル"
-    COOL = "クールアイドル"
-    PASSION = "パッションアイドル"
+    CUTE = "キュート"
+    COOL = "クール"
+    PASSION = "パッション"
     HELEN = "ヘレン"
     UNITS = "全ユニット"
-    CUTE_OF_UNITS = "全ユニットのキュートアイドル"
-    COOL_OF_UNITS = "全ユニットのクールアイドル"
-    PASSION_OF_UNITS = "全ユニットのパッションアイドル"
-
-
-class DominantType(StrEnum):
-    """
-    ドミナントアイドルタイプの列挙クラス。
-
-    :NA: 非該当
-    :CUTE: キュートドミナントアイドル
-    :COOL: クールドミナントアイドル
-    :PASSION: パッションドミナントアイドル
-    """
-
-    NA = "非該当"
-    CUTE = "キュートドミナントアイドル"
-    COOL = "クールドミナントアイドル"
-    PASSION = "パッションドミナントアイドル"
+    CUTE_OF_UNITS = "全ユニットのキュート"
+    COOL_OF_UNITS = "全ユニットのクール"
+    PASSION_OF_UNITS = "全ユニットのパッション"
 
 
 class RareClass(StrEnum):
