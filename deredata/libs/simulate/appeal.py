@@ -14,7 +14,6 @@
 
 ユニットメンバーのアピールの計算式
     :math:`(基礎値+ポテンシャル補正)\\times(1.00+楽曲タイプ一致効果+ルーム効果+センター効果)`
-
 """
 
 import numpy as np
@@ -30,7 +29,7 @@ from deredata.libs.database.skills import Skill, Skills, duration_value, probabi
 from deredata.libs.database.potentials import Potentials
 
 from deredata.libs.simulate.enumerations import AppealIndices, BoothIndices
-from deredata.libs.simulate.centerbuff import bonus
+from deredata.libs.simulate.centerbuff import bonus_and_resonance
 
 from kivy.logger import Logger as LibsAppealLogger
 
@@ -56,7 +55,6 @@ class BonusContext:
 
     :param Episode episode: 対象メンバーのエピソード
     :param Idol idol: 対象メンバーのアイドル情報
-    :param Buff buff: 対象メンバーのエピソードのセンター効果。
     :param Skill skill: 対象メンバーのエピソードの特技。
     :param SongType song_type: ライブ楽曲の楽曲タイプ。
     :param list[Episode] episodes: ユニットメンバーのエピソードリスト
@@ -65,7 +63,6 @@ class BonusContext:
 
     episode: Episode = Episode()
     idol: Idol = Idol()
-    buff: Buff = Buff()
     skill: Skill = Skill()
     song_type: SongType = SongType.ALL
     episodes: list[Episode] = field(default_factory=list)
@@ -236,7 +233,7 @@ def centerbuff_bonus(context: BonusContext, number: int) -> np.ndarray:
     """
     アピールのセンター効果ボーナス。
 
-    せんーた効果に応じたボーナスを与える。
+    センター効果に応じたボーナスを与える。
 
     :param BonusConext context: エピソードコンテキスト。
     :param int number: 評価するセンター効果を持っているメンバーの立ち位置。
@@ -245,7 +242,7 @@ def centerbuff_bonus(context: BonusContext, number: int) -> np.ndarray:
     :rtype: np.ndarray
     """
 
-    result = bonus(
+    result = bonus_and_resonance(
         episode=context.episode,
         buff=_buffs.get(context.episodes[number].buff),
         episodes=context.episodes,
@@ -308,7 +305,6 @@ def appeal_episode(
     context = BonusContext(
         episode=episode,
         idol=_idols.get(episode.ruby),
-        buff=_buffs.get(episode.buff),
         skill=_skills.get(episode.skill),
         song_type=music.song.type,
         episodes=episodes,
@@ -371,7 +367,6 @@ def appeal_support_member(support: Episode, music: Music) -> list[int]:
     context = BonusContext(
         episode=support,
         idol=_idols.get(support.ruby),
-        buff=_buffs.get(support.buff),
         skill=_skills.get(support.skill),
         song_type=music.song.type,
     )
@@ -417,7 +412,6 @@ def appeal_unit(
                 context = BonusContext(
                     episode=episode,
                     idol=_idols.get(episode.ruby),
-                    buff=_buffs.get(episode.buff),
                     skill=_skills.get(episode.skill),
                     song_type=music.song.type,
                     episodes=episodes,
@@ -445,7 +439,6 @@ def appeal_unit(
                 context = BonusContext(
                     episode=episode,
                     idol=_idols.get(episode.ruby),
-                    buff=_buffs.get(episode.buff),
                     skill=_skills.get(episode.skill),
                     song_type=music.song.type,
                     episodes=episodes,

@@ -1,5 +1,12 @@
 """
 センター効果ボーナスを計算する関数群のモジュール。
+
+エピソードのアピール、ユニットメンバーのアピールを計算する際のセンター効果ボーナスの計算に用いる。
+ライブのスコア計算にレゾナンス効果を適用するかどうかの判定値も含む。
+
+ボーナスおよびレゾナンス判定結果を得るには、 ``bonus_and_resonance`` 関数を呼び出す。
+
+:todo: センター効果・ワールドレベルに対応。（フェイスオープン(60秒経過)前後の2段階アピール）
 """
 
 import numpy as np
@@ -35,13 +42,11 @@ class BuffPartContext:
 
     アピールのボーナス配列を取得する際、必要となるセンター効果パーツに関わる各種条件を格納する。
 
-    :param bool buff_dominant_duet: センター効果「ドミナント・デュエット」のセンター効果パーツかどうか。
     :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param BuffPart buffpart: センター効果パーツ。
     :param SongType song_type: ライブの楽曲タイプ。
     """
 
-    buff_dominant_duet: bool = False
     episode: Episode = Episode()
     buffpart: BuffPart = BuffPart()
     song_type: SongType = SongType.ALL
@@ -72,19 +77,19 @@ class BuffContext:
 
 def buffpartwrap(func: Callable) -> Callable:
     """
-    センター効果パーツのボーナス配列を返すラッパー関数。
+    センター効果パーツのボーナス配列を返すラッパー。
 
-    :ボーナス配列:
-        要素がボーナスのNUMPY配列（軸0: アピールタイプ）。
     :前処理:
         デバッグ用ログを出力する。
     :後処理:
         | ボーナス配列を初期化する。
         | ボーナス配列に対して、指定（戻り値）のアピールタイプのボーナスを更新する。
+    :ボーナス配列:
+        要素がボーナスのNUMPY配列（軸0: アピールタイプ）。
 
     :param Callable func: センター効果パーツのAppealIndicesリストを返す関数。
 
-    :return: ラッパー関数
+    :return: ラッパー関数（センター効果パーツのボーナス配列を返す）。
     :rtype: Callable
     """
 
@@ -93,8 +98,6 @@ def buffpartwrap(func: Callable) -> Callable:
         """
         センター効果パーツのアピールタイプのリストを返す。
 
-        ラッパー関数により、センター効果パーツのボーナス配列に変換される。
-
         :param BuffPartContext context: センター効果パーツのコンテキスト。
 
         :return: アピールタイプのリスト。
@@ -102,10 +105,15 @@ def buffpartwrap(func: Callable) -> Callable:
         """
 
         def idoltypematch(type: IdolType, matchtype: IdolType) -> bool:
+            """
+            エピソードのアイドルのタイプ（あれば、ドミナントアイドルのタイプも）と適用メンバーが一致するか判定する。
+            """
+
             match [type, matchtype]:
                 case [x, IdolType.NA]:  # noqa: F841
                     return False
                 case [y, IdolType.HELEN]:  # noqa: F841
+                    LibsCenterbuffLogger.error("centerbuff.buffpartwrap: センター効果・ワールドレベルには未対応。")
                     return False
                 case [z, IdolType.UNIT]:  # noqa: F841
                     return True
@@ -114,22 +122,35 @@ def buffpartwrap(func: Callable) -> Callable:
                 case _:
                     return False
 
+        def abs_max(x: float, y: float) -> float:
+            """
+            レゾナンスのマイナス効果を考慮。
+            """
+
+            if max(x, y) == 0.0:
+                return min(x, y)
+            return max(x, y)
+
         # 前処理
         LibsCenterbuffLogger.debug(f"centerbuff.buffpartwrap: センター効果パーツ・{context.buffpart.name}を処理。")
 
-        appealidices: list[AppealIndices] = partial(func, context)()
+        # 適用要件（ワールドレベルのフェイスオープン）は、未対応
+        # 適用楽曲を評価してアピールタイプを返す。
+        # 適用メンバーは、後処理で対応。
+        appealindices: list[AppealIndices] = partial(func, context)()
 
         # 後処理
         bonus: float = context.buffpart.value
         matchtype: IdolType = context.buffpart.member
 
         bonus_array: np.ndarray = np.zeros((len(AppealIndices),))
-        for id in appealidices:
-            if not context.buff_dominant_duet:
+        for id in appealindices:
+            if context.episode.dominant == IdolType.NA:
                 bonus_array[id] = bonus if idoltypematch(context.episode.type, matchtype) else 0.0
+
             else:
-                # ドミナントアイドルタイプリストが空リストではないので、センター効果「ドミナント・デュエット」と判定。
-                bonus_array[id] = np.maximum(
+                # エピソードが、ドミナントアイドルの場合。
+                bonus_array[id] = abs_max(
                     bonus if idoltypematch(context.episode.type, matchtype) else 0.0,
                     bonus if idoltypematch(context.episode.dominant, matchtype) else 0.0,
                 )
@@ -272,35 +293,19 @@ def breakdown2buffparts(buffcontext: BuffContext, bonus_array_ext: np.ndarray) -
     :return: センター効果の ``拡大ボーナス配列`` 。
     :rtype: np.ndarray
 
-    :todo: この関数は ``buffwrap`` に組み込む。
+    :todo: この関数は ``buffwrap`` に組み込む（課題：シンデレラブレスでは呼ばれない）。
     """
 
     contexts: list[BuffPartContext] = list()
-    if buffcontext.buff.buff in [
-        "ドミナント・デュエット（ボイス＆ステップ）",
-        "ドミナント・デュエット（ステップ＆メイク）",
-        "ドミナント・デュエット（メイク＆ボイス）",
-    ]:
-        for buffpart in list(buffcontext.buff.buffparts):
-            if buffpart.appeal in bonus_funcname:
-                contexts.append(
-                    BuffPartContext(
-                        buff_dominant_duet=True,
-                        episode=buffcontext.episode,
-                        buffpart=buffpart,
-                        song_type=buffcontext.song_type,
-                    )
+    for buffpart in list(buffcontext.buff.buffparts):
+        if buffpart.appeal in bonus_funcname:
+            contexts.append(
+                BuffPartContext(
+                    episode=buffcontext.episode,
+                    buffpart=buffpart,
+                    song_type=buffcontext.song_type,
                 )
-    else:
-        for buffpart in list(buffcontext.buff.buffparts):
-            if buffpart.appeal in bonus_funcname:
-                contexts.append(
-                    BuffPartContext(
-                        episode=buffcontext.episode,
-                        buffpart=buffpart,
-                        song_type=buffcontext.song_type,
-                    )
-                )
+            )
 
     for i, context in enumerate(contexts):
         if context.buffpart.appeal in bonus_funcname:
@@ -343,7 +348,7 @@ def buffwrap(func: Callable) -> Callable:
         :rtype: np.ndarray
         """
 
-        # 大きい方（片方がZEROの時は、もう片方）を返すnumpy.ufunc定義
+        # 大きい方（片方がZEROの時は、もう片方）を返すnumpy.ufunc定義：レゾナンスのマイナス効果を考慮。
         abs_max = np.frompyfunc(lambda x, y: max(x, y) if max(x, y) != 0.0 else min(x, y), 2, 1)
 
         # 前処理
@@ -863,21 +868,21 @@ centerbuff_funcname: dict[str, Callable] = {
 # アピール（ボーカル、ダンス、ビジュアル、ライフ、特技発動確率）のボーナスに関わるセンター効果のみ。
 
 
-def bonus(
+def bonus_and_resonance(
     episode: Episode,
     buff: Buff,
     episodes: list[Episode],
     song_type: SongType,
 ) -> tuple[np.ndarray, bool]:
     """
-    センター効果ボーナス。
+    センター効果ボーナスとレゾナンスの有効かどうかを返す。
 
     :param Episode episode: センター効果ボーナスを受け取るエピソード。
     :param Buff buff: センター効果。
     :param list[Episode] episodes: ゲストを含むユニットメンバーのエピソードリスト。
     :param SongType songtype: ライブ楽曲の楽曲タイプ。
 
-    :return: センター効果ボーナス、 レゾナンスが有効かどうか。
+    :return: センター効果ボーナスと、 レゾナンスが有効かどうか。
     :rtype: tuple[np.ndarray, bool]
     """
 
